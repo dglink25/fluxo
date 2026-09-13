@@ -4,47 +4,33 @@
 
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
-
-    <!-- Onglets sidebar -->
     <div class="sidebar-tabs">
       <button class="s-tab" [class.active]="activePane() === 'channels'" (click)="activePane.set('channels')">
-        <flx-icon name="kanban" [size]="16"></flx-icon>
-        Channels
+        <flx-icon name="kanban" [size]="15"></flx-icon> Channels
       </button>
       <button class="s-tab" [class.active]="activePane() === 'dm'" (click)="activePane.set('dm')">
-        <flx-icon name="user" [size]="16"></flx-icon>
-        Messages directs
+        <flx-icon name="user" [size]="15"></flx-icon> Messages directs
       </button>
     </div>
 
-    <!-- Liste channels -->
     @if (activePane() === 'channels') {
       @if (channels().length === 0) {
-        <p class="sidebar-empty">Sélectionnez un projet dans le dashboard pour voir ses channels.</p>
+        <p class="sidebar-empty">Ouvrez un projet pour voir ses channels.</p>
       }
       @for (ch of channels(); track ch.id) {
-        <button
-          class="room-item"
-          [class.active]="activeChannelId() === ch.id"
-          (click)="selectChannel(ch)"
-        >
+        <button class="room-item" [class.active]="activeChannelId() === ch.id" (click)="selectChannel(ch)">
           <span class="room-hash">#</span>
           <span class="room-name">{{ ch.name }}</span>
         </button>
       }
     }
 
-    <!-- Liste DMs -->
     @if (activePane() === 'dm') {
       @if (conversations().length === 0) {
         <p class="sidebar-empty">Aucune conversation directe.</p>
       }
       @for (conv of conversations(); track conv.id) {
-        <button
-          class="room-item"
-          [class.active]="activeDmId() === conv.id"
-          (click)="selectDm(conv)"
-        >
+        <button class="room-item" [class.active]="activeDmId() === conv.id" (click)="selectDm(conv)">
           @if (getOtherParticipant(conv); as other) {
             @if (other.avatarUrl) {
               <img class="dm-avatar" [src]="other.avatarUrl" [alt]="other.username" />
@@ -59,56 +45,83 @@
         </button>
       }
     }
-
   </aside>
 
-  <!-- ── Zone de messages ── -->
+  <!-- ── Zone de chat ── -->
   <section class="chat-area">
 
     @if (!activeChannelId() && !activeDmId()) {
       <div class="no-selection">
         <flx-icon name="comment" [size]="36" color="var(--flx-text-faint)"></flx-icon>
-        <p>Sélectionnez un channel ou une conversation pour commencer.</p>
+        @if (activePane() === 'channels' && !projectId()) {
+          <p>Ouvrez un projet pour voir ses channels.</p>
+          <a class="flx-btn flx-btn--ghost" routerLink="/dashboard">
+            <flx-icon name="folder" [size]="14"></flx-icon> Mes projets
+          </a>
+        } @else {
+          <p>Sélectionnez une conversation.</p>
+        }
       </div>
     } @else {
 
-      <!-- En-tête du chat -->
+      <!-- En-tête -->
       <header class="chat-header">
         <div class="chat-title">
           @if (activePane() === 'channels' && activeChannelId()) {
             <span class="hash">#</span>
             @for (ch of channels(); track ch.id) {
-              @if (ch.id === activeChannelId()) {
-                <strong>{{ ch.name }}</strong>
-              }
+              @if (ch.id === activeChannelId()) { <strong>{{ ch.name }}</strong> }
             }
-          } @else if (activePane() === 'dm' && activeDmId()) {
-            <flx-icon name="user" [size]="16"></flx-icon>
+          } @else {
             @for (conv of conversations(); track conv.id) {
               @if (conv.id === activeDmId()) {
-                <strong>&#64;{{ getOtherParticipant(conv)?.username }}</strong>
+                @if (getOtherParticipant(conv); as other) {
+                  @if (other.avatarUrl) { <img class="hdr-avatar" [src]="other.avatarUrl" [alt]="other.username" /> }
+                  <strong>&#64;{{ other.username }}</strong>
+                }
               }
             }
           }
         </div>
         @if (activePane() === 'channels') {
-          <button class="flx-btn flx-btn--ghost search-btn" (click)="showSearch.set(!showSearch())">
-            <flx-icon name="search" [size]="15"></flx-icon>
-          </button>
+          <div class="header-actions">
+            <!-- Bouton appel vidéo -->
+            <a
+              class="ctrl-icon-btn"
+              [routerLink]="['/call']"
+              [queryParams]="{ room: activeChannelId() }"
+              title="Démarrer un appel vidéo"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M4 6.5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l5 3V7.5l-5 3v-2a2 2 0 0 0-2-2H4z"/>
+              </svg>
+            </a>
+            <button class="flx-btn flx-btn--ghost search-btn" (click)="showSearch.set(!showSearch())">
+              <flx-icon name="search" [size]="15"></flx-icon>
+            </button>
+          </div>
+        }
+        @if (activePane() === 'dm' && activeDmId()) {
+          <!-- Bouton appel audio 1-to-1 -->
+          <a
+            class="ctrl-icon-btn"
+            [routerLink]="['/call']"
+            [queryParams]="{ room: activeDmId() }"
+            title="Démarrer un appel"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+            </svg>
+          </a>
         }
       </header>
 
-      <!-- Barre de recherche dans le channel -->
-      @if (showSearch() && activePane() === 'channels') {
+      <!-- Recherche -->
+      @if (showSearch()) {
         <div class="search-bar">
           <flx-icon name="search" [size]="14" color="var(--flx-text-faint)"></flx-icon>
-          <input
-            class="flx-input search-input"
-            type="text"
-            [value]="searchQuery"
-            (input)="onSearchInput($any($event.target).value)"
-            placeholder="Rechercher dans ce channel…"
-          />
+          <input class="flx-input search-input" [value]="searchQuery"
+            (input)="onSearchInput($any($event.target).value)" placeholder="Rechercher…" />
         </div>
         @if (searchResults().length > 0) {
           <div class="search-results">
@@ -116,7 +129,7 @@
               <div class="search-result-item">
                 <span class="flx-mono actor">&#64;{{ msg.sender.username }}</span>
                 <p>{{ msg.content }}</p>
-                <span class="date flx-mono">{{ msg.createdAt | date: 'd MMM, HH:mm' }}</span>
+                <span class="date flx-mono">{{ msg.createdAt | date:'d MMM, HH:mm' }}</span>
               </div>
             }
           </div>
@@ -131,7 +144,7 @@
           @if (activeMessages().length === 0) {
             <div class="chat-empty">
               <flx-icon name="comment" [size]="28" color="var(--flx-text-faint)"></flx-icon>
-              <p class="sub">Aucun message pour l'instant. Soyez le premier à écrire !</p>
+              <p class="sub">Aucun message. Soyez le premier à écrire !</p>
             </div>
           }
           @for (msg of activeMessages(); track msg.id) {
@@ -150,18 +163,47 @@
                   <span class="sender-name flx-mono">&#64;{{ msg.sender.username }}</span>
                 }
                 <div class="bubble" [class.bubble-mine]="isMine(msg)">
-                  @if (msg.type === 'TEXT') {
-                    <p>{{ msg.content }}</p>
-                  } @else if (msg.type === 'IMAGE') {
-                    <img class="msg-image" [src]="msg.fileUrl ?? msg.content" alt="image" />
-                  } @else if (msg.type === 'FILE' || msg.type === 'AUDIO' || msg.type === 'VIDEO') {
-                    <a class="file-link" [href]="msg.fileUrl ?? msg.content" target="_blank" rel="noopener">
-                      <flx-icon name="clipboard" [size]="14"></flx-icon>
-                      {{ msg.content }}
+
+                  <!-- IMAGE -->
+                  @if (msg.type === 'IMAGE' && msg.fileUrl) {
+                    <img class="msg-image" [src]="msg.fileUrl" alt="image" loading="lazy" />
+                    @if (msg.content && msg.content !== msg.fileUrl) {
+                      <p>{{ msg.content }}</p>
+                    }
+                  }
+
+                  <!-- AUDIO -->
+                  @else if (msg.type === 'AUDIO' && msg.fileUrl) {
+                    <div class="audio-msg">
+                      <!-- Icône micro style WhatsApp -->
+                      <svg class="mic-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                        <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+                      </svg>
+                      <audio [src]="msg.fileUrl" controls class="audio-player"></audio>
+                    </div>
+                  }
+
+                  <!-- VIDEO -->
+                  @else if (msg.type === 'VIDEO' && msg.fileUrl) {
+                    <video class="msg-video" [src]="msg.fileUrl" controls></video>
+                  }
+
+                  <!-- FICHIER -->
+                  @else if (msg.type === 'FILE' && msg.fileUrl) {
+                    <a class="file-msg" [href]="msg.fileUrl" download>
+                      <span class="file-doc-icon">📎</span>
+                      <span>{{ msg.content }}</span>
                     </a>
                   }
-                  <span class="time flx-mono">{{ msg.createdAt | date: 'HH:mm' }}</span>
+
+                  <!-- TEXTE -->
+                  @else {
+                    <p>{{ msg.content }}</p>
+                  }
+
+                  <span class="time flx-mono">{{ msg.createdAt | date:'HH:mm' }}</span>
                 </div>
+
                 @if (msg.reactions.length) {
                   <div class="reactions">
                     @for (r of msg.reactions; track r.id) {
@@ -175,25 +217,100 @@
         </div>
       }
 
-      <!-- Zone de saisie -->
+      <!-- ── Zone de saisie ── -->
       <div class="input-area">
-        <form class="input-form" (ngSubmit)="sendMessage()">
-          <input
-            class="flx-input message-input"
-            type="text"
-            [(ngModel)]="newMessage"
-            name="message"
-            placeholder="Écrire un message…"
-            autocomplete="off"
-          />
-          <button
-            type="submit"
-            class="flx-btn flx-btn--primary send-btn"
-            [disabled]="!newMessage.trim() || sending()"
-          >
-            <flx-icon name="send" [size]="16" color="white"></flx-icon>
-          </button>
-        </form>
+
+        <!-- Prévisualisation du fichier attaché -->
+        @if (attachedFile) {
+          <div class="attachment-preview">
+            @if (attachedType() === 'image' && attachedPreview) {
+              <img [src]="attachedPreview" class="preview-img" alt="preview" />
+            } @else if (attachedType() === 'audio') {
+              <div class="audio-preview">
+                <svg class="mic-icon" viewBox="0 0 24 24" width="20" height="20" fill="var(--flx-accent)">
+                  <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+                </svg>
+                <span class="flx-mono">{{ attachedFile.name }}</span>
+              </div>
+            } @else {
+              <div class="file-preview-chip">
+                <span>{{ attachedFile.name }}</span>
+              </div>
+            }
+            <button class="clear-attach" (click)="clearAttachment()">
+              <flx-icon name="x" [size]="14"></flx-icon>
+            </button>
+          </div>
+        }
+
+        <!-- Enregistrement en cours -->
+        @if (isRecording()) {
+          <div class="recording-bar">
+            <span class="rec-dot"></span>
+            <span class="flx-mono rec-time">{{ formatRecordingTime() }}</span>
+            <span class="rec-label">Enregistrement en cours…</span>
+            <button class="flx-btn flx-btn--ghost stop-rec-btn" (click)="stopRecording()">
+              <flx-icon name="check" [size]="14" color="var(--flx-accent)"></flx-icon>
+              Terminer
+            </button>
+          </div>
+        } @else {
+          <div class="input-form">
+
+            <!-- Bouton pièce jointe -->
+            <label class="attach-btn" title="Joindre un fichier, image ou vidéo">
+              <flx-icon name="clipboard" [size]="18"></flx-icon>
+              <input
+                #fileInput
+                type="file"
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                style="display:none"
+                (change)="onFileSelect($event)"
+              />
+            </label>
+
+            <!-- Champ texte -->
+            <input
+              class="flx-input message-input"
+              type="text"
+              [(ngModel)]="newMessage"
+              name="message"
+              placeholder="Écrire un message…"
+              autocomplete="off"
+              (keydown.enter)="sendMessage()"
+            />
+
+            <!-- Bouton envoi OU micro -->
+            @if (newMessage.trim() || attachedFile) {
+              <!-- Bouton envoi -->
+              <button
+                type="button"
+                class="send-btn"
+                [disabled]="sending()"
+                (click)="sendMessage()"
+                title="Envoyer"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            } @else {
+              <!-- Bouton micro style WhatsApp -->
+              <button
+                type="button"
+                class="mic-btn"
+                (click)="startRecording()"
+                title="Enregistrer un message vocal"
+                aria-label="Enregistrer un message vocal"
+              >
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                  <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+                </svg>
+              </button>
+            }
+
+          </div>
+        }
       </div>
     }
 

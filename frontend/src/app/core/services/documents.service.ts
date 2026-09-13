@@ -30,7 +30,7 @@ export class DocumentsService {
     return this.http.get<ProjectDocument[]>(this.url(projectId));
   }
 
-  create(projectId: string, payload: { title: string; content?: string; taskId?: string }) {
+  create(projectId: string, payload: { title: string; content?: string; taskId?: string; fileType?: string }) {
     return this.http.post<ProjectDocument>(this.url(projectId), payload);
   }
 

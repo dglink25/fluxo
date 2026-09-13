@@ -194,7 +194,173 @@ h2 {
 .add-comment .flx-input { flex: 1; }
 .add-comment .flx-btn { flex-shrink: 0; padding: 8px 14px; }
 
-/* Mobile */
+/* ── Assignation ── */
+.assign-block h4 { margin-bottom: 10px; }
+
+.assignees-label {
+  font-size: 12px;
+  color: var(--flx-text-faint);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 0;
+}
+
+.assignee-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.assignee-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--flx-radius-md);
+  border: 2px solid var(--flx-border);
+  transition: border-color 0.12s, background 0.12s;
+  min-width: 64px;
+}
+.assignee-item:hover { background: var(--flx-bg-sunken); }
+.assignee-item.selected {
+  border-color: var(--flx-accent);
+  background: var(--flx-accent-soft);
+}
+.assignee-item .flx-mono { font-size: 10px; color: var(--flx-text-muted); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.assignee-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--flx-bg-sunken);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid var(--flx-border);
+}
+.assignee-item.selected .assignee-avatar { border-color: var(--flx-accent); }
+.assignee-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.check-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--flx-accent);
+  display: grid;
+  place-items: center;
+}
+
+.btn-xs {
+  padding: 5px 12px;
+  font-size: 12px;
+  gap: 5px;
+}
+
+.status-hint {
+  font-size: 11px;
+  color: var(--flx-text-faint);
+  font-style: italic;
+  align-self: center;
+}
+
+/* ── Commentaires enrichis ── */
+.comment-input-area { display: flex; flex-direction: column; gap: 8px; }
+
+.file-preview {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--flx-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--flx-border);
+}
+.file-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.file-preview-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--flx-bg-sunken);
+  padding: 8px 12px;
+  border-radius: var(--flx-radius-sm);
+  font-size: 12px;
+}
+.file-emoji { font-size: 18px; }
+
+.rm-file {
+  background: none;
+  border: none;
+  color: var(--flx-text-faint);
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+  line-height: 0;
+}
+.rm-file:hover { color: #dc2626; }
+
+.add-comment {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.attach-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--flx-radius-sm);
+  border: 1px solid var(--flx-border);
+  color: var(--flx-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+.attach-btn:hover { background: var(--flx-bg-sunken); }
+.add-comment .flx-input { flex: 1; }
+.send-btn { padding: 8px 14px; flex-shrink: 0; }
+
+/* Médias dans les commentaires */
+.comment-img {
+  max-width: 240px;
+  max-height: 200px;
+  border-radius: var(--flx-radius-md);
+  display: block;
+  margin-top: 6px;
+  cursor: zoom-in;
+}
+.comment-audio {
+  width: 100%;
+  max-width: 280px;
+  height: 36px;
+  margin-top: 6px;
+  accent-color: var(--flx-accent);
+}
+.comment-video {
+  max-width: 280px;
+  border-radius: var(--flx-radius-md);
+  margin-top: 6px;
+}
+.comment-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--flx-accent);
+  background: var(--flx-accent-soft);
+  padding: 6px 12px;
+  border-radius: var(--flx-radius-sm);
+  text-decoration: none;
+}
+
+/* Mobile — modal plein bas */
 @media (max-width: 600px) {
   .backdrop { padding: 0; align-items: flex-end; }
   .modal {
@@ -202,4 +368,7 @@ h2 {
     border-radius: var(--flx-radius-lg) var(--flx-radius-lg) 0 0;
     max-width: 100%;
   }
+  .assignee-grid { gap: 6px; }
+  .assignee-item { min-width: 56px; padding: 6px; }
+  .assignee-avatar { width: 30px; height: 30px; }
 }

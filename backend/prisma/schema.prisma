@@ -68,6 +68,12 @@ enum DeliverableStatus {
   REFUSED
 }
 
+enum SecretAccessType {
+  VIEW
+  COPY
+  EXPORT
+}
+
 // ─── Utilisateurs ─────────────────────────────────────────────────────────────
 
 model User {
@@ -94,6 +100,7 @@ model User {
   ownedProjects        Project[]           @relation("ProjectOwner")
   memberships          ProjectMember[]
   assignedTasks        Task[]              @relation("TaskAssignee")
+  taskAssignments      TaskAssignee[]
   comments             Comment[]
   activities           Activity[]
   notifications        Notification[]
@@ -177,6 +184,8 @@ model Project {
   activities  Activity[]
   channels    Channel[]
   files       ProjectFile[]
+  secrets     Secret[]
+  confidentialFiles ConfidentialFile[]
 }
 
 model ProjectMember {
@@ -221,7 +230,7 @@ model Task {
   description String?
   status      TaskStatus   @default(TODO)
   priority    TaskPriority @default(MEDIUM)
-  assigneeId  String?
+  assigneeId  String?      /// Assigné principal (rétrocompat)
   dueDate     DateTime?
   labels      String[]     @default([])
   position    Int          @default(0)
@@ -233,6 +242,7 @@ model Task {
   subtasks     SubTask[]
   comments     Comment[]
   deliverables Deliverable[]
+  assignees    TaskAssignee[]
 }
 
 model SubTask {
@@ -246,14 +256,29 @@ model SubTask {
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  taskId    String
-  userId    String
-  content   String
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  taskId      String
+  userId      String
+  content     String
+  fileUrl     String?  /// URL du fichier joint (image, audio, video, document)
+  fileName    String?
+  fileType    String?
+  createdAt   DateTime @default(now())
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id])
+}
+
+/// Table de jonction pour l'assignation multiple
+model TaskAssignee {
+  id     String @id @default(uuid())
+  taskId String
+  userId String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
 }
 
 // ─── Messagerie instantanée ───────────────────────────────────────────────────
@@ -362,6 +387,70 @@ model Deliverable {
   task      Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   author    User  @relation("DeliverableAuthor", fields: [authorId], references: [id])
   validator User? @relation("DeliverableValidator", fields: [validatorId], references: [id])
+}
+
+// ─── Secrets & Variables d'environnement ──────────────────────────────────────
+
+/// Variable d'environnement chiffrée (AES-256-GCM) stockée par projet
+model Secret {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String                    /// Nom de la variable (ex. DATABASE_URL)
+  valueEnc    String                    /// Valeur chiffrée AES-256-GCM (base64)
+  iv          String                    /// IV de chiffrement (base64)
+  authTag     String                    /// Auth tag GCM (base64)
+  description String?                   /// Description optionnelle
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logs    SecretAccessLog[]
+
+  @@unique([projectId, name])
+}
+
+/// Journal d'accès aux secrets
+model SecretAccessLog {
+  id         String           @id @default(uuid())
+  secretId   String
+  userId     String
+  accessType String           /// VIEW | COPY | EXPORT
+  createdAt  DateTime         @default(now())
+
+  secret Secret @relation(fields: [secretId], references: [id], onDelete: Cascade)
+}
+
+/// Fichier confidentiel (JSON Google, certificat, clé privée, etc.)
+model ConfidentialFile {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String                    /// Nom affiché (ex. service-account.json)
+  fileType    String   @default("OTHER") /// GOOGLE_SERVICE_ACCOUNT | CERTIFICATE | PRIVATE_KEY | OTHER
+  description String?
+  contentEnc  String                    /// Contenu chiffré AES-256-GCM (base64)
+  iv          String
+  authTag     String
+  sizeBytes   Int
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logs    ConfidentialFileAccessLog[]
+
+  @@index([projectId])
+}
+
+/// Journal d'accès aux fichiers confidentiels
+model ConfidentialFileAccessLog {
+  id         String   @id @default(uuid())
+  fileId     String
+  userId     String
+  accessType String
+  createdAt  DateTime @default(now())
+
+  file ConfidentialFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
 }
 
 // ─── Activité & Notifications ─────────────────────────────────────────────────

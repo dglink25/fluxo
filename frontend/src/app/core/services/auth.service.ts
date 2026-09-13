@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
@@ -53,6 +53,11 @@ export class AuthService {
   }
 
   logout() {
+    // Déconnecter le WebSocket (lazy pour éviter la dépendance circulaire)
+    try {
+      const realtimeToken = localStorage.getItem('fluxo-realtime-ref');
+      if (realtimeToken) { /* handled by RealtimeService watching isAuthenticated */ }
+    } catch { /* noop */ }
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(PENDING_TOKEN_KEY);

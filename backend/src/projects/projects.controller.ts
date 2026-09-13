@@ -80,4 +80,11 @@ export class ProjectsController {
   activity(@Param('projectId') projectId: string) {
     return this.projectsService.activityFeed(projectId);
   }
+
+  /** Liste des membres du projet avec leurs rôles et invitations en attente */
+  @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')
+  @Get(':projectId/members')
+  members(@Param('projectId') projectId: string) {
+    return this.projectsService.getMembersWithInvitations(projectId);
+  }
 }

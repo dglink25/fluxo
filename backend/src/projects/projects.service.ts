@@ -119,6 +119,39 @@ export class ProjectsService {
     return result;
   }
 
+  async getMembersWithInvitations(projectId: string) {
+    const [members, invitations] = await Promise.all([
+      this.prisma.projectMember.findMany({
+        where: { projectId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              avatarUrl: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+        orderBy: [
+          // OWNER en premier, puis ADMIN, puis MEMBER, puis READER
+          { role: 'asc' },
+          { addedAt: 'asc' },
+        ],
+      }),
+      this.prisma.invitation.findMany({
+        where: { projectId },
+        include: {
+          invitedBy: { select: { id: true, username: true, avatarUrl: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    return { members, invitations };
+  }
+
   async activityFeed(projectId: string) {
     return this.prisma.activity.findMany({
       where: { projectId },

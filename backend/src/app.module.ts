@@ -22,6 +22,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { FilesModule } from './files/files.module';
+import { SecretsModule } from './secrets/secrets.module';
 import { DeliverablesModule } from './deliverables/deliverables.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { GithubModule } from './github/github.module';
@@ -30,14 +31,13 @@ import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
-    // Config & transversaux
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     ScheduleModule.forRoot(),
 
     // Infrastructure
     PrismaModule,
-    MailModule,       // Global — pas besoin d'importer ailleurs
+    MailModule,
     WhatsappModule,
     HealthModule,
     RealtimeModule,
@@ -59,8 +59,9 @@ import { SearchModule } from './search/search.module';
     AnnouncementsModule,
     DocumentsModule,
 
-    // Fichiers & Livrables
+    // Fichiers, Secrets & Livrables
     FilesModule,
+    SecretsModule,
     DeliverablesModule,
 
     // Intégrations

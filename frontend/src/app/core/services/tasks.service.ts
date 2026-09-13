@@ -52,5 +52,21 @@ export class TasksService {
   addComment(projectId: string, taskId: string, content: string) {
     return this.http.post<TaskComment>(`${this.base(projectId)}/${taskId}/comments`, { content });
   }
+
+  addCommentWithFile(
+    projectId: string,
+    taskId: string,
+    content: string,
+    fileUrl: string,
+    fileName: string,
+    fileType: string,
+  ) {
+    return this.http.post<TaskComment>(`${this.base(projectId)}/${taskId}/comments`, {
+      content,
+      fileUrl,
+      fileName,
+      fileType,
+    });
+  }
 }
 

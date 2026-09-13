@@ -71,7 +71,11 @@ export class TasksController {
     @Param('taskId') taskId: string,
     @CurrentUser() user: any,
     @Body('content') content: string,
+    @Body('fileUrl') fileUrl?: string,
+    @Body('fileName') fileName?: string,
+    @Body('fileType') fileType?: string,
   ) {
-    return this.tasksService.addComment(projectId, taskId, user.userId, content);
+    const attachment = fileUrl ? { fileUrl, fileName: fileName ?? fileUrl, fileType: fileType ?? 'FILE' } : undefined;
+    return this.tasksService.addComment(projectId, taskId, user.userId, content ?? '', attachment);
   }
 }

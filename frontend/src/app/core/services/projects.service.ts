@@ -20,4 +20,16 @@ export class ProjectsService {
   create(payload: { name: string; description?: string; visibility?: ProjectVisibility; workspaceId?: string }) {
     return this.http.post<Project>(this.base, payload);
   }
+
+  getMembers(projectId: string) {
+    return this.http.get<any>(`${this.base}/${projectId}/members`);
+  }
+
+  changeMemberRole(projectId: string, userId: string, role: string) {
+    return this.http.patch(`${this.base}/${projectId}/members/${userId}/role`, { role });
+  }
+
+  removeMember(projectId: string, userId: string) {
+    return this.http.delete(`${this.base}/${projectId}/members/${userId}`);
+  }
 }

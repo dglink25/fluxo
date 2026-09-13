@@ -20,8 +20,10 @@ import { TaskCardComponent } from '../components/task-card/task-card.component';
 import { InviteModalComponent } from '../components/invite-modal/invite-modal.component';
 import { TaskDetailComponent } from '../components/task-detail/task-detail.component';
 import { ActivityFeedComponent } from '../components/activity-feed/activity-feed.component';
+import { SecretsComponent } from '../components/secrets/secrets.component';
+import { MembersComponent } from '../components/members/members.component';
 
-type ViewMode = 'kanban' | 'list' | 'activity' | 'files' | 'deliverables' | 'documents' | 'announcements' | 'messaging';
+type ViewMode = 'kanban' | 'list' | 'activity' | 'members' | 'files' | 'deliverables' | 'documents' | 'announcements' | 'messaging' | 'secrets';
 
 @Component({
   selector: 'flx-project-detail',
@@ -37,6 +39,8 @@ type ViewMode = 'kanban' | 'list' | 'activity' | 'files' | 'deliverables' | 'doc
     InviteModalComponent,
     TaskDetailComponent,
     ActivityFeedComponent,
+    SecretsComponent,
+    MembersComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.scss',
@@ -49,6 +53,10 @@ export class ProjectDetailComponent implements OnInit {
   announcements = signal<Announcement[]>([]);
   documents = signal<ProjectDocument[]>([]);
   channels = signal<Channel[]>([]);
+
+  // Membres et invitations
+  members = signal<any[]>([]);
+  invitations = signal<any[]>([]);
 
   loading = signal(true);
   view = signal<ViewMode>('kanban');
@@ -64,8 +72,12 @@ export class ProjectDetailComponent implements OnInit {
   filterPriority = '';
 
   // Formulaires
+  // Formulaires création tâche enrichi
   newTaskTitle = '';
   newTaskPriority: Task['priority'] = 'MEDIUM';
+  newTaskAssigneeIds: string[] = [];
+  newTaskDueDate = '';
+  newTaskLabels = '';
   creatingTask = signal(false);
 
   newAnnouncementTitle = '';
@@ -74,10 +86,64 @@ export class ProjectDetailComponent implements OnInit {
   creatingAnnouncement = signal(false);
   showAnnouncementForm = signal(false);
 
-  newDocTitle = '';
-  newDocContent = '';
+  // Fichiers — formulaire déclaration
+  showFileForm = signal(false);
+  newFileName = '';
+  newFileUrl = '';
+  newFileMime = 'application/octet-stream';
+
+  declareFile() {
+    if (!this.newFileUrl.trim() || !this.newFileName.trim()) return;
+    this.filesService.declare(this.projectId, {
+      name: this.newFileName,
+      size: 0,
+      mimeType: this.newFileMime || 'application/octet-stream',
+      url: this.newFileUrl,
+    }).subscribe({
+      next: (f) => {
+        this.files.update((list) => [f, ...list]);
+        this.newFileName = '';
+        this.newFileUrl = '';
+        this.newFileMime = 'application/octet-stream';
+        this.showFileForm.set(false);
+      },
+      error: () => {},
+    });
+  }
   creatingDoc = signal(false);
   showDocForm = signal(false);
+  newDocTitle = '';
+  newDocContent = '';
+  docFormType: 'file' | 'text' = 'file';
+  docFileSelected = false;
+  docFileMime = '';
+
+  onDocFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.newDocTitle = file.name;
+    this.docFileMime = file.type;
+    this.docFileSelected = true;
+    const reader = new FileReader();
+    reader.onload = (e) => { this.newDocContent = e.target?.result as string ?? ''; };
+    if (file.type.startsWith('text') || file.name.endsWith('.json') || file.name.endsWith('.md')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsDataURL(file);
+    }
+  }
+
+  fileEmoji(mimeType: string): string {
+    if (!mimeType) return '📄';
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType.startsWith('video/')) return '🎬';
+    if (mimeType.startsWith('audio/')) return '🎵';
+    if (mimeType.includes('pdf')) return '📋';
+    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+    if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊';
+    return '📄';
+  }
 
   projectId!: string;
 
@@ -163,15 +229,30 @@ export class ProjectDetailComponent implements OnInit {
     if (v === 'files') this.loadFiles();
     if (v === 'announcements') this.loadAnnouncements();
     if (v === 'documents') this.loadDocuments();
+    if (v === 'members') this.loadMembers();
+  }
+
+  loadMembers() {
+    this.projectsService.getMembers(this.projectId).subscribe({
+      next: (data: any) => {
+        this.members.set(data.members ?? []);
+        this.invitations.set(data.invitations ?? []);
+      },
+      error: () => {},
+    });
   }
 
   tasksByStatus(status: TaskStatus) {
     return this.tasks().filter((t) => t.status === status);
   }
 
-  onDragStart(task: Task) { this.draggedTask = task; }
+  toggleNewTaskAssignee(userId: string) {
+    this.newTaskAssigneeIds = this.newTaskAssigneeIds.includes(userId)
+      ? this.newTaskAssigneeIds.filter((id) => id !== userId)
+      : [...this.newTaskAssigneeIds, userId];
+  }
 
-  onDrop(status: TaskStatus) {
+  onDragStart(task: Task) { this.draggedTask = task; }
     if (!this.draggedTask || this.draggedTask.status === status) return;
     const task = this.draggedTask;
     this.tasks.update((list) => list.map((t) => (t.id === task.id ? { ...t, status } : t)));
@@ -182,12 +263,25 @@ export class ProjectDetailComponent implements OnInit {
   createTask() {
     if (!this.newTaskTitle.trim()) return;
     this.creatingTask.set(true);
+    const labels = this.newTaskLabels
+      ? this.newTaskLabels.split(',').map((l) => l.trim()).filter(Boolean)
+      : [];
     this.tasksService
-      .create(this.projectId, { title: this.newTaskTitle, priority: this.newTaskPriority })
+      .create(this.projectId, {
+        title: this.newTaskTitle,
+        priority: this.newTaskPriority,
+        assigneeIds: this.newTaskAssigneeIds.length ? this.newTaskAssigneeIds : undefined,
+        dueDate: this.newTaskDueDate || undefined,
+        labels,
+      } as any)
       .subscribe({
         next: (task) => {
           this.tasks.update((list) => [...list, task]);
           this.newTaskTitle = '';
+          this.newTaskPriority = 'MEDIUM';
+          this.newTaskAssigneeIds = [];
+          this.newTaskDueDate = '';
+          this.newTaskLabels = '';
           this.showNewTask.set(false);
           this.creatingTask.set(false);
         },

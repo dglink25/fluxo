@@ -127,6 +127,68 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return { joined: data.channelId };
   }
 
+  // ── WebRTC Signalisation ─────────────────────────────────────────────────
+
+  /** Un participant rejoint une salle d'appel */
+  @SubscribeMessage('call:join')
+  handleCallJoin(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { room: string },
+  ) {
+    socket.join(`call:${data.room}`);
+    this.logger.debug(`User joined call room: ${data.room}`);
+    return { joined: data.room };
+  }
+
+  /** Offre SDP WebRTC (initiateur → participant) */
+  @SubscribeMessage('call:offer')
+  handleCallOffer(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { room: string; offer: RTCSessionDescriptionInit },
+  ) {
+    socket.to(`call:${data.room}`).emit('call:offer', {
+      offer: data.offer,
+      room: data.room,
+      from: (socket as any).userId,
+    });
+  }
+
+  /** Réponse SDP WebRTC (participant → initiateur) */
+  @SubscribeMessage('call:answer')
+  handleCallAnswer(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { room: string; answer: RTCSessionDescriptionInit },
+  ) {
+    socket.to(`call:${data.room}`).emit('call:answer', {
+      answer: data.answer,
+      room: data.room,
+      from: (socket as any).userId,
+    });
+  }
+
+  /** ICE Candidates */
+  @SubscribeMessage('call:ice')
+  handleCallIce(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { room: string; candidate: RTCIceCandidateInit },
+  ) {
+    socket.to(`call:${data.room}`).emit('call:ice', {
+      candidate: data.candidate,
+      room: data.room,
+    });
+  }
+
+  /** Fin d'appel */
+  @SubscribeMessage('call:end')
+  handleCallEnd(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { room: string },
+  ) {
+    socket.to(`call:${data.room}`).emit('call:ended', { room: data.room });
+    socket.leave(`call:${data.room}`);
+    this.logger.debug(`Call ended in room: ${data.room}`);
+  }
+
   /** Indicateur "en train d'écrire" */
   @SubscribeMessage('typing:start')
   handleTypingStart(

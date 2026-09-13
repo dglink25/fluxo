@@ -1,0 +1,124 @@
+<!-- Toast -->
+@if (toast()) {
+  <div class="members-toast" [class.members-toast-error]="toast()!.type === 'error'">
+    <flx-icon [name]="toast()!.type === 'success' ? 'check' : 'x'" [size]="13" color="white"></flx-icon>
+    {{ toast()!.msg }}
+  </div>
+}
+
+<!-- Barre d'actions -->
+<div class="members-toolbar">
+  <h3 class="sec-title">
+    <flx-icon name="user" [size]="16"></flx-icon>
+    {{ members().length }} membre(s)
+  </h3>
+  @if (canManage()) {
+    <button class="flx-btn flx-btn--primary btn-sm" (click)="invite.emit()">
+      <flx-icon name="mail" [size]="14" color="white"></flx-icon>
+      Inviter
+    </button>
+  }
+</div>
+
+@if (loading()) {
+  <p class="sub loading">Chargement…</p>
+} @else {
+
+  <!-- ── Membres actifs ── -->
+  <div class="members-list">
+    @for (m of members(); track m.id) {
+      <div class="flx-card member-row" [class.is-me]="isMe(m)">
+
+        <!-- Avatar -->
+        <div class="m-avatar">
+          @if (m.user.avatarUrl) {
+            <img [src]="m.user.avatarUrl" [alt]="m.user.username" />
+          } @else {
+            <flx-icon name="user" [size]="18"></flx-icon>
+          }
+          @if (isMe(m)) {
+            <span class="me-badge">Moi</span>
+          }
+        </div>
+
+        <!-- Infos -->
+        <div class="m-info">
+          <p class="m-name">{{ m.user.fullName || m.user.username }}</p>
+          <span class="m-username flx-mono">&#64;{{ m.user.username }}</span>
+          <span class="m-email">{{ m.user.email }}</span>
+        </div>
+
+        <!-- Rôle — sélecteur pour admin/owner, badge pour les autres -->
+        <div class="m-role">
+          @if (isOwner(m)) {
+            <span class="role-badge role-owner">OWNER</span>
+          } @else if (canManage() && !isMe(m)) {
+            <select
+              class="flx-input role-select"
+              [value]="m.role"
+              [disabled]="changingRoleId() === m.id"
+              (change)="changeRole(m, $any($event.target).value)"
+            >
+              @for (r of roles; track r) {
+                <option [value]="r" [selected]="m.role === r">{{ r }}</option>
+              }
+            </select>
+          } @else {
+            <span class="role-badge" [class]="'role-'+m.role.toLowerCase()">{{ m.role }}</span>
+          }
+        </div>
+
+        <!-- Date -->
+        <span class="m-date flx-mono">{{ m.addedAt | date:'d MMM yyyy' }}</span>
+
+        <!-- Retirer -->
+        @if (canManage() && !isOwner(m) && !isMe(m)) {
+          <button
+            class="action-btn action-btn-danger"
+            [disabled]="removingId() === m.id"
+            (click)="removeMember(m)"
+            title="Retirer du projet"
+          >
+            <flx-icon name="x" [size]="14"></flx-icon>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── Invitations ── -->
+  @if (invitations().length > 0) {
+    <div class="inv-section">
+      <h4 class="inv-title">
+        <flx-icon name="mail" [size]="14"></flx-icon>
+        Invitations envoyées ({{ invitations().length }})
+      </h4>
+      <div class="inv-list">
+        @for (inv of invitations(); track inv.id) {
+          <div class="flx-card inv-row">
+
+            <div class="inv-type-icon">
+              @if (inv.targetType === 'EMAIL') { <flx-icon name="mail" [size]="14"></flx-icon> }
+              @else if (inv.targetType === 'PHONE') { <flx-icon name="phone" [size]="14"></flx-icon> }
+              @else { <flx-icon name="user" [size]="14"></flx-icon> }
+            </div>
+
+            <div class="inv-info">
+              <p class="inv-target flx-mono">{{ inv.targetValue }}</p>
+              <span class="inv-meta">{{ targetTypeLabel(inv.targetType) }} · Rôle : {{ inv.role }}</span>
+              @if (inv.invitedBy) {
+                <span class="inv-by flx-mono">par &#64;{{ inv.invitedBy.username }}</span>
+              }
+            </div>
+
+            <span class="inv-status" [class]="'status-'+inv.status.toLowerCase()">
+              {{ statusLabel(inv.status) }}
+            </span>
+
+            <span class="inv-date flx-mono">{{ inv.createdAt | date:'d MMM' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+}

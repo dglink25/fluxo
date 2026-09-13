@@ -63,6 +63,12 @@ export const routes: Routes = [
       import('./features/messaging/messaging.component').then((m) => m.MessagingComponent),
   },
   {
+    path: 'call',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/call/call.component').then((m) => m.CallComponent),
+  },
+  {
     path: 'search',
     canActivate: [authGuard],
     loadComponent: () =>

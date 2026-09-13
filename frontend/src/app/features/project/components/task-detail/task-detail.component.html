@@ -15,22 +15,32 @@
         <div>
           <span class="flx-mono id">#{{ task()!.id.slice(0, 6) }}</span>
           <h2>{{ task()!.title }}</h2>
+          <!-- Assignés -->
+          <p class="assignees-label">
+            <flx-icon name="user" [size]="12"></flx-icon>
+            {{ assigneesLabel() }}
+          </p>
         </div>
         <button class="close-btn" type="button" (click)="close.emit()">
           <flx-icon name="x" [size]="18"></flx-icon>
         </button>
       </header>
 
-      <!-- Statuts -->
+      <!-- ── Statuts ── -->
       <div class="status-row">
         @for (status of statuses; track status.value) {
           <button
             class="status-chip"
             [class.active]="task()!.status === status.value"
+            [disabled]="!canChangeStatus()"
+            [title]="canChangeStatus() ? '' : 'Seul un assigné peut changer le statut'"
             (click)="updateStatus(status.value)"
           >
             {{ status.label }}
           </button>
+        }
+        @if (!canChangeStatus()) {
+          <span class="status-hint">🔒 Seul un assigné peut changer le statut</span>
         }
       </div>
 
@@ -38,7 +48,40 @@
         <p class="description">{{ task()!.description }}</p>
       }
 
-      <!-- Sous-tâches -->
+      <!-- ── Assignation multiple ── -->
+      <section class="block assign-block">
+        <h4><flx-icon name="user" [size]="15"></flx-icon> Assignés</h4>
+        <div class="assignee-grid">
+          @for (m of projectMembers(); track m.userId) {
+            <label class="assignee-item" [class.selected]="isAssigned(m.userId)">
+              <input
+                type="checkbox"
+                [checked]="isAssigned(m.userId)"
+                (change)="toggleAssignee(m.userId)"
+                style="display:none"
+              />
+              <div class="assignee-avatar">
+                @if (m.user.avatarUrl) {
+                  <img [src]="m.user.avatarUrl" [alt]="m.user.username" />
+                } @else {
+                  <flx-icon name="user" [size]="14"></flx-icon>
+                }
+                @if (isAssigned(m.userId)) {
+                  <span class="check-badge"><flx-icon name="check" [size]="9" color="white"></flx-icon></span>
+                }
+              </div>
+              <span class="flx-mono">&#64;{{ m.user.username }}</span>
+            </label>
+          }
+        </div>
+        @if (selectedAssigneeIds().length > 0) {
+          <button class="flx-btn flx-btn--primary btn-xs" (click)="saveAssignees()">
+            Enregistrer l'assignation
+          </button>
+        }
+      </section>
+
+      <!-- ── Sous-tâches ── -->
       <section class="block">
         <h4>
           <flx-icon name="tasks" [size]="15"></flx-icon>
@@ -47,32 +90,21 @@
             <span class="count flx-mono">{{ subtaskProgress(task()!) }}%</span>
           }
         </h4>
-
         @for (sub of task()!.subtasks ?? []; track sub.id) {
           <label class="subtask-row">
-            <input
-              type="checkbox"
-              [checked]="sub.done"
-              (change)="toggleSubtask(sub.id, !sub.done)"
-            />
+            <input type="checkbox" [checked]="sub.done" (change)="toggleSubtask(sub.id, !sub.done)" />
             <span [class.done]="sub.done">{{ sub.title }}</span>
           </label>
         }
-
         <form class="add-subtask" (ngSubmit)="addSubtask()">
-          <input
-            class="flx-input"
-            [(ngModel)]="newSubtaskTitle"
-            name="subtaskTitle"
-            placeholder="Ajouter une sous-tâche…"
-          />
+          <input class="flx-input" [(ngModel)]="newSubtaskTitle" name="subtaskTitle" placeholder="Ajouter une sous-tâche…" />
           <button class="flx-btn flx-btn--ghost" type="submit" [disabled]="addingSubtask()">
             <flx-icon name="plus" [size]="14"></flx-icon>
           </button>
         </form>
       </section>
 
-      <!-- Commentaires -->
+      <!-- ── Commentaires ── -->
       <section class="block">
         <h4>
           <flx-icon name="comment" [size]="15"></flx-icon>
@@ -85,9 +117,27 @@
             <div class="comment">
               <div class="comment-head">
                 <span class="flx-mono">&#64;{{ c.user.username }}</span>
-                <span class="date">{{ c.createdAt | date: 'd MMM, HH:mm' }}</span>
+                <span class="date">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
               </div>
-              <p>{{ c.content }}</p>
+              <!-- Texte du commentaire -->
+              @if (c.content && c.content !== c.fileName) {
+                <p>{{ c.content }}</p>
+              }
+              <!-- Pièce jointe -->
+              @if (c.fileUrl) {
+                @if (isImage(c.fileUrl)) {
+                  <img class="comment-img" [src]="c.fileUrl" [alt]="c.fileName ?? 'image'" />
+                } @else if (isAudio(c.fileUrl, c.fileType)) {
+                  <audio class="comment-audio" [src]="c.fileUrl" controls></audio>
+                } @else if (isVideo(c.fileUrl, c.fileType)) {
+                  <video class="comment-video" [src]="c.fileUrl" controls></video>
+                } @else {
+                  <a class="comment-file" [href]="c.fileUrl" download>
+                    <span class="file-emoji">{{ fileIcon(c.fileType) }}</span>
+                    {{ c.fileName ?? c.content }}
+                  </a>
+                }
+              }
             </div>
           }
           @if (task()!.comments.length === 0) {
@@ -95,17 +145,41 @@
           }
         </div>
 
-        <form class="add-comment" (ngSubmit)="postComment()">
-          <input
-            class="flx-input"
-            [(ngModel)]="newComment"
-            name="comment"
-            placeholder="Écrire un commentaire…"
-          />
-          <button class="flx-btn flx-btn--primary" type="submit" [disabled]="postingComment()">
-            <flx-icon name="send" [size]="14" color="white"></flx-icon>
-          </button>
-        </form>
+        <!-- Zone de saisie commentaire + pièce jointe -->
+        <div class="comment-input-area">
+          @if (commentFilePreview) {
+            <div class="file-preview">
+              <img [src]="commentFilePreview" alt="preview" />
+              <button class="rm-file" (click)="clearCommentFile()"><flx-icon name="x" [size]="12"></flx-icon></button>
+            </div>
+          } @else if (commentFile) {
+            <div class="file-preview-name">
+              <span class="file-emoji">{{ fileIcon(commentFile.type) }}</span>
+              <span class="flx-mono">{{ commentFile.name }}</span>
+              <button class="rm-file" (click)="clearCommentFile()"><flx-icon name="x" [size]="12"></flx-icon></button>
+            </div>
+          }
+
+          <form class="add-comment" (ngSubmit)="postComment()">
+            <label class="attach-btn" title="Joindre un fichier">
+              <flx-icon name="clipboard" [size]="16"></flx-icon>
+              <input type="file" style="display:none" (change)="onCommentFileSelect($event)" accept="*/*" />
+            </label>
+            <input
+              class="flx-input"
+              [(ngModel)]="newComment"
+              name="comment"
+              placeholder="Écrire un commentaire ou joindre un fichier…"
+            />
+            <button
+              class="flx-btn flx-btn--primary send-btn"
+              type="submit"
+              [disabled]="postingComment() || (!newComment.trim() && !commentFile)"
+            >
+              <flx-icon name="send" [size]="14" color="white"></flx-icon>
+            </button>
+          </form>
+        </div>
       </section>
     }
 

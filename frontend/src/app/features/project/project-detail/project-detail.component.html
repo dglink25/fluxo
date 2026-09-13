@@ -3,101 +3,128 @@
 @if (project(); as p) {
   <main class="page">
 
-    <!-- En-tête -->
+    <!-- ── En-tête avec bouton retour ── -->
     <div class="head">
-      <div>
-        <h1>{{ p.name }}</h1>
-        <p class="sub">{{ p.description || 'Aucune description' }}</p>
+      <div class="head-left">
+        <a class="back-btn" routerLink="/dashboard" title="Retour aux projets">
+          <flx-icon name="chevron-right" [size]="16" style="transform:rotate(180deg)"></flx-icon>
+          Projets
+        </a>
+        <div>
+          <h1>{{ p.name }}</h1>
+          <p class="sub">{{ p.description || 'Aucune description' }}</p>
+        </div>
       </div>
       <div class="actions">
-
-        <!-- Switcher de vue -->
-        <div class="view-switch">
-          <button class="opt" [class.active]="view() === 'kanban'" (click)="setView('kanban')" title="Kanban">
-            <flx-icon name="kanban" [size]="15"></flx-icon>
-          </button>
-          <button class="opt" [class.active]="view() === 'list'" (click)="setView('list')" title="Liste">
-            <flx-icon name="list" [size]="15"></flx-icon>
-          </button>
-          <button class="opt" [class.active]="view() === 'activity'" (click)="setView('activity')" title="Activité">
-            <flx-icon name="activity" [size]="15"></flx-icon>
-          </button>
-          <button class="opt" [class.active]="view() === 'files'" (click)="setView('files')" title="Fichiers">
-            <flx-icon name="clipboard" [size]="15"></flx-icon>
-          </button>
-          <button class="opt" [class.active]="view() === 'announcements'" (click)="setView('announcements')" title="Annonces">
-            <flx-icon name="bell" [size]="15"></flx-icon>
-          </button>
-          <button class="opt" [class.active]="view() === 'documents'" (click)="setView('documents')" title="Documents">
-            <flx-icon name="tasks" [size]="15"></flx-icon>
-          </button>
-          <button class="opt" [class.active]="view() === 'messaging'" (click)="setView('messaging')" title="Messagerie">
-            <flx-icon name="comment" [size]="15"></flx-icon>
-          </button>
-        </div>
-
         <button class="flx-btn flx-btn--ghost" (click)="showInvite.set(true)">
           <flx-icon name="mail" [size]="15"></flx-icon>
-          <span class="desktop-only">Inviter</span>
+          Inviter
         </button>
-
         @if (view() === 'kanban' || view() === 'list') {
           <button class="flx-btn flx-btn--primary" (click)="showNewTask.set(!showNewTask())">
             <flx-icon name="plus" [size]="16" color="white"></flx-icon>
-            <span class="desktop-only">Tâche</span>
+            Nouvelle tâche
           </button>
         }
         @if (view() === 'announcements') {
           <button class="flx-btn flx-btn--primary" (click)="showAnnouncementForm.set(!showAnnouncementForm())">
             <flx-icon name="plus" [size]="16" color="white"></flx-icon>
-            <span class="desktop-only">Annonce</span>
+            Annonce
           </button>
         }
         @if (view() === 'documents') {
           <button class="flx-btn flx-btn--primary" (click)="showDocForm.set(!showDocForm())">
             <flx-icon name="plus" [size]="16" color="white"></flx-icon>
-            <span class="desktop-only">Document</span>
+            Nouveau fichier / doc
           </button>
         }
       </div>
     </div>
 
-    <!-- Formulaire nouvelle tâche -->
+    <!-- ── Onglets de navigation ── -->
+    <div class="view-tabs">
+      <button class="vtab" [class.active]="view() === 'kanban'" (click)="setView('kanban')">
+        <flx-icon name="kanban" [size]="14"></flx-icon> Kanban
+      </button>
+      <button class="vtab" [class.active]="view() === 'list'" (click)="setView('list')">
+        <flx-icon name="list" [size]="14"></flx-icon> Liste
+      </button>
+      <button class="vtab" [class.active]="view() === 'members'" (click)="setView('members')">
+        <flx-icon name="user" [size]="14"></flx-icon> Membres
+      </button>
+      <button class="vtab" [class.active]="view() === 'activity'" (click)="setView('activity')">
+        <flx-icon name="activity" [size]="14"></flx-icon> Activité
+      </button>
+      <!-- Documents = fichiers + textes unifiés -->
+      <button class="vtab" [class.active]="view() === 'documents'" (click)="setView('documents')">
+        <flx-icon name="clipboard" [size]="14"></flx-icon> Documents
+      </button>
+      <button class="vtab" [class.active]="view() === 'announcements'" (click)="setView('announcements')">
+        <flx-icon name="bell" [size]="14"></flx-icon> Annonces
+      </button>
+      <button class="vtab" [class.active]="view() === 'messaging'" (click)="setView('messaging')">
+        <flx-icon name="comment" [size]="14"></flx-icon> Messages
+      </button>
+      <button class="vtab" [class.active]="view() === 'secrets'" (click)="setView('secrets')">
+        <flx-icon name="lock" [size]="14"></flx-icon> Secrets
+      </button>
+    </div>
+
+    <!-- ── Formulaire nouvelle tâche enrichi ── -->
     @if (showNewTask() && (view() === 'kanban' || view() === 'list')) {
-      <form class="flx-card new-task-form" (ngSubmit)="createTask()">
-        <input class="flx-input" [(ngModel)]="newTaskTitle" name="title" placeholder="Titre de la tâche" required />
-        <select class="flx-input priority-select" [(ngModel)]="newTaskPriority" name="priority">
-          <option value="LOW">Basse</option>
-          <option value="MEDIUM">Moyenne</option>
-          <option value="HIGH">Haute</option>
-          <option value="URGENT">Urgente</option>
-        </select>
-        <button class="flx-btn flx-btn--primary" type="submit" [disabled]="creatingTask()">Ajouter</button>
-      </form>
+      <div class="flx-card new-task-panel">
+        <div class="new-task-row">
+          <input class="flx-input flex1" [(ngModel)]="newTaskTitle" placeholder="Titre de la tâche…" required autofocus />
+          <select class="flx-input sel-sm" [(ngModel)]="newTaskPriority">
+            <option value="LOW">🟢 Basse</option>
+            <option value="MEDIUM">🔵 Moyenne</option>
+            <option value="HIGH">🟠 Haute</option>
+            <option value="URGENT">🔴 Urgente</option>
+          </select>
+        </div>
+        <div class="new-task-row">
+          <input class="flx-input flex1" type="date" [(ngModel)]="newTaskDueDate" title="Date d'échéance" />
+          <input class="flx-input flex1" [(ngModel)]="newTaskLabels" placeholder="Labels (séparés par virgule)" title="Labels" />
+        </div>
+        <!-- Assignation rapide aux membres -->
+        @if (members().length > 0) {
+          <div class="quick-assign">
+            <span class="assign-label">Assigner à :</span>
+            @for (m of members(); track m.userId) {
+              <label class="quick-chip" [class.selected]="newTaskAssigneeIds.includes(m.userId)"
+                (click)="toggleNewTaskAssignee(m.userId)" title="@{{m.user.username}}">
+                @if (m.user.avatarUrl) {
+                  <img [src]="m.user.avatarUrl" [alt]="m.user.username" />
+                } @else {
+                  <span>{{ m.user.username.slice(0,1).toUpperCase() }}</span>
+                }
+              </label>
+            }
+          </div>
+        }
+        <div class="new-task-actions">
+          <button class="flx-btn flx-btn--ghost btn-sm" (click)="showNewTask.set(false); loadMembers()">Annuler</button>
+          <button class="flx-btn flx-btn--primary btn-sm" (click)="createTask()" [disabled]="creatingTask() || !newTaskTitle.trim()">
+            {{ creatingTask() ? 'Création…' : 'Créer la tâche' }}
+          </button>
+        </div>
+      </div>
     }
 
-    <!-- ── VUE KANBAN ── -->
+    <!-- ══ KANBAN ══ -->
     @if (view() === 'kanban') {
       @if (loading()) {
         <p class="sub loading">Chargement…</p>
       } @else {
         <div class="kanban">
           @for (status of statuses; track status.value) {
-            <section
-              class="column"
-              (dragover)="$event.preventDefault()"
-              (drop)="onDrop(status.value)"
-            >
+            <section class="column" (dragover)="$event.preventDefault()" (drop)="onDrop(status.value)">
               <header>
                 <h3>{{ status.label }}</h3>
                 <span class="count flx-mono">{{ tasksByStatus(status.value).length }}</span>
               </header>
               @for (task of tasksByStatus(status.value); track task.id) {
-                <flx-task-card
-                  [task]="task"
-                  (dragStart)="onDragStart($event)"
-                  (open)="openTaskId.set($event.id)"
-                ></flx-task-card>
+                <flx-task-card [task]="task" (dragStart)="onDragStart($event)" (open)="openTaskId.set($event.id)"></flx-task-card>
               }
               @if (tasksByStatus(status.value).length === 0) {
                 <div class="empty-col">Déposez une tâche ici</div>
@@ -108,112 +135,171 @@
       }
     }
 
-    <!-- ── VUE LISTE ── -->
+    <!-- ══ LISTE ══ -->
     @else if (view() === 'list') {
       <div class="list-filters">
         <select class="flx-input" [(ngModel)]="filterStatus">
           <option value="">Tous statuts</option>
-          @for (status of statuses; track status.value) {
-            <option [value]="status.value">{{ status.label }}</option>
-          }
+          @for (s of statuses; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
         </select>
         <select class="flx-input" [(ngModel)]="filterPriority">
           <option value="">Toutes priorités</option>
-          <option value="LOW">Basse</option>
-          <option value="MEDIUM">Moyenne</option>
-          <option value="HIGH">Haute</option>
-          <option value="URGENT">Urgente</option>
+          <option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option>
+          <option value="HIGH">Haute</option><option value="URGENT">Urgente</option>
         </select>
       </div>
       <div class="list">
         @for (task of filteredTasks(); track task.id) {
           <div class="flx-card list-row" (click)="openTaskId.set(task.id)">
-            <span class="flx-mono id">#{{ task.id.slice(0, 6) }}</span>
+            <span class="flx-mono id">#{{ task.id.slice(0,6) }}</span>
             <span class="title">{{ task.title }}</span>
-            <span class="pill">{{ task.status }}</span>
+            <span class="pill pill-status">{{ task.status }}</span>
             <span class="pill prio-{{ task.priority.toLowerCase() }}">{{ task.priority }}</span>
-            <span class="assignee flx-mono">{{ task.assignee ? '@' + task.assignee.username : '—' }}</span>
+            <span class="assignee flx-mono">{{ task.assignee ? '@'+task.assignee.username : '—' }}</span>
           </div>
         }
-        @if (filteredTasks().length === 0) {
-          <p class="sub">Aucune tâche ne correspond aux filtres.</p>
-        }
+        @if (filteredTasks().length === 0) { <p class="sub">Aucune tâche ne correspond aux filtres.</p> }
       </div>
     }
 
-    <!-- ── VUE ACTIVITÉ ── -->
+    <!-- ══ MEMBRES ══ -->
+    @else if (view() === 'members') {
+      <flx-members [projectId]="projectId" (invite)="showInvite.set(true)"></flx-members>
+    }
+
+    <!-- ══ ACTIVITÉ ══ -->
     @else if (view() === 'activity') {
-      <div class="flx-card activity-panel">
+      <div class="flx-card panel">
         <flx-activity-feed [projectId]="projectId"></flx-activity-feed>
       </div>
     }
 
-    <!-- ── VUE FICHIERS ── -->
-    @else if (view() === 'files') {
-      @if (files().length === 0) {
+    <!-- ══ DOCUMENTS (fichiers + textes unifiés) ══ -->
+    @else if (view() === 'documents') {
+      @if (showDocForm()) {
+        <div class="flx-card inline-form col">
+          <!-- Onglets : Uploader un fichier OU écrire un document texte -->
+          <div class="doc-type-tabs">
+            <button class="doc-type-btn" [class.active]="docFormType === 'file'" (click)="docFormType = 'file'">
+              <flx-icon name="clipboard" [size]="13"></flx-icon> Fichier
+            </button>
+            <button class="doc-type-btn" [class.active]="docFormType === 'text'" (click)="docFormType = 'text'">
+              <flx-icon name="tasks" [size]="13"></flx-icon> Document texte
+            </button>
+          </div>
+
+          @if (docFormType === 'file') {
+            <label class="flx-btn flx-btn--ghost file-upload-label">
+              <flx-icon name="clipboard" [size]="14"></flx-icon>
+              Choisir un fichier (PDF, image, vidéo, Excel, Word…)
+              <input type="file" (change)="onDocFileSelect($event)" style="display:none" />
+            </label>
+            @if (docFileSelected) {
+              <div class="file-selected-info">
+                <flx-icon name="check" [size]="13" color="var(--flx-accent)"></flx-icon>
+                <span class="flx-mono">{{ newDocTitle }}</span>
+              </div>
+            }
+          } @else {
+            <input class="flx-input" [(ngModel)]="newDocTitle" placeholder="Titre du document…" autofocus />
+            <textarea class="flx-input" [(ngModel)]="newDocContent" rows="5" placeholder="Contenu (Markdown supporté)…"></textarea>
+          }
+
+          <div class="form-row">
+            <button class="flx-btn flx-btn--ghost" (click)="showDocForm.set(false); docFileSelected = false">Annuler</button>
+            <button class="flx-btn flx-btn--primary" (click)="createDocument()" [disabled]="creatingDoc() || !newDocTitle.trim()">
+              {{ creatingDoc() ? 'Création…' : 'Ajouter' }}
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (documents().length === 0 && files().length === 0 && !showDocForm()) {
         <div class="flx-card empty-panel">
-          <flx-icon name="clipboard" [size]="28" color="var(--flx-text-faint)"></flx-icon>
-          <p>Aucun fichier partagé pour l'instant.</p>
-          <p class="sub">Les fichiers déposés dans ce projet apparaîtront ici.</p>
+          <flx-icon name="clipboard" [size]="32" color="var(--flx-text-faint)"></flx-icon>
+          <p>Aucun document ni fichier partagé.</p>
+          <button class="flx-btn flx-btn--primary" (click)="showDocForm.set(true)">
+            <flx-icon name="plus" [size]="15" color="white"></flx-icon> Ajouter
+          </button>
         </div>
       } @else {
-        <div class="file-grid">
-          @for (file of files(); track file.id) {
-            <div class="flx-card file-card">
-              <div class="file-icon"><flx-icon name="clipboard" [size]="22" color="var(--flx-accent)"></flx-icon></div>
-              <div class="file-info">
-                <p class="file-name">{{ file.name }}</p>
-                <span class="file-meta flx-mono">
-                  {{ formatFileSize(file.size) }} · v{{ file.version }}
-                  · &#64;{{ file.uploader.username }}
-                </span>
-                @if (file.children && file.children.length > 0) {
-                  <span class="file-versions">{{ file.children.length + 1 }} versions</span>
-                }
+        <!-- Fichiers uploadés -->
+        @if (files().length > 0) {
+          <h4 class="section-label">
+            <flx-icon name="clipboard" [size]="14"></flx-icon> Fichiers
+          </h4>
+          <div class="file-grid">
+            @for (file of files(); track file.id) {
+              <div class="flx-card file-card">
+                <div class="file-icon">{{ fileEmoji(file.mimeType) }}</div>
+                <div class="file-info">
+                  <p class="file-name">{{ file.name }}</p>
+                  <span class="file-meta flx-mono">{{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}</span>
+                </div>
+                <a [href]="file.url" target="_blank" rel="noopener" class="flx-btn flx-btn--ghost" title="Ouvrir">
+                  <flx-icon name="send" [size]="14"></flx-icon>
+                </a>
               </div>
-              <a [href]="file.url" target="_blank" rel="noopener" class="flx-btn flx-btn--ghost file-dl" title="Télécharger">
-                <flx-icon name="send" [size]="14"></flx-icon>
-              </a>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        }
+
+        <!-- Documents texte -->
+        @if (documents().length > 0) {
+          <h4 class="section-label" style="margin-top: 20px">
+            <flx-icon name="tasks" [size]="14"></flx-icon> Documents texte
+          </h4>
+          <div class="doc-list">
+            @for (doc of documents(); track doc.id) {
+              <div class="flx-card doc-card">
+                <div class="doc-icon"><flx-icon name="tasks" [size]="18" color="var(--flx-accent)"></flx-icon></div>
+                <div class="doc-info">
+                  <p class="doc-title">{{ doc.details.title }}</p>
+                  <span class="doc-meta flx-mono">v{{ doc.details.version }} · &#64;{{ doc.user.username }} · {{ doc.createdAt | date:'d MMM' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
       }
     }
 
-    <!-- ── VUE ANNONCES ── -->
+    <!-- ══ ANNONCES ══ -->
     @else if (view() === 'announcements') {
       @if (showAnnouncementForm()) {
-        <form class="flx-card create-form" (ngSubmit)="createAnnouncement()">
-          <label>Titre<input class="flx-input" [(ngModel)]="newAnnouncementTitle" name="aTitle" required placeholder="Ex. Mise à jour de la roadmap" /></label>
-          <label>Contenu<textarea class="flx-input" [(ngModel)]="newAnnouncementContent" name="aContent" rows="3" placeholder="Détails de l'annonce…"></textarea></label>
-          <label class="inline-check">
+        <form class="flx-card inline-form col" (ngSubmit)="createAnnouncement()">
+          <input class="flx-input" [(ngModel)]="newAnnouncementTitle" name="aTitle" required placeholder="Titre de l'annonce…" autofocus />
+          <textarea class="flx-input" [(ngModel)]="newAnnouncementContent" name="aContent" rows="3" placeholder="Détails…"></textarea>
+          <label class="check-label">
             <input type="checkbox" [(ngModel)]="newAnnouncementPinned" name="aPinned" />
             Épingler cette annonce
           </label>
-          <div class="form-actions">
+          <div class="form-row">
             <button type="button" class="flx-btn flx-btn--ghost" (click)="showAnnouncementForm.set(false)">Annuler</button>
             <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creatingAnnouncement()">Publier</button>
           </div>
         </form>
       }
-
-      @if (announcements().length === 0) {
+      @if (announcements().length === 0 && !showAnnouncementForm()) {
         <div class="flx-card empty-panel">
-          <flx-icon name="bell" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+          <flx-icon name="bell" [size]="32" color="var(--flx-text-faint)"></flx-icon>
           <p>Aucune annonce pour l'instant.</p>
+          <button class="flx-btn flx-btn--primary" (click)="showAnnouncementForm.set(true)">
+            <flx-icon name="plus" [size]="15" color="white"></flx-icon> Créer une annonce
+          </button>
         </div>
-      } @else {
+      } @else if (announcements().length > 0) {
         <div class="announcement-list">
           @for (a of announcements(); track a.id) {
             <div class="flx-card announcement-card" [class.pinned]="a.details.pinned">
               @if (a.details.pinned) {
-                <span class="pin-badge"><flx-icon name="check" [size]="12"></flx-icon> Épinglée</span>
+                <span class="pin-badge"><flx-icon name="check" [size]="11"></flx-icon> Épinglée</span>
               }
               <h3>{{ a.details.title }}</h3>
               <p>{{ a.details.content }}</p>
               <div class="ann-meta flx-mono">
                 <span>&#64;{{ a.user.username }}</span>
-                <span>{{ a.createdAt | date: 'd MMM yyyy' }}</span>
+                <span>{{ a.createdAt | date:'d MMM yyyy' }}</span>
               </div>
             </div>
           }
@@ -221,72 +307,41 @@
       }
     }
 
-    <!-- ── VUE DOCUMENTS ── -->
-    @else if (view() === 'documents') {
-      @if (showDocForm()) {
-        <form class="flx-card create-form" (ngSubmit)="createDocument()">
-          <label>Titre<input class="flx-input" [(ngModel)]="newDocTitle" name="dTitle" required placeholder="Compte-rendu de réunion…" /></label>
-          <label>Contenu initial<textarea class="flx-input" [(ngModel)]="newDocContent" name="dContent" rows="4" placeholder="(Markdown supporté)"></textarea></label>
-          <div class="form-actions">
-            <button type="button" class="flx-btn flx-btn--ghost" (click)="showDocForm.set(false)">Annuler</button>
-            <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creatingDoc()">Créer</button>
-          </div>
-        </form>
-      }
-
-      @if (documents().length === 0) {
-        <div class="flx-card empty-panel">
-          <flx-icon name="tasks" [size]="28" color="var(--flx-text-faint)"></flx-icon>
-          <p>Aucun document pour l'instant.</p>
-        </div>
-      } @else {
-        <div class="doc-list">
-          @for (doc of documents(); track doc.id) {
-            <div class="flx-card doc-card">
-              <div class="doc-icon"><flx-icon name="tasks" [size]="18" color="var(--flx-accent)"></flx-icon></div>
-              <div class="doc-info">
-                <p class="doc-title">{{ doc.details.title }}</p>
-                <span class="doc-meta flx-mono">
-                  v{{ doc.details.version }} · &#64;{{ doc.user.username }} · {{ doc.createdAt | date: 'd MMM' }}
-                </span>
-              </div>
-            </div>
-          }
-        </div>
-      }
-    }
-
-    <!-- ── VUE MESSAGERIE INTÉGRÉE ── -->
+    <!-- ══ MESSAGERIE ══ -->
     @else if (view() === 'messaging') {
-      <div class="flx-card messaging-panel">
-        <p class="sub">
+      <div class="flx-card panel">
+        <p class="sub" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
           <flx-icon name="comment" [size]="15"></flx-icon>
-          {{ channels().length }} channel(s) — accédez à la messagerie complète via
-          <a routerLink="/messaging" [queryParams]="{ projectId: projectId }">l'onglet Messages</a>.
+          {{ channels().length }} channel(s) dans ce projet
         </p>
         @if (channels().length > 0) {
           <div class="channel-list">
             @for (ch of channels(); track ch.id) {
-              <a
-                class="channel-item"
-                routerLink="/messaging"
-                [queryParams]="{ projectId: projectId }"
-              >
+              <a class="channel-item" routerLink="/messaging" [queryParams]="{ projectId: projectId }">
                 <span class="hash">#</span> {{ ch.name }}
               </a>
             }
           </div>
         }
+        <a class="flx-btn flx-btn--primary" style="margin-top:16px;width:fit-content;"
+           routerLink="/messaging" [queryParams]="{ projectId: projectId }">
+          <flx-icon name="comment" [size]="14" color="white"></flx-icon>
+          Ouvrir la messagerie complète
+        </a>
       </div>
+    }
+
+    <!-- ══ SECRETS ══ -->
+    @else if (view() === 'secrets') {
+      <flx-secrets [projectId]="projectId"></flx-secrets>
     }
 
   </main>
 
-  <!-- Modales -->
+  <!-- ── Modales ── -->
   @if (showInvite()) {
     <flx-invite-modal [projectId]="p.id" (close)="showInvite.set(false)"></flx-invite-modal>
   }
-
   @if (openTaskId(); as taskId) {
     <flx-task-detail
       [projectId]="p.id"

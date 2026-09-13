@@ -1,0 +1,197 @@
+/* =====================================================
+   Page de recherche globale
+   ===================================================== */
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 24px 100px;
+}
+
+/* ── Barre de recherche ── */
+.search-header {
+  margin-bottom: 24px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--flx-bg-raised);
+  border: 2px solid var(--flx-border);
+  border-radius: var(--flx-radius-lg);
+  padding: 12px 18px;
+  transition: border-color 0.15s;
+}
+.search-box:focus-within {
+  border-color: var(--flx-accent);
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 17px;
+  color: var(--flx-text);
+  font-family: inherit;
+  outline: none;
+}
+.search-input::placeholder { color: var(--flx-text-faint); }
+
+/* Spinner inline */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--flx-border);
+  border-top-color: var(--flx-accent);
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.count {
+  font-size: 12px;
+  color: var(--flx-text-faint);
+  margin: 8px 0 0;
+}
+.sub { color: var(--flx-text-muted); }
+
+/* ── État vide ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  text-align: center;
+  color: var(--flx-text-faint);
+}
+.empty p { font-size: 14px; margin: 0; color: var(--flx-text-muted); }
+
+/* ── Sections ── */
+.section {
+  margin-bottom: 28px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--flx-text-faint);
+  margin: 0 0 10px;
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Élément de résultat ── */
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  text-decoration: none !important;
+  color: var(--flx-text) !important;
+  transition: border-color 0.12s, background 0.12s;
+  cursor: pointer;
+}
+.result-item:hover {
+  border-color: var(--flx-accent);
+  background: var(--flx-bg-sunken);
+}
+
+.result-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--flx-radius-sm);
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-muted);
+  display: grid;
+  place-items: center;
+}
+
+.result-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mise en évidence du terme recherché */
+:host ::ng-deep mark {
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.result-sub {
+  font-size: 12px;
+  color: var(--flx-text-faint);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  font-family: var(--flx-font-mono);
+}
+
+/* Badge visibilité */
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  flex-shrink: 0;
+}
+.badge.public {
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+}
+
+/* Avatar utilisateur */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .page { padding: 20px 16px 90px; }
+  .search-input { font-size: 15px; }
+  .result-sub .flx-mono { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+}

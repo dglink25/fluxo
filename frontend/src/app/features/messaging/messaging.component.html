@@ -1,0 +1,204 @@
+<flx-navbar></flx-navbar>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+
+    <!-- Onglets sidebar -->
+    <div class="sidebar-tabs">
+      <button class="s-tab" [class.active]="activePane() === 'channels'" (click)="activePane.set('channels')">
+        <flx-icon name="kanban" [size]="16"></flx-icon>
+        Channels
+      </button>
+      <button class="s-tab" [class.active]="activePane() === 'dm'" (click)="activePane.set('dm')">
+        <flx-icon name="user" [size]="16"></flx-icon>
+        Messages directs
+      </button>
+    </div>
+
+    <!-- Liste channels -->
+    @if (activePane() === 'channels') {
+      @if (channels().length === 0) {
+        <p class="sidebar-empty">Sélectionnez un projet dans le dashboard pour voir ses channels.</p>
+      }
+      @for (ch of channels(); track ch.id) {
+        <button
+          class="room-item"
+          [class.active]="activeChannelId() === ch.id"
+          (click)="selectChannel(ch)"
+        >
+          <span class="room-hash">#</span>
+          <span class="room-name">{{ ch.name }}</span>
+        </button>
+      }
+    }
+
+    <!-- Liste DMs -->
+    @if (activePane() === 'dm') {
+      @if (conversations().length === 0) {
+        <p class="sidebar-empty">Aucune conversation directe.</p>
+      }
+      @for (conv of conversations(); track conv.id) {
+        <button
+          class="room-item"
+          [class.active]="activeDmId() === conv.id"
+          (click)="selectDm(conv)"
+        >
+          @if (getOtherParticipant(conv); as other) {
+            @if (other.avatarUrl) {
+              <img class="dm-avatar" [src]="other.avatarUrl" [alt]="other.username" />
+            } @else {
+              <div class="dm-avatar-placeholder"><flx-icon name="user" [size]="14"></flx-icon></div>
+            }
+            <div class="dm-info">
+              <span class="room-name flx-mono">&#64;{{ other.username }}</span>
+              <span class="dm-last">{{ lastMessage(conv) }}</span>
+            </div>
+          }
+        </button>
+      }
+    }
+
+  </aside>
+
+  <!-- ── Zone de messages ── -->
+  <section class="chat-area">
+
+    @if (!activeChannelId() && !activeDmId()) {
+      <div class="no-selection">
+        <flx-icon name="comment" [size]="36" color="var(--flx-text-faint)"></flx-icon>
+        <p>Sélectionnez un channel ou une conversation pour commencer.</p>
+      </div>
+    } @else {
+
+      <!-- En-tête du chat -->
+      <header class="chat-header">
+        <div class="chat-title">
+          @if (activePane() === 'channels' && activeChannelId()) {
+            <span class="hash">#</span>
+            @for (ch of channels(); track ch.id) {
+              @if (ch.id === activeChannelId()) {
+                <strong>{{ ch.name }}</strong>
+              }
+            }
+          } @else if (activePane() === 'dm' && activeDmId()) {
+            <flx-icon name="user" [size]="16"></flx-icon>
+            @for (conv of conversations(); track conv.id) {
+              @if (conv.id === activeDmId()) {
+                <strong>&#64;{{ getOtherParticipant(conv)?.username }}</strong>
+              }
+            }
+          }
+        </div>
+        @if (activePane() === 'channels') {
+          <button class="flx-btn flx-btn--ghost search-btn" (click)="showSearch.set(!showSearch())">
+            <flx-icon name="search" [size]="15"></flx-icon>
+          </button>
+        }
+      </header>
+
+      <!-- Barre de recherche dans le channel -->
+      @if (showSearch() && activePane() === 'channels') {
+        <div class="search-bar">
+          <flx-icon name="search" [size]="14" color="var(--flx-text-faint)"></flx-icon>
+          <input
+            class="flx-input search-input"
+            type="text"
+            [value]="searchQuery"
+            (input)="onSearchInput($any($event.target).value)"
+            placeholder="Rechercher dans ce channel…"
+          />
+        </div>
+        @if (searchResults().length > 0) {
+          <div class="search-results">
+            @for (msg of searchResults(); track msg.id) {
+              <div class="search-result-item">
+                <span class="flx-mono actor">&#64;{{ msg.sender.username }}</span>
+                <p>{{ msg.content }}</p>
+                <span class="date flx-mono">{{ msg.createdAt | date: 'd MMM, HH:mm' }}</span>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- Liste des messages -->
+      @if (loadingMessages()) {
+        <div class="loading"><p class="sub">Chargement…</p></div>
+      } @else {
+        <div class="message-list" #messageList>
+          @if (activeMessages().length === 0) {
+            <div class="chat-empty">
+              <flx-icon name="comment" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+              <p class="sub">Aucun message pour l'instant. Soyez le premier à écrire !</p>
+            </div>
+          }
+          @for (msg of activeMessages(); track msg.id) {
+            <div class="message-row" [class.mine]="isMine(msg)">
+              @if (!isMine(msg)) {
+                <div class="avatar-sm">
+                  @if (msg.sender.avatarUrl) {
+                    <img [src]="msg.sender.avatarUrl" [alt]="msg.sender.username" />
+                  } @else {
+                    <flx-icon name="user" [size]="14"></flx-icon>
+                  }
+                </div>
+              }
+              <div class="bubble-group">
+                @if (!isMine(msg)) {
+                  <span class="sender-name flx-mono">&#64;{{ msg.sender.username }}</span>
+                }
+                <div class="bubble" [class.bubble-mine]="isMine(msg)">
+                  @if (msg.type === 'TEXT') {
+                    <p>{{ msg.content }}</p>
+                  } @else if (msg.type === 'IMAGE') {
+                    <img class="msg-image" [src]="msg.fileUrl ?? msg.content" alt="image" />
+                  } @else if (msg.type === 'FILE' || msg.type === 'AUDIO' || msg.type === 'VIDEO') {
+                    <a class="file-link" [href]="msg.fileUrl ?? msg.content" target="_blank" rel="noopener">
+                      <flx-icon name="clipboard" [size]="14"></flx-icon>
+                      {{ msg.content }}
+                    </a>
+                  }
+                  <span class="time flx-mono">{{ msg.createdAt | date: 'HH:mm' }}</span>
+                </div>
+                @if (msg.reactions?.length) {
+                  <div class="reactions">
+                    @for (r of msg.reactions; track r.id) {
+                      <span class="reaction">{{ r.emoji }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Zone de saisie -->
+      <div class="input-area">
+        <form class="input-form" (ngSubmit)="sendMessage()">
+          <input
+            class="flx-input message-input"
+            type="text"
+            [(ngModel)]="newMessage"
+            name="message"
+            placeholder="Écrire un message…"
+            autocomplete="off"
+          />
+          <button
+            type="submit"
+            class="flx-btn flx-btn--primary send-btn"
+            [disabled]="!newMessage.trim() || sending()"
+          >
+            <flx-icon name="send" [size]="16" color="white"></flx-icon>
+          </button>
+        </form>
+      </div>
+    }
+
+  </section>
+
+</div>
+
+<flx-bottom-nav></flx-bottom-nav>

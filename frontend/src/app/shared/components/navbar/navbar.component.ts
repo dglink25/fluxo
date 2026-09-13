@@ -50,6 +50,12 @@ import { IconComponent } from '../icon/icon.component';
             <span class="notif-badge">{{ realtime.unreadNotifications() > 9 ? '9+' : realtime.unreadNotifications() }}</span>
           }
         </a>
+        <a routerLink="/search" class="notif-btn desktop-only" aria-label="Recherche">
+          <flx-icon name="search" [size]="18"></flx-icon>
+        </a>
+        <a routerLink="/messaging" class="notif-btn desktop-only" aria-label="Messagerie">
+          <flx-icon name="comment" [size]="18"></flx-icon>
+        </a>
         @if (auth.currentUser(); as user) {
           <span class="user flx-mono desktop-only">&#64;{{ user.username }}</span>
           <button class="flx-btn flx-btn--ghost desktop-only" (click)="auth.logout()">

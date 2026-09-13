@@ -1,0 +1,136 @@
+<flx-navbar></flx-navbar>
+<main class="page">
+
+  <div class="search-header">
+    <div class="search-box">
+      <flx-icon name="search" [size]="18" color="var(--flx-text-faint)"></flx-icon>
+      <input
+        class="search-input"
+        type="search"
+        [value]="query"
+        (input)="onInput($any($event.target).value)"
+        placeholder="Rechercher des projets, tâches, membres…"
+        autofocus
+        autocomplete="off"
+      />
+      @if (loading()) {
+        <span class="spinner"></span>
+      }
+    </div>
+    @if (results() && totalResults() > 0) {
+      <p class="count sub">{{ totalResults() }} résultat(s)</p>
+    }
+  </div>
+
+  @if (query.length >= 2 && !loading() && results() && totalResults() === 0) {
+    <div class="empty">
+      <flx-icon name="search" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+      <p>Aucun résultat pour <strong>« {{ query }} »</strong></p>
+    </div>
+  }
+
+  @if (results(); as r) {
+
+    <!-- Projets -->
+    @if (r.projects.length > 0) {
+      <section class="section">
+        <h3 class="section-title"><flx-icon name="folder" [size]="14"></flx-icon> Projets</h3>
+        <div class="result-list">
+          @for (project of r.projects; track project.id) {
+            <a class="flx-card result-item" [routerLink]="['/projects', project.id]">
+              <div class="result-icon"><flx-icon name="folder" [size]="16" color="var(--flx-accent)"></flx-icon></div>
+              <div class="result-content">
+                <p class="result-title" [innerHTML]="highlight(project.name)"></p>
+                @if (project.description) {
+                  <p class="result-sub" [innerHTML]="highlight(project.description)"></p>
+                }
+              </div>
+              <span class="badge" [class.public]="project.visibility === 'PUBLIC'">
+                {{ project.visibility === 'PUBLIC' ? 'Public' : 'Privé' }}
+              </span>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Tâches -->
+    @if (r.tasks.length > 0) {
+      <section class="section">
+        <h3 class="section-title"><flx-icon name="tasks" [size]="14"></flx-icon> Tâches</h3>
+        <div class="result-list">
+          @for (task of r.tasks; track task.id) {
+            <a class="flx-card result-item" [routerLink]="['/projects', task.projectId]">
+              <div class="result-icon"><flx-icon name="tasks" [size]="16"></flx-icon></div>
+              <div class="result-content">
+                <p class="result-title" [innerHTML]="highlight(task.title)"></p>
+                <p class="result-sub">
+                  <span class="flx-mono">{{ task.project.name }}</span>
+                  · <span class="pill">{{ task.status }}</span>
+                  · <span class="pill">{{ task.priority }}</span>
+                </p>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Utilisateurs -->
+    @if (r.users.length > 0) {
+      <section class="section">
+        <h3 class="section-title"><flx-icon name="user" [size]="14"></flx-icon> Membres</h3>
+        <div class="result-list">
+          @for (u of r.users; track u.id) {
+            <div class="flx-card result-item user-item">
+              <div class="user-avatar">
+                @if (u.avatarUrl) {
+                  <img [src]="u.avatarUrl" [alt]="u.username" />
+                } @else {
+                  <flx-icon name="user" [size]="16"></flx-icon>
+                }
+              </div>
+              <div class="result-content">
+                <p class="result-title flx-mono" [innerHTML]="highlight('@' + u.username)"></p>
+                @if (u.fullName) {
+                  <p class="result-sub">{{ u.fullName }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Messages -->
+    @if (r.messages.length > 0) {
+      <section class="section">
+        <h3 class="section-title"><flx-icon name="comment" [size]="14"></flx-icon> Messages</h3>
+        <div class="result-list">
+          @for (msg of r.messages; track msg.id) {
+            <a
+              class="flx-card result-item"
+              [routerLink]="['/messaging']"
+              [queryParams]="{ projectId: msg.channel?.projectId }"
+            >
+              <div class="result-icon"><flx-icon name="comment" [size]="16"></flx-icon></div>
+              <div class="result-content">
+                <p class="result-title" [innerHTML]="highlight(msg.content)"></p>
+                <p class="result-sub">
+                  <span class="flx-mono">&#64;{{ msg.sender.username }}</span>
+                  @if (msg.channel) {
+                    · #{{ msg.channel.name }}
+                  }
+                  · <span class="flx-mono">{{ msg.createdAt | date: 'd MMM' }}</span>
+                </p>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+  }
+
+</main>
+<flx-bottom-nav></flx-bottom-nav>

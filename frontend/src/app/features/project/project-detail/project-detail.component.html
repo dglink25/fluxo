@@ -1,0 +1,121 @@
+<flx-navbar></flx-navbar>
+
+@if (project(); as p) {
+  <main class="page">
+    <div class="head">
+      <div>
+        <h1>{{ p.name }}</h1>
+        <p class="sub">{{ p.description || 'Aucune description' }}</p>
+      </div>
+      <div class="actions">
+        <div class="view-switch">
+          <button class="opt" [class.active]="view() === 'kanban'" (click)="view.set('kanban')">
+            <flx-icon name="kanban" [size]="15"></flx-icon> Kanban
+          </button>
+          <button class="opt" [class.active]="view() === 'list'" (click)="view.set('list')">
+            <flx-icon name="list" [size]="15"></flx-icon> Liste
+          </button>
+          <button class="opt" [class.active]="view() === 'activity'" (click)="view.set('activity')">
+            <flx-icon name="activity" [size]="15"></flx-icon> Activité
+          </button>
+        </div>
+        <button class="flx-btn flx-btn--ghost" (click)="showInvite.set(true)">
+          <flx-icon name="mail" [size]="15"></flx-icon>
+          Inviter
+        </button>
+        @if (view() !== 'activity') {
+          <button class="flx-btn flx-btn--primary" (click)="showNewTask.set(!showNewTask())">
+            <flx-icon name="plus" [size]="16" color="white"></flx-icon>
+            Tâche
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (showNewTask() && view() !== 'activity') {
+      <form class="flx-card new-task-form" (ngSubmit)="createTask()">
+        <input class="flx-input" [(ngModel)]="newTaskTitle" name="title" placeholder="Titre de la tâche" required />
+        <select class="flx-input priority-select" [(ngModel)]="newTaskPriority" name="priority">
+          <option value="LOW">Basse</option>
+          <option value="MEDIUM">Moyenne</option>
+          <option value="HIGH">Haute</option>
+          <option value="URGENT">Urgente</option>
+        </select>
+        <button class="flx-btn flx-btn--primary" type="submit" [disabled]="creatingTask()">Ajouter</button>
+      </form>
+    }
+
+    @if (view() === 'kanban') {
+      <div class="kanban">
+        @for (status of statuses; track status.value) {
+          <section
+            class="column"
+            (dragover)="$event.preventDefault()"
+            (drop)="onDrop(status.value)"
+          >
+            <header>
+              <h3>{{ status.label }}</h3>
+              <span class="count flx-mono">{{ tasksByStatus(status.value).length }}</span>
+            </header>
+            @for (task of tasksByStatus(status.value); track task.id) {
+              <flx-task-card
+                [task]="task"
+                (dragStart)="onDragStart($event)"
+                (open)="openTaskId.set($event.id)"
+              ></flx-task-card>
+            }
+          </section>
+        }
+      </div>
+    } @else if (view() === 'list') {
+      <div class="list-filters">
+        <select class="flx-input" [(ngModel)]="filterStatus">
+          <option value="">Tous statuts</option>
+          @for (status of statuses; track status.value) {
+            <option [value]="status.value">{{ status.label }}</option>
+          }
+        </select>
+        <select class="flx-input" [(ngModel)]="filterPriority">
+          <option value="">Toutes priorités</option>
+          <option value="LOW">Basse</option>
+          <option value="MEDIUM">Moyenne</option>
+          <option value="HIGH">Haute</option>
+          <option value="URGENT">Urgente</option>
+        </select>
+      </div>
+      <div class="list">
+        @for (task of filteredTasks(); track task.id) {
+          <div class="flx-card list-row" (click)="openTaskId.set(task.id)">
+            <span class="flx-mono id">#{{ task.id.slice(0, 6) }}</span>
+            <span class="title">{{ task.title }}</span>
+            <span class="pill">{{ task.status }}</span>
+            <span class="pill">{{ task.priority }}</span>
+            <span class="assignee flx-mono">{{ task.assignee ? '@' + task.assignee.username : '—' }}</span>
+          </div>
+        }
+        @if (filteredTasks().length === 0) {
+          <p class="sub">Aucune tâche ne correspond à ces filtres.</p>
+        }
+      </div>
+    } @else {
+      <div class="flx-card activity-panel">
+        <flx-activity-feed [projectId]="projectId"></flx-activity-feed>
+      </div>
+    }
+  </main>
+
+  @if (showInvite()) {
+    <flx-invite-modal [projectId]="p.id" (close)="showInvite.set(false)"></flx-invite-modal>
+  }
+
+  @if (openTaskId(); as taskId) {
+    <flx-task-detail
+      [projectId]="p.id"
+      [taskId]="taskId"
+      (close)="openTaskId.set(null)"
+      (changed)="onTaskDetailChanged()"
+    ></flx-task-detail>
+  }
+}
+
+<flx-bottom-nav></flx-bottom-nav>

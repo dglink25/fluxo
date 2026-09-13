@@ -1,0 +1,85 @@
+<flx-navbar></flx-navbar>
+<main class="page">
+
+  @if (auth.currentUser(); as user) {
+
+    <!-- Carte profil -->
+    <div class="flx-card profile-card">
+      <div class="avatar">
+        @if (user.avatarUrl) {
+          <img [src]="user.avatarUrl" [alt]="user.username" />
+        } @else {
+          <flx-icon name="user" [size]="32"></flx-icon>
+        }
+      </div>
+
+      @if (!editMode()) {
+        <h1>{{ user.fullName || user.username }}</h1>
+        <p class="username flx-mono">&#64;{{ user.username }}</p>
+        <p class="email sub">{{ user.email }}</p>
+        <button class="flx-btn flx-btn--ghost edit-btn" (click)="startEdit()">
+          <flx-icon name="refresh" [size]="14"></flx-icon>
+          Modifier le profil
+        </button>
+      } @else {
+        <form class="edit-form" (ngSubmit)="saveProfile()">
+          <label>
+            Nom complet
+            <input class="flx-input" [(ngModel)]="editFullName" name="fullName" placeholder="Votre nom" />
+          </label>
+          <label>
+            Bio
+            <textarea class="flx-input" [(ngModel)]="editBio" name="bio" rows="2" placeholder="Courte description…"></textarea>
+          </label>
+          <div class="edit-actions">
+            <button type="button" class="flx-btn flx-btn--ghost" (click)="editMode.set(false)">Annuler</button>
+            <button type="submit" class="flx-btn flx-btn--primary" [disabled]="saving()">
+              {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+
+    <!-- Heatmap de contributions -->
+    <div class="flx-card heatmap-card">
+      <h3>Activité — 12 derniers mois</h3>
+      <div class="heatmap" role="img" aria-label="Heatmap d'activité">
+        @for (week of heatmapGrid; track $index) {
+          <div class="week">
+            @for (day of week; track day.date) {
+              <div
+                class="day"
+                [class]="'level-' + day.level"
+                [title]="day.count + ' activité(s) le ' + day.date"
+              ></div>
+            }
+          </div>
+        }
+      </div>
+      <div class="legend">
+        <span class="sub">Moins</span>
+        <div class="day level-0"></div>
+        <div class="day level-1"></div>
+        <div class="day level-2"></div>
+        <div class="day level-3"></div>
+        <div class="day level-4"></div>
+        <span class="sub">Plus</span>
+      </div>
+    </div>
+
+    <!-- Thème -->
+    <div class="flx-card row-card">
+      <span>Thème de l'interface</span>
+      <flx-theme-toggle></flx-theme-toggle>
+    </div>
+
+    <!-- Déconnexion -->
+    <button class="flx-btn flx-btn--ghost logout" (click)="auth.logout()">
+      <flx-icon name="logout" [size]="16"></flx-icon>
+      Se déconnecter
+    </button>
+  }
+
+</main>
+<flx-bottom-nav></flx-bottom-nav>

@@ -1,0 +1,205 @@
+/* =====================================================
+   Modal détail d'une tâche
+   ===================================================== */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 200;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  width: 100%;
+  max-width: 600px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--flx-radius-lg);
+  /* scrollbar discrète */
+  scrollbar-width: thin;
+  scrollbar-color: var(--flx-border) transparent;
+}
+
+/* En-tête */
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 22px 16px;
+  border-bottom: 1px solid var(--flx-border);
+  position: sticky;
+  top: 0;
+  background: var(--flx-bg-raised);
+  z-index: 1;
+}
+.modal-header > div { flex: 1; min-width: 0; }
+
+.id {
+  font-size: 11px;
+  color: var(--flx-text-faint);
+  display: block;
+  margin-bottom: 4px;
+}
+
+h2 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  word-break: break-word;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--flx-text-muted);
+  cursor: pointer;
+  border-radius: var(--flx-radius-sm);
+  flex-shrink: 0;
+  line-height: 0;
+}
+.close-btn:hover { background: var(--flx-bg-sunken); color: var(--flx-text); }
+
+/* Statuts */
+.status-row {
+  display: flex;
+  gap: 6px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--flx-border);
+  flex-wrap: wrap;
+}
+
+.status-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid var(--flx-border);
+  background: transparent;
+  color: var(--flx-text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.status-chip.active {
+  background: var(--flx-accent);
+  border-color: var(--flx-accent);
+  color: white;
+}
+.status-chip:hover:not(.active) {
+  border-color: var(--flx-accent);
+  color: var(--flx-accent);
+}
+
+/* Description */
+.description {
+  padding: 14px 22px;
+  font-size: 14px;
+  color: var(--flx-text-muted);
+  margin: 0;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--flx-border);
+}
+
+/* Blocs sous-tâches / commentaires */
+.block {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--flx-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.block:last-child { border-bottom: none; }
+
+.block h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--flx-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+.block h4 .count {
+  background: var(--flx-bg-sunken);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--flx-text-faint);
+}
+
+/* Sous-tâches */
+.subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--flx-text);
+}
+.subtask-row input[type='checkbox'] {
+  accent-color: var(--flx-accent);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.subtask-row span.done {
+  text-decoration: line-through;
+  color: var(--flx-text-faint);
+}
+
+.add-subtask {
+  display: flex;
+  gap: 8px;
+}
+.add-subtask .flx-input { flex: 1; }
+.add-subtask .flx-btn { flex-shrink: 0; padding: 8px 12px; }
+
+/* Commentaires */
+.comments {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment {
+  background: var(--flx-bg-sunken);
+  border-radius: var(--flx-radius-md);
+  padding: 12px 14px;
+}
+.comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.comment-head span { font-size: 12px; font-weight: 700; }
+.date { font-size: 11px; color: var(--flx-text-faint); font-family: var(--flx-font-mono); }
+.comment p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--flx-text); }
+
+.add-comment {
+  display: flex;
+  gap: 8px;
+}
+.add-comment .flx-input { flex: 1; }
+.add-comment .flx-btn { flex-shrink: 0; padding: 8px 14px; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .backdrop { padding: 0; align-items: flex-end; }
+  .modal {
+    max-height: 90dvh;
+    border-radius: var(--flx-radius-lg) var(--flx-radius-lg) 0 0;
+    max-width: 100%;
+  }
+}

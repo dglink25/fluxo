@@ -1,0 +1,144 @@
+<flx-navbar></flx-navbar>
+
+<main class="page">
+
+  <!-- En-tête avec onglets -->
+  <div class="head">
+    <div>
+      <h1>Tableau de bord</h1>
+      <p class="sub">Gérez vos workspaces et vos projets.</p>
+    </div>
+    <button
+      class="flx-btn flx-btn--primary"
+      (click)="activeTab() === 'workspaces'
+        ? showCreateWorkspace.set(!showCreateWorkspace())
+        : showCreateProject.set(!showCreateProject())"
+    >
+      <flx-icon name="plus" [size]="16" color="white"></flx-icon>
+      {{ activeTab() === 'workspaces' ? 'Nouveau workspace' : 'Nouveau projet' }}
+    </button>
+  </div>
+
+  <!-- Onglets -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab() === 'workspaces'" (click)="activeTab.set('workspaces')">
+      <flx-icon name="folder" [size]="15"></flx-icon>
+      Workspaces <span class="count flx-mono">{{ workspaces().length }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab() === 'projects'" (click)="activeTab.set('projects')">
+      <flx-icon name="tasks" [size]="15"></flx-icon>
+      Mes projets <span class="count flx-mono">{{ projects().length }}</span>
+    </button>
+  </div>
+
+  <!-- ── WORKSPACES ── -->
+  @if (activeTab() === 'workspaces') {
+    @if (showCreateWorkspace()) {
+      <form class="flx-card create-form" (ngSubmit)="createWorkspace()">
+        <label>
+          Nom du workspace
+          <input class="flx-input" [(ngModel)]="newWsName" name="wsName" required placeholder="Ex. Équipe produit" />
+        </label>
+        <label>
+          Description
+          <textarea class="flx-input" [(ngModel)]="newWsDescription" name="wsDesc" rows="2" placeholder="Optionnel"></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" class="flx-btn flx-btn--ghost" (click)="showCreateWorkspace.set(false)">Annuler</button>
+          <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creatingWs()">
+            {{ creatingWs() ? 'Création…' : 'Créer le workspace' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (loadingWorkspaces()) {
+      <p class="sub loading">Chargement…</p>
+    } @else if (workspaces().length === 0) {
+      <div class="empty flx-card">
+        <flx-icon name="folder" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+        <p>Aucun workspace pour l'instant.</p>
+        <p class="sub">Les workspaces regroupent plusieurs projets sous une même organisation.</p>
+      </div>
+    } @else {
+      <div class="grid">
+        @for (ws of workspaces(); track ws.id) {
+          <a class="flx-card ws-card" [routerLink]="['/workspaces', ws.id, 'projects']">
+            <div class="ws-icon"><flx-icon name="folder" [size]="20"></flx-icon></div>
+            <div class="ws-info">
+              <h3>{{ ws.name }}</h3>
+              <p class="sub">{{ ws.description || 'Aucune description' }}</p>
+            </div>
+            <div class="meta flx-mono">
+              <span><flx-icon name="tasks" [size]="13"></flx-icon> {{ ws._count?.projects ?? 0 }} projets</span>
+              <span><flx-icon name="user" [size]="13"></flx-icon> {{ ws._count?.members ?? 0 }}</span>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  }
+
+  <!-- ── PROJETS ── -->
+  @if (activeTab() === 'projects') {
+    @if (showCreateProject()) {
+      <form class="flx-card create-form" (ngSubmit)="createProject()">
+        <label>
+          Nom du projet
+          <input class="flx-input" [(ngModel)]="newName" name="name" required placeholder="Ex. Refonte du site" />
+        </label>
+        <label>
+          Description
+          <textarea class="flx-input" [(ngModel)]="newDescription" name="description" rows="2" placeholder="Optionnel"></textarea>
+        </label>
+        <label>
+          Visibilité
+          <select class="flx-input" [(ngModel)]="newVisibility" name="visibility">
+            <option value="PRIVATE">Privé</option>
+            <option value="PUBLIC">Public</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="button" class="flx-btn flx-btn--ghost" (click)="showCreateProject.set(false)">Annuler</button>
+          <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creating()">
+            {{ creating() ? 'Création…' : 'Créer le projet' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (loadingProjects()) {
+      <p class="sub loading">Chargement…</p>
+    } @else if (projects().length === 0) {
+      <div class="empty flx-card">
+        <flx-icon name="tasks" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+        <p>Aucun projet pour l'instant.</p>
+        <p class="sub">Créez un projet pour commencer à assigner des tâches.</p>
+      </div>
+    } @else {
+      <div class="grid">
+        @for (project of projects(); track project.id) {
+          <a class="flx-card project-card" [routerLink]="['/projects', project.id]">
+            <div class="row">
+              <div class="title-group">
+                <flx-icon name="folder" [size]="16" color="var(--flx-accent)"></flx-icon>
+                <h3>{{ project.name }}</h3>
+              </div>
+              <span class="badge" [class.public]="project.visibility === 'PUBLIC'">
+                {{ project.visibility === 'PUBLIC' ? 'Public' : 'Privé' }}
+              </span>
+            </div>
+            <p class="desc">{{ project.description || 'Aucune description' }}</p>
+            <div class="meta flx-mono">
+              <span><flx-icon name="tasks" [size]="13"></flx-icon> {{ project._count?.tasks ?? 0 }}</span>
+              <span><flx-icon name="user" [size]="13"></flx-icon> {{ project._count?.members ?? 0 }}</span>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  }
+
+</main>
+
+<flx-bottom-nav></flx-bottom-nav>

@@ -1,0 +1,75 @@
+/* =====================================================
+   Fil d'activité
+   ===================================================== */
+
+.sub {
+  font-size: 13px;
+  color: var(--flx-text-muted);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 0;
+  color: var(--flx-text-faint);
+}
+
+.feed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.feed li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--flx-border);
+  position: relative;
+}
+.feed li:first-child { padding-top: 0; }
+.feed li:last-child { border-bottom: none; }
+
+/* Icône ronde */
+.dot {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--flx-bg-sunken);
+  border: 1px solid var(--flx-border);
+  color: var(--flx-text-muted);
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.content p {
+  margin: 0 0 3px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--flx-text);
+  word-break: break-word;
+}
+
+.actor {
+  font-weight: 700;
+  color: var(--flx-text);
+}
+
+.date {
+  font-size: 11px;
+  color: var(--flx-text-faint);
+  font-family: var(--flx-font-mono);
+}

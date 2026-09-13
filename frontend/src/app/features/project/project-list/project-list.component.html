@@ -1,0 +1,79 @@
+<flx-navbar></flx-navbar>
+
+<main class="page">
+  <div class="head">
+    <div>
+      @if (workspace(); as ws) {
+        <p class="breadcrumb">
+          <a routerLink="/dashboard">Workspaces</a>
+          <flx-icon name="chevron-right" [size]="14"></flx-icon>
+          {{ ws.name }}
+        </p>
+      }
+      <h1>Projets</h1>
+    </div>
+    <button class="flx-btn flx-btn--primary" (click)="showCreateForm.set(!showCreateForm())">
+      <flx-icon name="plus" [size]="16" color="white"></flx-icon>
+      Nouveau projet
+    </button>
+  </div>
+
+  @if (showCreateForm()) {
+    <form class="flx-card create-form" (ngSubmit)="createProject()">
+      <label>
+        Nom du projet
+        <input class="flx-input" [(ngModel)]="newName" name="name" required placeholder="Ex. Application mobile" />
+      </label>
+      <label>
+        Description
+        <textarea class="flx-input" [(ngModel)]="newDescription" name="description" rows="2" placeholder="Optionnel"></textarea>
+      </label>
+      <label>
+        Visibilité
+        <select class="flx-input" [(ngModel)]="newVisibility" name="visibility">
+          <option value="PRIVATE">Privé</option>
+          <option value="PUBLIC">Public</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button type="button" class="flx-btn flx-btn--ghost" (click)="showCreateForm.set(false)">Annuler</button>
+        <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creating()">
+          {{ creating() ? 'Création…' : 'Créer le projet' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="sub">Chargement…</p>
+  } @else if (projects().length === 0) {
+    <div class="empty flx-card">
+      <flx-icon name="folder" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+      <p>Aucun projet dans ce workspace.</p>
+      <p class="sub">Créez votre premier projet pour commencer.</p>
+    </div>
+  } @else {
+    <div class="grid">
+      @for (project of projects(); track project.id) {
+        <a class="flx-card project-card" [routerLink]="['/projects', project.id]">
+          <div class="row">
+            <div class="title-group">
+              <flx-icon name="folder" [size]="16" color="var(--flx-accent)"></flx-icon>
+              <h3>{{ project.name }}</h3>
+            </div>
+            <span class="badge" [class.public]="project.visibility === 'PUBLIC'">
+              {{ project.visibility === 'PUBLIC' ? 'Public' : 'Privé' }}
+            </span>
+          </div>
+          <p class="desc">{{ project.description || 'Aucune description' }}</p>
+          <div class="meta flx-mono">
+            <span><flx-icon name="tasks" [size]="13"></flx-icon> {{ project._count?.tasks ?? 0 }}</span>
+            <span><flx-icon name="user" [size]="13"></flx-icon> {{ project._count?.members ?? 0 }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</main>
+
+<flx-bottom-nav></flx-bottom-nav>

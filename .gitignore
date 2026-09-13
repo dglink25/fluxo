@@ -1,0 +1,17 @@
+# Dépendances
+node_modules/
+
+# Backend
+backend/dist/
+backend/.env
+backend/prisma/*.db
+
+# Frontend
+frontend/dist/
+frontend/.angular/
+
+# Divers
+.DS_Store
+*.log
+.env
+.env.local

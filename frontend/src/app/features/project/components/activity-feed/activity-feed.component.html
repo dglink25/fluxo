@@ -1,0 +1,23 @@
+@if (loading()) {
+  <p class="sub">Chargement de l'activité…</p>
+} @else if (activities().length === 0) {
+  <div class="empty">
+    <flx-icon name="activity" [size]="26" color="var(--flx-text-faint)"></flx-icon>
+    <p class="sub">Aucune activité pour l'instant.</p>
+  </div>
+} @else {
+  <ul class="feed">
+    @for (activity of activities(); track activity.id) {
+      <li>
+        <span class="dot"><flx-icon [name]="iconFor(activity.type)" [size]="14"></flx-icon></span>
+        <div class="content">
+          <p>
+            <span class="flx-mono actor">&#64;{{ activity.user.username }}</span>
+            {{ labelFor(activity) }}
+          </p>
+          <span class="date">{{ activity.createdAt | date: 'd MMM yyyy, HH:mm' }}</span>
+        </div>
+      </li>
+    }
+  </ul>
+}

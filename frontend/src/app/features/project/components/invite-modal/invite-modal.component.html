@@ -1,0 +1,96 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="flx-card modal" (click)="$event.stopPropagation()">
+    <h3>Inviter un collaborateur</h3>
+
+    <div class="tabs">
+      @for (t of tabs; track t.value) {
+        <button type="button" class="tab" [class.active]="tab() === t.value" (click)="switchTab(t.value)">
+          <flx-icon [name]="t.icon" [size]="15"></flx-icon>
+          {{ t.label }}
+        </button>
+      }
+    </div>
+
+    <form (ngSubmit)="submit()">
+      @switch (tab()) {
+        @case ('EMAIL') {
+          <p class="sub">Un email avec un lien d'invitation sera envoyé.</p>
+          <label>
+            Adresse email
+            <input class="flx-input" type="email" [(ngModel)]="email" name="email" required placeholder="nom@exemple.com" />
+          </label>
+        }
+        @case ('PHONE') {
+          <p class="sub">Un lien d'invitation sera envoyé par WhatsApp.</p>
+          <label>
+            Numéro de téléphone
+            <input class="flx-input" type="tel" [(ngModel)]="phone" name="phone" required placeholder="+229 XX XX XX XX" />
+          </label>
+        }
+        @case ('USERNAME') {
+          <p class="sub">Recherchez un compte existant par son pseudo.</p>
+          <label>
+            Pseudo
+            <div class="search-box">
+              <flx-icon name="search" [size]="15"></flx-icon>
+              <input
+                class="flx-input search-input"
+                type="text"
+                name="username"
+                [ngModel]="usernameQuery"
+                (ngModelChange)="onUsernameQueryChange($event)"
+                placeholder="Rechercher un pseudo…"
+                autocomplete="off"
+              />
+            </div>
+          </label>
+
+          @if (selectedUser(); as u) {
+            <div class="picked-user">
+              <flx-icon name="user" [size]="15"></flx-icon>
+              <span class="flx-mono">&#64;{{ u.username }}</span>
+              <button type="button" class="clear" (click)="selectedUser.set(null)">
+                <flx-icon name="x" [size]="14"></flx-icon>
+              </button>
+            </div>
+          } @else if (searchResults().length) {
+            <ul class="results">
+              @for (u of searchResults(); track u.id) {
+                <li (click)="pickUser(u)">
+                  <flx-icon name="user" [size]="14"></flx-icon>
+                  <span class="flx-mono">&#64;{{ u.username }}</span>
+                  @if (u.fullName) { <span class="fullname">{{ u.fullName }}</span> }
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+
+      <label>
+        Rôle
+        <select class="flx-input" [(ngModel)]="role" name="role">
+          <option value="MEMBER">Membre</option>
+          <option value="ADMIN">Admin</option>
+          <option value="READER">Lecteur</option>
+        </select>
+      </label>
+
+      @if (error()) { <p class="error">{{ error() }}</p> }
+      @if (success()) {
+        <p class="success">
+          <flx-icon name="check" [size]="14"></flx-icon>
+          {{ success() }}
+        </p>
+      }
+
+      <div class="actions">
+        <button type="button" class="flx-btn flx-btn--ghost" (click)="close.emit()">Fermer</button>
+        <button type="submit" class="flx-btn flx-btn--primary" [disabled]="!canSubmit">
+          <flx-icon name="send" [size]="14" color="white"></flx-icon>
+          {{ sending() ? 'Envoi…' : "Envoyer l'invitation" }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

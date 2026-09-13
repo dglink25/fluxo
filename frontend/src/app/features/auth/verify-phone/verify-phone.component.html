@@ -1,0 +1,74 @@
+<div class="auth-screen">
+  <div class="auth-card flx-card">
+    <div class="icon-badge">
+      <flx-icon name="whatsapp" [size]="22"></flx-icon>
+    </div>
+
+    @if (step() === 'phone') {
+      <h1>Vérifiez votre numéro</h1>
+      <p class="sub">
+        Un code à 6 chiffres vous sera envoyé par WhatsApp pour confirmer votre numéro de téléphone.
+      </p>
+
+      <form (ngSubmit)="sendCode()" class="form">
+        <label>
+          Numéro de téléphone
+          <input
+            class="flx-input"
+            type="tel"
+            name="phone"
+            [(ngModel)]="phone"
+            required
+            placeholder="+229 XX XX XX XX"
+            autocomplete="tel"
+          />
+        </label>
+
+        @if (error()) { <p class="error">{{ error() }}</p> }
+
+        <button class="flx-btn flx-btn--primary" type="submit" [disabled]="sending() || !phone">
+          {{ sending() ? 'Envoi…' : 'Recevoir le code par WhatsApp' }}
+        </button>
+      </form>
+    } @else {
+      <h1>Entrez le code reçu</h1>
+      <p class="sub">
+        Code envoyé par WhatsApp au <span class="flx-mono">{{ phone }}</span>.
+        Il expire dans <span class="flx-mono countdown">{{ formattedTime() }}</span>.
+      </p>
+
+      <div class="otp-row">
+        @for (digit of digits(); track $index) {
+          <input
+            [id]="'otp-' + $index"
+            class="otp-input flx-mono"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+            [value]="digit"
+            (input)="onDigitInput($index, $event)"
+            (keydown)="onDigitKeydown($index, $event)"
+          />
+        }
+      </div>
+
+      <button type="button" class="flx-btn flx-btn--ghost paste-btn" (click)="pasteFromClipboard()">
+        <flx-icon name="clipboard" [size]="16"></flx-icon>
+        Coller le code
+      </button>
+
+      @if (error()) { <p class="error">{{ error() }}</p> }
+      @if (verifying()) { <p class="sub">Vérification…</p> }
+
+      <button
+        type="button"
+        class="flx-btn flx-btn--ghost resend-btn"
+        [disabled]="secondsLeft() > 0"
+        (click)="resend()"
+      >
+        <flx-icon name="refresh" [size]="15"></flx-icon>
+        {{ secondsLeft() > 0 ? 'Renvoyer le code (' + formattedTime() + ')' : 'Renvoyer le code' }}
+      </button>
+    }
+  </div>
+</div>

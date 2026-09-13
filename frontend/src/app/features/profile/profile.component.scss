@@ -1,0 +1,164 @@
+/* =====================================================
+   Page Profil
+   ===================================================== */
+
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 24px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Carte principale */
+.profile-card {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 3px solid var(--flx-border);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+h1 { font-size: 20px; margin: 0; }
+
+.username {
+  font-size: 14px;
+  color: var(--flx-text-muted);
+  margin: 0;
+}
+.email {
+  font-size: 13px;
+  color: var(--flx-text-faint);
+  margin: 0;
+}
+.sub { font-size: 13px; color: var(--flx-text-muted); margin: 0; }
+
+.edit-btn {
+  margin-top: 8px;
+  font-size: 13px;
+  gap: 6px;
+}
+
+/* Formulaire d'édition */
+.edit-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-top: 8px;
+}
+
+.edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--flx-text-muted);
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Heatmap */
+.heatmap-card {
+  padding: 22px 20px;
+  overflow-x: auto;
+}
+
+h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--flx-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 14px;
+}
+
+.heatmap {
+  display: flex;
+  gap: 3px;
+}
+
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.day {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--flx-bg-sunken);
+  flex-shrink: 0;
+}
+
+/* Niveaux de couleur (style GitHub) */
+.day.level-0 { background: var(--flx-bg-sunken); }
+.day.level-1 { background: #c6efdf; }
+.day.level-2 { background: #71c89a; }
+.day.level-3 { background: #2e9966; }
+.day.level-4 { background: #166553; }
+
+[data-theme='dark'] .day.level-0 { background: var(--flx-bg-sunken); }
+[data-theme='dark'] .day.level-1 { background: #0f3d2e; }
+[data-theme='dark'] .day.level-2 { background: #1a6648; }
+[data-theme='dark'] .day.level-3 { background: #27915f; }
+[data-theme='dark'] .day.level-4 { background: #34c27e; }
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--flx-text-faint);
+}
+.legend .day { cursor: default; }
+
+/* Ligne thème */
+.row-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Déconnexion */
+.logout {
+  justify-content: center;
+  color: #dc2626;
+  border-color: #dc262630;
+}
+.logout:hover { background: #dc262610; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .page { padding: 20px 16px 90px; }
+  .profile-card { padding: 24px 20px; }
+  .heatmap-card { padding: 18px 16px; }
+  .day { width: 9px; height: 9px; }
+}

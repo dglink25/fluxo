@@ -1,0 +1,113 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="flx-card modal" (click)="$event.stopPropagation()">
+
+    @if (loading()) {
+      <div class="modal-header">
+        <p class="sub">Chargement…</p>
+        <button class="close-btn" type="button" (click)="close.emit()">
+          <flx-icon name="x" [size]="18"></flx-icon>
+        </button>
+      </div>
+    }
+
+    @if (!loading() && task()) {
+      <header class="modal-header">
+        <div>
+          <span class="flx-mono id">#{{ task()!.id.slice(0, 6) }}</span>
+          <h2>{{ task()!.title }}</h2>
+        </div>
+        <button class="close-btn" type="button" (click)="close.emit()">
+          <flx-icon name="x" [size]="18"></flx-icon>
+        </button>
+      </header>
+
+      <!-- Statuts -->
+      <div class="status-row">
+        @for (status of statuses; track status.value) {
+          <button
+            class="status-chip"
+            [class.active]="task()!.status === status.value"
+            (click)="updateStatus(status.value)"
+          >
+            {{ status.label }}
+          </button>
+        }
+      </div>
+
+      @if (task()!.description) {
+        <p class="description">{{ task()!.description }}</p>
+      }
+
+      <!-- Sous-tâches -->
+      <section class="block">
+        <h4>
+          <flx-icon name="tasks" [size]="15"></flx-icon>
+          Sous-tâches
+          @if (task()!.subtasks?.length) {
+            <span class="count flx-mono">{{ subtaskProgress(task()!) }}%</span>
+          }
+        </h4>
+
+        @for (sub of task()!.subtasks ?? []; track sub.id) {
+          <label class="subtask-row">
+            <input
+              type="checkbox"
+              [checked]="sub.done"
+              (change)="toggleSubtask(sub.id, !sub.done)"
+            />
+            <span [class.done]="sub.done">{{ sub.title }}</span>
+          </label>
+        }
+
+        <form class="add-subtask" (ngSubmit)="addSubtask()">
+          <input
+            class="flx-input"
+            [(ngModel)]="newSubtaskTitle"
+            name="subtaskTitle"
+            placeholder="Ajouter une sous-tâche…"
+          />
+          <button class="flx-btn flx-btn--ghost" type="submit" [disabled]="addingSubtask()">
+            <flx-icon name="plus" [size]="14"></flx-icon>
+          </button>
+        </form>
+      </section>
+
+      <!-- Commentaires -->
+      <section class="block">
+        <h4>
+          <flx-icon name="comment" [size]="15"></flx-icon>
+          Commentaires
+          <span class="count flx-mono">{{ task()!.comments.length }}</span>
+        </h4>
+
+        <div class="comments">
+          @for (c of task()!.comments; track c.id) {
+            <div class="comment">
+              <div class="comment-head">
+                <span class="flx-mono">&#64;{{ c.user.username }}</span>
+                <span class="date">{{ c.createdAt | date: 'd MMM, HH:mm' }}</span>
+              </div>
+              <p>{{ c.content }}</p>
+            </div>
+          }
+          @if (task()!.comments.length === 0) {
+            <p class="sub">Aucun commentaire pour l'instant.</p>
+          }
+        </div>
+
+        <form class="add-comment" (ngSubmit)="postComment()">
+          <input
+            class="flx-input"
+            [(ngModel)]="newComment"
+            name="comment"
+            placeholder="Écrire un commentaire…"
+          />
+          <button class="flx-btn flx-btn--primary" type="submit" [disabled]="postingComment()">
+            <flx-icon name="send" [size]="14" color="white"></flx-icon>
+          </button>
+        </form>
+      </section>
+    }
+
+  </div>
+</div>

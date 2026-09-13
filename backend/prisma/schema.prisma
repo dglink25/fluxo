@@ -1,0 +1,391 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  READER
+}
+
+enum ProjectVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum InvitationTarget {
+  EMAIL
+  PHONE
+  USERNAME
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+  AUDIO
+}
+
+enum DeliverableStatus {
+  DRAFT
+  SUBMITTED
+  VALIDATED
+  REFUSED
+}
+
+// ─── Utilisateurs ─────────────────────────────────────────────────────────────
+
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  username      String        @unique
+  fullName      String?
+  avatarUrl     String?
+  bio           String?
+
+  /// Authentification exclusivement via OAuth (Google / GitHub)
+  provider      OAuthProvider
+  providerId    String
+
+  /// Vérification du numéro de téléphone par code OTP WhatsApp (Convessa)
+  phone         String?       @unique
+  phoneVerified Boolean       @default(false)
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  ownedWorkspaces      Workspace[]         @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
+  ownedProjects        Project[]           @relation("ProjectOwner")
+  memberships          ProjectMember[]
+  assignedTasks        Task[]              @relation("TaskAssignee")
+  comments             Comment[]
+  activities           Activity[]
+  notifications        Notification[]
+  sentInvitations      Invitation[]        @relation("InvitedBy")
+  receivedInvitations  Invitation[]        @relation("InvitationRecipient")
+  phoneVerifications   PhoneVerification[]
+  sentMessages         Message[]           @relation("MessageSender")
+  dmParticipations     DirectMessageParticipant[]
+  uploadedFiles        ProjectFile[]
+  deliverables         Deliverable[]       @relation("DeliverableAuthor")
+  validatedDeliverables Deliverable[]      @relation("DeliverableValidator")
+
+  @@unique([provider, providerId])
+}
+
+/// Codes OTP envoyés par WhatsApp (via Convessa) pour valider un numéro de téléphone
+model PhoneVerification {
+  id         String    @id @default(uuid())
+  userId     String
+  phone      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Workspaces ───────────────────────────────────────────────────────────────
+
+/// Organisation regroupant plusieurs projets
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members  WorkspaceMember[]
+  projects Project[]
+}
+
+model WorkspaceMember {
+  id          String      @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        ProjectRole @default(MEMBER)
+  addedAt     DateTime    @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+// ─── Projets ──────────────────────────────────────────────────────────────────
+
+model Project {
+  id          String            @id @default(uuid())
+  name        String
+  description String?
+  visibility  ProjectVisibility @default(PRIVATE)
+  archived    Boolean           @default(false)
+  ownerId     String
+  workspaceId String?
+
+  owner     User       @relation("ProjectOwner", fields: [ownerId], references: [id])
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members     ProjectMember[]
+  tasks       Task[]
+  invitations Invitation[]
+  activities  Activity[]
+  channels    Channel[]
+  files       ProjectFile[]
+}
+
+model ProjectMember {
+  id        String      @id @default(uuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  addedAt   DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+// ─── Invitations ──────────────────────────────────────────────────────────────
+
+model Invitation {
+  id            String           @id @default(uuid())
+  projectId     String
+  invitedById   String
+  targetType    InvitationTarget @default(EMAIL)
+  targetValue   String
+  invitedUserId String?
+  role          ProjectRole      @default(MEMBER)
+  status        InvitationStatus @default(PENDING)
+  token         String           @unique
+  expiresAt     DateTime
+  createdAt     DateTime         @default(now())
+
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedBy   User    @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedUser User?   @relation("InvitationRecipient", fields: [invitedUserId], references: [id])
+}
+
+// ─── Tâches ───────────────────────────────────────────────────────────────────
+
+model Task {
+  id          String       @id @default(uuid())
+  projectId   String
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  assigneeId  String?
+  dueDate     DateTime?
+  labels      String[]     @default([])
+  position    Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee     User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  subtasks     SubTask[]
+  comments     Comment[]
+  deliverables Deliverable[]
+}
+
+model SubTask {
+  id       String  @id @default(uuid())
+  taskId   String
+  title    String
+  done     Boolean @default(false)
+  position Int     @default(0)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ─── Messagerie instantanée ───────────────────────────────────────────────────
+
+/// Channel de groupe lié à un projet (canal général ou thématique)
+model Channel {
+  id        String   @id @default(uuid())
+  projectId String
+  name      String   @default("général")
+  createdAt DateTime @default(now())
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+/// Message envoyé dans un Channel ou une conversation DirectMessage
+model Message {
+  id          String      @id @default(uuid())
+  senderId    String
+  channelId   String?
+  dmId        String?
+  type        MessageType @default(TEXT)
+  content     String
+  fileUrl     String?
+  delivered   Boolean     @default(false)
+  read        Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+
+  sender  User             @relation("MessageSender", fields: [senderId], references: [id])
+  channel Channel?         @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  dm      DirectMessage?   @relation(fields: [dmId], references: [id], onDelete: Cascade)
+  reactions MessageReaction[]
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+/// Conversation 1-to-1 entre deux utilisateurs
+model DirectMessage {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  participants DirectMessageParticipant[]
+  messages     Message[]
+}
+
+model DirectMessageParticipant {
+  id   String @id @default(uuid())
+  dmId String
+  userId String
+
+  dm   DirectMessage @relation(fields: [dmId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([dmId, userId])
+}
+
+// ─── Fichiers partagés ────────────────────────────────────────────────────────
+
+/// Fichier partagé dans un projet
+model ProjectFile {
+  id         String   @id @default(uuid())
+  projectId  String
+  uploadedBy String
+  name       String
+  size       Int
+  mimeType   String
+  url        String
+  version    Int      @default(1)
+  parentId   String?  /// ID de la version précédente (null pour la première version)
+  createdAt  DateTime @default(now())
+
+  project  Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploader User        @relation(fields: [uploadedBy], references: [id])
+  parent   ProjectFile? @relation("FileVersions", fields: [parentId], references: [id])
+  children ProjectFile[] @relation("FileVersions")
+}
+
+// ─── Livrables ────────────────────────────────────────────────────────────────
+
+model Deliverable {
+  id          String            @id @default(uuid())
+  taskId      String
+  authorId    String
+  validatorId String?
+  type        String            @default("FILE") /// FILE | LINK | CAPTURE
+  url         String
+  name        String
+  size        Int?
+  status      DeliverableStatus @default(DRAFT)
+  refusalNote String?
+  submittedAt DateTime?
+  validatedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  task      Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User  @relation("DeliverableAuthor", fields: [authorId], references: [id])
+  validator User? @relation("DeliverableValidator", fields: [validatorId], references: [id])
+}
+
+// ─── Activité & Notifications ─────────────────────────────────────────────────
+
+model Activity {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  type      String
+  targetId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

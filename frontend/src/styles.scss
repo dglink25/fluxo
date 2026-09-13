@@ -1,0 +1,147 @@
+/* ==========================================================================
+   Fluxo — design tokens
+   Palette : ardoise graphite + accent émeraude (#059669), pensée pour un
+   outil de travail utilisé toute la journée (contraste doux, pas de blanc pur).
+   Typo : Manrope (interface) + JetBrains Mono (identifiants, dates, code).
+   ========================================================================== */
+
+:root {
+  --flx-accent: #166553;
+  --flx-accent-strong: #0f4a3c;
+  --flx-accent-soft: #16655322;
+  --flx-accent-contrast: #ffffff;
+
+  --flx-radius-sm: 6px;
+  --flx-radius-md: 10px;
+  --flx-radius-lg: 16px;
+
+  --flx-font-ui: 'Manrope', system-ui, -apple-system, sans-serif;
+  --flx-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --flx-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --flx-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  color-scheme: light;
+
+  --flx-bg: #f4f6f5;
+  --flx-bg-raised: #ffffff;
+  --flx-bg-sunken: #e8ebea;
+  --flx-border: #d7dedb;
+  --flx-text: #16211d;
+  --flx-text-muted: #57655f;
+  --flx-text-faint: #8a968f;
+
+  --flx-status-todo: #94a3ac;
+  --flx-status-progress: #2563eb;
+  --flx-status-review: #d97706;
+  --flx-status-done: var(--flx-accent);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --flx-bg: #0e1512;
+  --flx-bg-raised: #141d19;
+  --flx-bg-sunken: #0a100e;
+  --flx-border: #23302a;
+  --flx-text: #e7ece9;
+  --flx-text-muted: #9fada6;
+  --flx-text-faint: #66766e;
+
+  --flx-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --flx-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--flx-font-ui);
+  background: var(--flx-bg);
+  color: var(--flx-text);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a { color: var(--flx-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.flx-mono {
+  font-family: var(--flx-font-mono);
+  font-variant-ligatures: none;
+}
+
+/* Boutons partagés */
+.flx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--flx-radius-md);
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.08s ease, background-color 0.15s ease;
+}
+.flx-btn:active { transform: scale(0.98); }
+
+.flx-btn--primary {
+  background: var(--flx-accent);
+  color: var(--flx-accent-contrast);
+}
+.flx-btn--primary:hover { background: var(--flx-accent-strong); }
+
+.flx-btn--ghost {
+  background: transparent;
+  border-color: var(--flx-border);
+  color: var(--flx-text);
+}
+.flx-btn--ghost:hover { background: var(--flx-bg-sunken); }
+
+.flx-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--flx-radius-sm);
+  border: 1px solid var(--flx-border);
+  background: var(--flx-bg-raised);
+  color: var(--flx-text);
+  font-size: 14px;
+  font-family: inherit;
+}
+.flx-input:focus {
+  outline: 2px solid var(--flx-accent);
+  outline-offset: 1px;
+}
+
+.flx-card {
+  background: var(--flx-bg-raised);
+  border: 1px solid var(--flx-border);
+  border-radius: var(--flx-radius-lg);
+  box-shadow: var(--flx-shadow-1);
+}
+
+/* Focus clavier visible partout (accessibilité) */
+:focus-visible {
+  outline: 2px solid var(--flx-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

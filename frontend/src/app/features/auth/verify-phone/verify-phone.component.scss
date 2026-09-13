@@ -1,0 +1,133 @@
+/* =====================================================
+   Vérification du téléphone — Fluxo
+   ===================================================== */
+
+.auth-screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--flx-bg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--flx-accent);
+  margin-bottom: 4px;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.sub {
+  font-size: 13px;
+  color: var(--flx-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--flx-text-muted);
+  text-align: left;
+}
+
+/* Grille OTP 6 chiffres */
+.otp-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.otp-input {
+  width: 46px;
+  height: 52px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: var(--flx-radius-md);
+  border: 2px solid var(--flx-border);
+  background: var(--flx-bg-raised);
+  color: var(--flx-text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  padding: 0;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: var(--flx-accent);
+  box-shadow: 0 0 0 3px var(--flx-accent-soft);
+}
+
+.otp-input:not(:placeholder-shown) {
+  border-color: var(--flx-accent);
+}
+
+.countdown {
+  color: var(--flx-accent);
+}
+
+/* Boutons */
+.flx-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.paste-btn,
+.resend-btn {
+  font-size: 13px;
+  gap: 7px;
+}
+
+.resend-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  font-size: 13px;
+  color: #dc2626;
+  background: #dc262612;
+  border: 1px solid #dc262630;
+  border-radius: var(--flx-radius-sm);
+  padding: 10px 12px;
+  margin: 0;
+  text-align: left;
+}
+
+@media (max-width: 400px) {
+  .auth-card { padding: 28px 18px; }
+  .otp-input { width: 38px; height: 46px; font-size: 20px; }
+  .otp-row { gap: 6px; }
+}

@@ -1,0 +1,112 @@
+<flx-navbar></flx-navbar>
+<main class="page">
+
+  <div class="head">
+    <h1>Notifications</h1>
+    @if (unreadCount() > 0) {
+      <button class="flx-btn flx-btn--ghost mark-all" (click)="markAllRead()">
+        <flx-icon name="check" [size]="14"></flx-icon>
+        Tout marquer lu
+      </button>
+    }
+  </div>
+
+  <!-- Onglets -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab() === 'invitations'" (click)="activeTab.set('invitations')">
+      <flx-icon name="mail" [size]="15"></flx-icon>
+      Invitations
+      @if (invitations().length > 0) {
+        <span class="badge">{{ invitations().length }}</span>
+      }
+    </button>
+    <button class="tab" [class.active]="activeTab() === 'notifications'" (click)="activeTab.set('notifications')">
+      <flx-icon name="bell" [size]="15"></flx-icon>
+      Système
+      @if (unreadCount() > 0) {
+        <span class="badge">{{ unreadCount() }}</span>
+      }
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="sub loading">Chargement…</p>
+  }
+
+  <!-- ── INVITATIONS ── -->
+  @if (!loading() && activeTab() === 'invitations') {
+    @if (invitations().length === 0) {
+      <div class="empty flx-card">
+        <flx-icon name="mail" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+        <p>Aucune invitation en attente.</p>
+      </div>
+    } @else {
+      <div class="list">
+        @for (inv of invitations(); track inv.id) {
+          <div class="flx-card invite-row">
+            <div class="icon-badge"><flx-icon name="mail" [size]="16"></flx-icon></div>
+            <div class="content">
+              <p>
+                <span class="flx-mono">&#64;{{ inv.invitedBy?.username }}</span>
+                vous invite à rejoindre <strong>{{ inv.project?.name }}</strong>
+              </p>
+              <span class="role flx-mono">Rôle : {{ inv.role }}</span>
+            </div>
+            <div class="row-actions">
+              <button
+                class="flx-btn flx-btn--ghost"
+                [disabled]="respondingId() === inv.id"
+                (click)="decline(inv)"
+                title="Refuser"
+              >
+                <flx-icon name="x" [size]="14"></flx-icon>
+              </button>
+              <button
+                class="flx-btn flx-btn--primary"
+                [disabled]="respondingId() === inv.id"
+                (click)="accept(inv)"
+                title="Accepter"
+              >
+                <flx-icon name="check" [size]="14" color="white"></flx-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ── NOTIFICATIONS SYSTÈME ── -->
+  @if (!loading() && activeTab() === 'notifications') {
+    @if (notifications().length === 0) {
+      <div class="empty flx-card">
+        <flx-icon name="bell" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+        <p>Aucune notification pour l'instant.</p>
+        <p class="sub">Les rappels et alertes importants apparaîtront ici.</p>
+      </div>
+    } @else {
+      <div class="list">
+        @for (notif of notifications(); track notif.id) {
+          <div
+            class="flx-card notif-row"
+            [class.unread]="!notif.read"
+            (click)="markRead(notif)"
+          >
+            <div class="icon-badge" [class.accent]="!notif.read">
+              <flx-icon [name]="notificationIcon(notif.type)" [size]="15"></flx-icon>
+            </div>
+            <div class="content">
+              <p>{{ notif.content }}</p>
+              <span class="date flx-mono">{{ notif.createdAt | date: 'd MMM, HH:mm' }}</span>
+            </div>
+            @if (!notif.read) {
+              <div class="unread-dot" aria-label="Non lue"></div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+</main>
+<flx-bottom-nav></flx-bottom-nav>

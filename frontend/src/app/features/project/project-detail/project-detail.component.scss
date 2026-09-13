@@ -1,0 +1,173 @@
+/* =====================================================
+   Détail projet — Kanban / Liste / Activité
+   ===================================================== */
+
+.page {
+  padding: 24px 24px 100px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* En-tête */
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.head h1 { font-size: 20px; margin-bottom: 4px; }
+.sub { font-size: 13px; color: var(--flx-text-muted); margin: 0; }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Switcher de vue */
+.view-switch {
+  display: inline-flex;
+  background: var(--flx-bg-sunken);
+  border: 1px solid var(--flx-border);
+  border-radius: var(--flx-radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+.opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--flx-text-muted);
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.opt.active {
+  background: var(--flx-bg-raised);
+  color: var(--flx-accent);
+  box-shadow: var(--flx-shadow-1);
+}
+
+/* Formulaire nouvelle tâche */
+.new-task-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.new-task-form .flx-input { flex: 1; min-width: 180px; }
+.priority-select { width: 140px; }
+
+/* ── Kanban ── */
+.kanban {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  /* scrollbar discrète */
+  scrollbar-width: thin;
+  scrollbar-color: var(--flx-border) transparent;
+}
+.kanban::-webkit-scrollbar { height: 6px; }
+.kanban::-webkit-scrollbar-track { background: transparent; }
+.kanban::-webkit-scrollbar-thumb {
+  background: var(--flx-border);
+  border-radius: 3px;
+}
+
+.column {
+  min-width: 270px;
+  max-width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.column header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px 12px;
+  border-bottom: 2px solid var(--flx-border);
+  margin-bottom: 10px;
+}
+.column header h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--flx-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+.count {
+  font-size: 12px;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* ── Vue Liste ── */
+.list-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.list-filters .flx-input { max-width: 200px; }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  flex-wrap: wrap;
+}
+.list-row:hover { border-color: var(--flx-accent); background: var(--flx-bg-sunken); }
+.list-row .id { font-size: 11px; color: var(--flx-text-faint); flex-shrink: 0; }
+.list-row .title { flex: 1; font-size: 14px; font-weight: 600; min-width: 120px; }
+.list-row .pill {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  font-family: var(--flx-font-mono);
+  flex-shrink: 0;
+}
+.list-row .assignee { font-size: 12px; color: var(--flx-text-muted); margin-left: auto; }
+
+/* ── Activité ── */
+.activity-panel {
+  padding: 24px;
+  max-width: 680px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .page { padding: 16px 12px 90px; }
+  .head { flex-direction: column; align-items: stretch; }
+  .actions { justify-content: flex-start; }
+  .column { min-width: 260px; }
+  .list-filters .flx-input { max-width: none; flex: 1 1 140px; }
+  .list-row .assignee { display: none; }
+}

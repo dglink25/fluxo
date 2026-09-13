@@ -1,0 +1,93 @@
+/* =====================================================
+   Page de connexion — Fluxo
+   ===================================================== */
+
+.auth-screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--flx-bg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+}
+
+/* Logo */
+.mark {
+  width: 88px;
+  height: 60px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 6px 14px rgba(22, 101, 83, 0.28));
+}
+.mark svg { width: 100%; height: 100%; }
+
+h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--flx-text);
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-size: 14px;
+  color: var(--flx-text-muted);
+  line-height: 1.5;
+  margin: 0 0 28px;
+  max-width: 320px;
+}
+
+.providers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.provider-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  gap: 10px;
+}
+
+.google-btn {
+  background: var(--flx-bg-raised);
+  border-color: var(--flx-border);
+  color: var(--flx-text);
+}
+.google-btn:hover { background: var(--flx-bg-sunken); }
+
+.github-btn {
+  background: var(--flx-text);
+  border-color: transparent;
+  color: var(--flx-bg);
+}
+.github-btn:hover { opacity: 0.88; }
+
+.provider-icon { flex-shrink: 0; }
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--flx-text-faint);
+  text-align: center;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 32px 24px; }
+}

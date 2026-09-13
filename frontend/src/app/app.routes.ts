@@ -4,7 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
-  // ── Auth ────────────────────────────────────────────────────────────────
+  // ── Auth (routes publiques) ──────────────────────────────────────────────
   {
     path: 'login',
     loadComponent: () =>
@@ -24,8 +24,16 @@ export const routes: Routes = [
         (m) => m.VerifyPhoneComponent,
       ),
   },
+  // Invitation publique — accessible sans être connecté
+  {
+    path: 'invitations/:token',
+    loadComponent: () =>
+      import('./features/auth/invitation/invitation.component').then(
+        (m) => m.InvitationComponent,
+      ),
+  },
 
-  // ── App (protégées) ─────────────────────────────────────────────────────
+  // ── App (routes protégées) ───────────────────────────────────────────────
   {
     path: 'dashboard',
     canActivate: [authGuard],

@@ -15,4 +15,8 @@ export class CreateProjectDto {
   @IsOptional()
   @IsEnum(ProjectVisibility)
   visibility?: ProjectVisibility;
+
+  @IsOptional()
+  @IsString()
+  workspaceId?: string;
 }

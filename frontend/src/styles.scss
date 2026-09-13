@@ -145,3 +145,122 @@ button {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ── Utilitaires responsifs ── */
+@media (max-width: 768px) {
+  /* Espace pour la bottom nav mobile */
+  main, .page {
+    padding-bottom: 90px;
+  }
+}
+
+/* ── Scrollbar globale discrète ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--flx-border) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--flx-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--flx-text-faint);
+}
+
+/* ── Helpers ── */
+.text-accent { color: var(--flx-accent); }
+.text-muted  { color: var(--flx-text-muted); }
+.text-faint  { color: var(--flx-text-faint); }
+
+/* Texte tronqué */
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Séparateur */
+hr.flx-sep {
+  border: none;
+  border-top: 1px solid var(--flx-border);
+  margin: 16px 0;
+}
+
+/* Badge générique */
+.flx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+}
+.flx-badge--accent {
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+}
+.flx-badge--red {
+  background: #dc262618;
+  color: #dc2626;
+}
+.flx-badge--orange {
+  background: #d9770618;
+  color: #d97706;
+}
+.flx-badge--blue {
+  background: #2563eb18;
+  color: #2563eb;
+}
+
+/* Loader inline */
+.flx-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--flx-border);
+  border-top-color: var(--flx-accent);
+  animation: flx-spin 0.7s linear infinite;
+}
+@keyframes flx-spin { to { transform: rotate(360deg); } }
+
+/* Grille responsive générique */
+.flx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* Toast / message d'erreur inline */
+.flx-error {
+  font-size: 13px;
+  color: #dc2626;
+  background: #dc262612;
+  border: 1px solid #dc262630;
+  border-radius: var(--flx-radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flx-success {
+  font-size: 13px;
+  color: var(--flx-accent);
+  background: var(--flx-accent-soft);
+  border: 1px solid var(--flx-accent);
+  border-radius: var(--flx-radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

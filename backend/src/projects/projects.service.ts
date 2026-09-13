@@ -29,10 +29,16 @@ export class ProjectsService {
           description: dto.description,
           visibility: dto.visibility ?? 'PRIVATE',
           ownerId: userId,
+          workspaceId: dto.workspaceId ?? null,
         },
       });
+      // Inscrire le créateur comme OWNER
       await tx.projectMember.create({
         data: { projectId: project.id, userId, role: 'OWNER' },
+      });
+      // Créer le channel général par défaut
+      await tx.channel.create({
+        data: { projectId: project.id, name: 'général' },
       });
       await tx.activity.create({
         data: {

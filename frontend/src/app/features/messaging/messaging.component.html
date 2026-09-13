@@ -162,7 +162,7 @@
                   }
                   <span class="time flx-mono">{{ msg.createdAt | date: 'HH:mm' }}</span>
                 </div>
-                @if (msg.reactions?.length) {
+                @if (msg.reactions.length) {
                   <div class="reactions">
                     @for (r of msg.reactions; track r.id) {
                       <span class="reaction">{{ r.emoji }}</span>

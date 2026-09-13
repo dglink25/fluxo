@@ -41,4 +41,40 @@ export class MailService {
       html,
     });
   }
+
+  async sendDueDateReminderEmail(
+    to: string,
+    taskTitle: string,
+    projectName: string,
+    dueDate: Date,
+  ) {
+    const formattedDate = dueDate.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const subject = `⏰ Rappel : « ${taskTitle} » arrive à échéance`;
+    const html = `
+      <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
+        <h2 style="color:#166553;">Rappel d'échéance — Fluxo</h2>
+        <p>La tâche <strong>${taskTitle}</strong> dans le projet <strong>${projectName}</strong>
+           arrive à échéance le <strong>${formattedDate}</strong>.</p>
+        <p>Connectez-vous à Fluxo pour mettre à jour son statut.</p>
+        <p style="color:#888;font-size:12px;">Vous recevez cet email car vous êtes assigné à cette tâche.</p>
+      </div>`;
+
+    if (!this.resend) {
+      this.logger.warn(`[DEV] Email rappel non envoyé (RESEND_API_KEY absente). Destinataire: ${to}`);
+      return;
+    }
+
+    await this.resend.emails.send({
+      from: process.env.MAIL_FROM ?? 'Fluxo <no-reply@fluxo.app>',
+      to,
+      subject,
+      html,
+    });
+  }
 }

@@ -17,7 +17,7 @@ export class ProjectsService {
     return this.http.get<Project>(`${this.base}/${id}`);
   }
 
-  create(payload: { name: string; description?: string; visibility?: ProjectVisibility }) {
+  create(payload: { name: string; description?: string; visibility?: ProjectVisibility; workspaceId?: string }) {
     return this.http.post<Project>(this.base, payload);
   }
 }

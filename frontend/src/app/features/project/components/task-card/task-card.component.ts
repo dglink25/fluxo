@@ -26,7 +26,7 @@ import { Task } from '../../../../core/models/task.model';
         </div>
       }
       <footer>
-        @if (task.labels?.length) {
+        @if (task.labels.length) {
           <div class="labels">
             @for (label of task.labels; track label) {
               <span class="label">{{ label }}</span>

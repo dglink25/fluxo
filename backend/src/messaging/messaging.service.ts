@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MessageType } from '@prisma/client';
 
 export interface SendMessageInput {
@@ -14,7 +15,10 @@ export interface SendMessageInput {
 
 @Injectable()
 export class MessagingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private realtime: RealtimeGateway,
+  ) {}
 
   // ── Channels projet ────────────────────────────────────────────────────────
 
@@ -78,7 +82,7 @@ export class MessagingService {
     const isMember = channel.project.members.some((m) => m.userId === senderId);
     if (!isMember) throw new ForbiddenException('Accès refusé');
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         senderId,
         channelId,
@@ -91,6 +95,11 @@ export class MessagingService {
         reactions: true,
       },
     });
+
+    // Diffuser en temps réel à tous les membres du channel
+    this.realtime.emitToChannel(channelId, 'message:new', message);
+
+    return message;
   }
 
   async searchChannelMessages(channelId: string, userId: string, query: string) {
@@ -176,7 +185,7 @@ export class MessagingService {
       throw new ForbiddenException('Accès refusé');
     }
 
-    return this.prisma.message.create({
+    const dmMessage = await this.prisma.message.create({
       data: {
         senderId,
         dmId,
@@ -189,6 +198,17 @@ export class MessagingService {
         reactions: true,
       },
     });
+
+    // Diffuser en temps réel aux participants
+    this.realtime.emitToChannel(dmId, 'message:new', dmMessage);
+
+    // Notifier le/les autre(s) participant(s)
+    const other = dm.participants.filter((p) => p.userId !== senderId);
+    for (const p of other) {
+      this.realtime.emitToUser(p.userId, 'notification:new', { type: 'DM' });
+    }
+
+    return dmMessage;
   }
 
   /** Lister les DMs d'un utilisateur */

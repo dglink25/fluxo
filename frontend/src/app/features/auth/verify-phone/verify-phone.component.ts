@@ -1,7 +1,7 @@
-import { Component, OnDestroy, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
@@ -14,7 +14,7 @@ type Step = 'phone' | 'code';
   templateUrl: './verify-phone.component.html',
   styleUrl: './verify-phone.component.scss',
 })
-export class VerifyPhoneComponent implements OnDestroy {
+export class VerifyPhoneComponent implements OnInit, OnDestroy {
   step = signal<Step>('phone');
   phone = '';
   digits = signal<string[]>(['', '', '', '', '', '']);
@@ -23,9 +23,19 @@ export class VerifyPhoneComponent implements OnDestroy {
   verifying = signal(false);
   error = signal<string | null>(null);
 
+  /** Redirect après vérification (ex. reprise d'invitation) */
+  private redirectTo: string | null = null;
   private timer?: ReturnType<typeof setInterval>;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
+
+  ngOnInit() {
+    this.redirectTo = this.route.snapshot.queryParamMap.get('redirectTo');
+  }
 
   sendCode() {
     this.error.set(null);
@@ -88,7 +98,10 @@ export class VerifyPhoneComponent implements OnDestroy {
     this.error.set(null);
     this.verifying.set(true);
     this.auth.verifyPhoneOtp(this.phone, code).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => {
+        const dest = this.redirectTo ?? '/dashboard';
+        this.router.navigateByUrl(dest);
+      },
       error: (err) => {
         this.verifying.set(false);
         this.error.set(err?.error?.message ?? 'Code invalide');

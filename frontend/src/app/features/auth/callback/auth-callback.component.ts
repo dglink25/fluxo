@@ -54,7 +54,15 @@ export class AuthCallbackComponent implements OnInit {
 
     if (pending) {
       this.auth.storePendingToken(pending);
-      this.router.navigate(['/verify-phone']);
+      // Vérifier si une invitation était en attente avant le login
+      const pendingInvite = sessionStorage.getItem('fluxo-pending-invite');
+      if (pendingInvite) {
+        this.router.navigate(['/verify-phone'], {
+          queryParams: { redirectTo: `/invitations/${pendingInvite}` },
+        });
+      } else {
+        this.router.navigate(['/verify-phone']);
+      }
       return;
     }
 
@@ -74,7 +82,14 @@ export class AuthCallbackComponent implements OnInit {
             refreshToken: session.refreshToken ?? refreshToken,
             user: session.user,
           });
-          this.router.navigate(['/dashboard']);
+          // Reprendre une invitation en attente s'il y en a une
+          const pendingInvite = sessionStorage.getItem('fluxo-pending-invite');
+          if (pendingInvite) {
+            sessionStorage.removeItem('fluxo-pending-invite');
+            this.router.navigate(['/invitations', pendingInvite]);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
         },
         error: () => this.router.navigate(['/login']),
       });

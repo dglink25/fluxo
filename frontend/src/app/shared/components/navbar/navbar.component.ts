@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
@@ -153,6 +153,8 @@ import { IconComponent } from '../icon/icon.component';
   `],
 })
 export class NavbarComponent implements OnInit {
+  showSearch = signal(false);
+
   constructor(
     public auth: AuthService,
     public realtime: RealtimeService,
@@ -160,7 +162,6 @@ export class NavbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Charger le compteur initial de notifications non lues
     if (this.auth.isAuthenticated()) {
       this.notificationsService.countUnread().subscribe({
         next: ({ count }) => this.realtime.unreadNotifications.set(count),

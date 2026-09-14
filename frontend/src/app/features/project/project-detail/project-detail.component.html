@@ -21,7 +21,7 @@
           Inviter
         </button>
         @if (view() === 'kanban' || view() === 'list') {
-          <button class="flx-btn flx-btn--primary" (click)="showNewTask.set(!showNewTask())">
+          <button class="flx-btn flx-btn--primary" (click)="openNewTaskForm()">
             <flx-icon name="plus" [size]="16" color="white"></flx-icon>
             Nouvelle tâche
           </button>
@@ -68,6 +68,9 @@
       <button class="vtab" [class.active]="view() === 'secrets'" (click)="setView('secrets')">
         <flx-icon name="lock" [size]="14"></flx-icon> Secrets
       </button>
+      <button class="vtab" [class.active]="view() === 'github'" (click)="setView('github')">
+        <flx-icon name="github" [size]="14"></flx-icon> GitHub
+      </button>
     </div>
 
     <!-- ── Formulaire nouvelle tâche enrichi ── -->
@@ -76,10 +79,10 @@
         <div class="new-task-row">
           <input class="flx-input flex1" [(ngModel)]="newTaskTitle" placeholder="Titre de la tâche…" required autofocus />
           <select class="flx-input sel-sm" [(ngModel)]="newTaskPriority">
-            <option value="LOW">🟢 Basse</option>
-            <option value="MEDIUM">🔵 Moyenne</option>
-            <option value="HIGH">🟠 Haute</option>
-            <option value="URGENT">🔴 Urgente</option>
+            <option value="LOW">Basse</option>
+            <option value="MEDIUM">Moyenne</option>
+            <option value="HIGH">Haute</option>
+            <option value="URGENT">Urgente</option>
           </select>
         </div>
         <div class="new-task-row">
@@ -177,90 +180,101 @@
     <!-- ══ DOCUMENTS (fichiers + textes unifiés) ══ -->
     @else if (view() === 'documents') {
       @if (showDocForm()) {
-        <div class="flx-card inline-form col">
-          <!-- Onglets : Uploader un fichier OU écrire un document texte -->
+        <div class="flx-card new-doc-panel">
+          <h4 class="doc-form-title">Ajouter dans Documents</h4>
+
+          <!-- Sélection du type -->
           <div class="doc-type-tabs">
             <button class="doc-type-btn" [class.active]="docFormType === 'file'" (click)="docFormType = 'file'">
-              <flx-icon name="clipboard" [size]="13"></flx-icon> Fichier
+              <flx-icon name="clipboard" [size]="14"></flx-icon> Uploader un fichier
             </button>
             <button class="doc-type-btn" [class.active]="docFormType === 'text'" (click)="docFormType = 'text'">
-              <flx-icon name="tasks" [size]="13"></flx-icon> Document texte
+              <flx-icon name="tasks" [size]="14"></flx-icon> Écrire un document
             </button>
           </div>
 
           @if (docFormType === 'file') {
-            <label class="flx-btn flx-btn--ghost file-upload-label">
-              <flx-icon name="clipboard" [size]="14"></flx-icon>
-              Choisir un fichier (PDF, image, vidéo, Excel, Word…)
-              <input type="file" (change)="onDocFileSelect($event)" style="display:none" />
+            <!-- Upload fichier -->
+            <label class="upload-area">
+              <flx-icon name="clipboard" [size]="28" color="var(--flx-accent)"></flx-icon>
+              <span>Cliquez pour choisir un fichier</span>
+              <span class="upload-hint">PDF, Word, Excel, images, vidéos, ZIP… (max 50 Mo)</span>
+              <input type="file" (change)="onDocFileSelect($event)"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.zip,.rar,
+                        image/*,video/*,audio/*,application/*"
+                style="display:none" />
             </label>
             @if (docFileSelected) {
               <div class="file-selected-info">
-                <flx-icon name="check" [size]="13" color="var(--flx-accent)"></flx-icon>
-                <span class="flx-mono">{{ newDocTitle }}</span>
+                <span class="file-emoji-lg">{{ fileEmoji(docFileMime) }}</span>
+                <div>
+                  <p class="file-sel-name">{{ newDocTitle }}</p>
+                  <span class="file-sel-type flx-mono">{{ docFileMime || 'fichier' }}</span>
+                </div>
+                <button class="flx-btn flx-btn--ghost btn-sm" (click)="docFileSelected = false; newDocTitle = ''; newDocContent = ''">
+                  <flx-icon name="x" [size]="13"></flx-icon>
+                </button>
               </div>
             }
           } @else {
+            <!-- Document texte -->
             <input class="flx-input" [(ngModel)]="newDocTitle" placeholder="Titre du document…" autofocus />
-            <textarea class="flx-input" [(ngModel)]="newDocContent" rows="5" placeholder="Contenu (Markdown supporté)…"></textarea>
+            <textarea class="flx-input doc-textarea" [(ngModel)]="newDocContent"
+              rows="6" placeholder="Contenu… (Markdown supporté)&#10;&#10;# Titre&#10;## Sous-titre&#10;- Liste&#10;**gras** *italique*"></textarea>
           }
 
-          <div class="form-row">
-            <button class="flx-btn flx-btn--ghost" (click)="showDocForm.set(false); docFileSelected = false">Annuler</button>
-            <button class="flx-btn flx-btn--primary" (click)="createDocument()" [disabled]="creatingDoc() || !newDocTitle.trim()">
-              {{ creatingDoc() ? 'Création…' : 'Ajouter' }}
+          <div class="doc-form-actions">
+            <button class="flx-btn flx-btn--ghost btn-sm" (click)="showDocForm.set(false); docFileSelected = false">
+              Annuler
+            </button>
+            <button class="flx-btn flx-btn--primary btn-sm" (click)="createDocument()"
+              [disabled]="creatingDoc() || !newDocTitle.trim()">
+              {{ creatingDoc() ? 'Ajout…' : 'Ajouter' }}
             </button>
           </div>
         </div>
       }
 
+      <!-- Liste des documents -->
       @if (documents().length === 0 && files().length === 0 && !showDocForm()) {
         <div class="flx-card empty-panel">
-          <flx-icon name="clipboard" [size]="32" color="var(--flx-text-faint)"></flx-icon>
-          <p>Aucun document ni fichier partagé.</p>
+          <flx-icon name="clipboard" [size]="36" color="var(--flx-text-faint)"></flx-icon>
+          <p>Aucun document pour l'instant.</p>
+          <p class="sub">Uploadez des fichiers ou rédigez des documents directement.</p>
           <button class="flx-btn flx-btn--primary" (click)="showDocForm.set(true)">
-            <flx-icon name="plus" [size]="15" color="white"></flx-icon> Ajouter
+            <flx-icon name="plus" [size]="15" color="white"></flx-icon> Ajouter un document
           </button>
         </div>
       } @else {
-        <!-- Fichiers uploadés -->
-        @if (files().length > 0) {
-          <h4 class="section-label">
-            <flx-icon name="clipboard" [size]="14"></flx-icon> Fichiers
-          </h4>
-          <div class="file-grid">
-            @for (file of files(); track file.id) {
-              <div class="flx-card file-card">
-                <div class="file-icon">{{ fileEmoji(file.mimeType) }}</div>
-                <div class="file-info">
-                  <p class="file-name">{{ file.name }}</p>
-                  <span class="file-meta flx-mono">{{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}</span>
-                </div>
-                <a [href]="file.url" target="_blank" rel="noopener" class="flx-btn flx-btn--ghost" title="Ouvrir">
-                  <flx-icon name="send" [size]="14"></flx-icon>
-                </a>
+        <div class="docs-grid">
+          <!-- Fichiers uploadés -->
+          @for (file of files(); track file.id) {
+            <div class="flx-card doc-item file-item">
+              <div class="doc-item-icon file-emoji-lg">{{ fileEmoji(file.mimeType) }}</div>
+              <div class="doc-item-info">
+                <p class="doc-item-name">{{ file.name }}</p>
+                <span class="doc-item-meta flx-mono">{{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}</span>
               </div>
-            }
-          </div>
-        }
-
-        <!-- Documents texte -->
-        @if (documents().length > 0) {
-          <h4 class="section-label" style="margin-top: 20px">
-            <flx-icon name="tasks" [size]="14"></flx-icon> Documents texte
-          </h4>
-          <div class="doc-list">
-            @for (doc of documents(); track doc.id) {
-              <div class="flx-card doc-card">
-                <div class="doc-icon"><flx-icon name="tasks" [size]="18" color="var(--flx-accent)"></flx-icon></div>
-                <div class="doc-info">
-                  <p class="doc-title">{{ doc.details.title }}</p>
-                  <span class="doc-meta flx-mono">v{{ doc.details.version }} · &#64;{{ doc.user.username }} · {{ doc.createdAt | date:'d MMM' }}</span>
-                </div>
+              <a [href]="file.url" target="_blank" rel="noopener" class="flx-btn flx-btn--ghost doc-action" title="Ouvrir / Télécharger">
+                <flx-icon name="send" [size]="14"></flx-icon>
+              </a>
+            </div>
+          }
+          <!-- Documents texte -->
+          @for (doc of documents(); track doc.id) {
+            <div class="flx-card doc-item text-item">
+              <div class="doc-item-icon">
+                <flx-icon name="tasks" [size]="20" color="var(--flx-accent)"></flx-icon>
               </div>
-            }
-          </div>
-        }
+              <div class="doc-item-info">
+                <p class="doc-item-name">{{ doc.details.title }}</p>
+                <span class="doc-item-meta flx-mono">
+                  v{{ doc.details.version }} · &#64;{{ doc.user.username }} · {{ doc.createdAt | date:'d MMM' }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
       }
     }
 
@@ -334,6 +348,164 @@
     <!-- ══ SECRETS ══ -->
     @else if (view() === 'secrets') {
       <flx-secrets [projectId]="projectId"></flx-secrets>
+    }
+
+    <!-- ══ GITHUB ══ -->
+    @else if (view() === 'github') {
+      <div class="github-panel">
+
+        @if (!githubConnected()) {
+          <div class="flx-card gh-connect-card">
+
+            <div class="gh-hero">
+              <flx-icon name="github" [size]="40" color="var(--flx-text-muted)"></flx-icon>
+              <h3>Connecter un dépôt GitHub</h3>
+              <p class="sub">Liez un dépôt GitHub à ce projet pour associer automatiquement les commits aux tâches et mettre à jour leurs statuts.</p>
+            </div>
+
+            <div class="gh-form">
+
+              <!-- 1. Token -->
+              <label class="gh-label">
+                Token GitHub (Personal Access Token)
+                <div class="value-row">
+                  <input class="flx-input mono-input"
+                    [type]="showGithubToken ? 'text' : 'password'"
+                    [(ngModel)]="githubToken"
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                    autocomplete="new-password" />
+                  <button type="button" class="eye-btn" (click)="showGithubToken = !showGithubToken">
+                    <flx-icon [name]="showGithubToken ? 'x' : 'search'" [size]="15"></flx-icon>
+                  </button>
+                </div>
+                <span class="gh-hint">Permissions requises : <code>repo</code> — <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" rel="noopener">Générer ici</a></span>
+              </label>
+
+              <!-- 2. Charger les repos -->
+              <button class="flx-btn flx-btn--ghost btn-sm" (click)="loadGithubRepos()"
+                [disabled]="loadingRepos() || !githubToken.trim()">
+                <flx-icon name="refresh" [size]="13"></flx-icon>
+                {{ loadingRepos() ? 'Chargement des dépôts…' : 'Charger mes dépôts' }}
+              </button>
+
+              <!-- 3. Sélecteur de repo -->
+              @if (showRepoSelect() && githubRepos().length > 0) {
+                <div class="repo-select">
+                  <label class="gh-label">Sélectionnez un dépôt</label>
+                  <div class="repo-list">
+                    @for (repo of githubRepos(); track repo.fullName) {
+                      <button class="repo-item" [class.selected]="githubRepo === repo.fullName"
+                        (click)="selectRepo(repo.fullName)">
+                        <div class="repo-info">
+                          <span class="repo-name flx-mono">{{ repo.fullName }}</span>
+                          @if (repo.description) {
+                            <span class="repo-desc">{{ repo.description }}</span>
+                          }
+                        </div>
+                        <span class="repo-badge" [class.private]="repo.private">
+                          {{ repo.private ? 'Privé' : 'Public' }}
+                        </span>
+                        @if (githubRepo === repo.fullName) {
+                          <flx-icon name="check" [size]="14" color="var(--flx-accent)"></flx-icon>
+                        }
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Dépôt sélectionné -->
+              @if (githubRepo) {
+                <div class="selected-repo">
+                  <flx-icon name="github" [size]="14" color="var(--flx-accent)"></flx-icon>
+                  <span class="flx-mono">{{ githubRepo }}</span>
+                  <button class="clear-btn" (click)="githubRepo = ''; showRepoSelect.set(false)">
+                    <flx-icon name="x" [size]="12"></flx-icon>
+                  </button>
+                </div>
+              }
+
+              <!-- 4. Bouton connexion -->
+              <button class="flx-btn flx-btn--primary"
+                (click)="connectGithub()"
+                [disabled]="connectingGithub() || !githubRepo.trim() || !githubToken.trim()">
+                <flx-icon name="github" [size]="15" color="white"></flx-icon>
+                {{ connectingGithub() ? 'Connexion…' : 'Connecter ce dépôt' }}
+              </button>
+
+            </div>
+
+            <div class="gh-howto">
+              <h4>Comment ça marche</h4>
+              <ol>
+                <li>Connectez votre dépôt avec votre token GitHub</li>
+                <li>Dans vos commits, référencez une tâche : <code>#TASK-{{'{'}}id{{'}'}}</code></li>
+                <li>Pour fermer automatiquement une tâche : <code>closes #TASK-{{'{'}}id{{'}'}}</code></li>
+                <li>Chaque push notifie tous les membres du projet</li>
+              </ol>
+              <div class="gh-webhook-info">
+                <p>URL webhook (configurée automatiquement) :</p>
+                <code class="gh-webhook-url">{{ webhookUrl }}</code>
+                <button class="flx-btn flx-btn--ghost btn-sm" (click)="copyWebhookUrl()">
+                  <flx-icon name="clipboard" [size]="13"></flx-icon> Copier
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        } @else {
+          <div class="flx-card gh-connected">
+            <div class="gh-connected-header">
+              <flx-icon name="github" [size]="22" color="var(--flx-accent)"></flx-icon>
+              <div>
+                <p class="gh-repo-name flx-mono">{{ githubRepo }}</p>
+                <span class="gh-status">Connecté — Webhook actif</span>
+              </div>
+              <button class="flx-btn flx-btn--ghost btn-sm"
+                (click)="githubConnected.set(false); githubRepos.set([]); showRepoSelect.set(false)">
+                Modifier
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (githubCommits().length > 0) {
+          <h4 class="section-label" style="margin-top:20px">
+            <flx-icon name="activity" [size]="14"></flx-icon>
+            Commits liés aux tâches
+          </h4>
+          <div class="commits-list">
+            @for (commit of githubCommits(); track commit.id) {
+              <div class="flx-card commit-card">
+                <code class="commit-sha flx-mono">{{ commit.details.sha }}</code>
+                <div class="commit-info">
+                  <p class="commit-msg">{{ commit.details.message }}</p>
+                  <span class="commit-meta flx-mono">
+                    &#64;{{ commit.details.author }} · {{ commit.createdAt | date:'d MMM HH:mm' }}
+                    @if (commit.details.closedTask) {
+                      <span class="closed-badge">tâche fermée</span>
+                    }
+                  </span>
+                </div>
+                @if (commit.details.url) {
+                  <a [href]="commit.details.url" target="_blank" rel="noopener"
+                    class="flx-btn flx-btn--ghost btn-sm">
+                    <flx-icon name="send" [size]="13"></flx-icon>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        } @else if (githubConnected()) {
+          <div class="flx-card empty-panel" style="margin-top:16px">
+            <flx-icon name="activity" [size]="28" color="var(--flx-text-faint)"></flx-icon>
+            <p>Aucun commit lié pour l'instant.</p>
+            <p class="sub">Utilisez <code>#TASK-id</code> dans vos messages de commit.</p>
+          </div>
+        }
+
+      </div>
     }
 
   </main>

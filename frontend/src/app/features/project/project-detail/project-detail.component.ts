@@ -2,10 +2,10 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { ProjectsService } from '../../../core/services/projects.service';
 import { TasksService } from '../../../core/services/tasks.service';
 import { FilesService, ProjectFile } from '../../../core/services/files.service';
-import { DeliverablesService, Deliverable } from '../../../core/services/deliverables.service';
 import { AnnouncementsService, Announcement } from '../../../core/services/announcements.service';
 import { DocumentsService, ProjectDocument } from '../../../core/services/documents.service';
 import { MessagingService } from '../../../core/services/messaging.service';
@@ -22,57 +22,60 @@ import { TaskDetailComponent } from '../components/task-detail/task-detail.compo
 import { ActivityFeedComponent } from '../components/activity-feed/activity-feed.component';
 import { SecretsComponent } from '../components/secrets/secrets.component';
 import { MembersComponent } from '../components/members/members.component';
+import { environment } from '../../../../environments/environment';
 
-type ViewMode = 'kanban' | 'list' | 'activity' | 'members' | 'files' | 'deliverables' | 'documents' | 'announcements' | 'messaging' | 'secrets';
+type ViewMode =
+  | 'kanban' | 'list' | 'activity' | 'members'
+  | 'documents' | 'announcements' | 'messaging' | 'secrets' | 'github';
 
 @Component({
   selector: 'flx-project-detail',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink,
-    NavbarComponent,
-    BottomNavComponent,
-    IconComponent,
-    TaskCardComponent,
-    InviteModalComponent,
-    TaskDetailComponent,
-    ActivityFeedComponent,
-    SecretsComponent,
-    MembersComponent,
+    CommonModule, FormsModule, RouterLink,
+    NavbarComponent, BottomNavComponent, IconComponent,
+    TaskCardComponent, InviteModalComponent, TaskDetailComponent,
+    ActivityFeedComponent, SecretsComponent, MembersComponent,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.scss',
 })
 export class ProjectDetailComponent implements OnInit {
-  project = signal<Project | null>(null);
-  tasks = signal<Task[]>([]);
-  files = signal<ProjectFile[]>([]);
-  deliverables = signal<Deliverable[]>([]);
+
+  // ── État principal ─────────────────────────────────────────────────────────
+  project      = signal<Project | null>(null);
+  tasks        = signal<Task[]>([]);
+  files        = signal<ProjectFile[]>([]);
+  documents    = signal<ProjectDocument[]>([]);
   announcements = signal<Announcement[]>([]);
-  documents = signal<ProjectDocument[]>([]);
-  channels = signal<Channel[]>([]);
+  channels     = signal<Channel[]>([]);
+  members      = signal<any[]>([]);
+  invitations  = signal<any[]>([]);
+  githubCommits = signal<any[]>([]);
 
-  // Membres et invitations
-  members = signal<any[]>([]);
-  invitations = signal<any[]>([]);
-
-  loading = signal(true);
-  view = signal<ViewMode>('kanban');
+  loading    = signal(true);
+  view       = signal<ViewMode>('kanban');
   showInvite = signal(false);
   showNewTask = signal(false);
   openTaskId = signal<string | null>(null);
   draggedTask: Task | null = null;
+  projectId!: string;
 
   statuses = TASK_STATUSES;
 
-  // Filtres liste
+  // ── Filtres ────────────────────────────────────────────────────────────────
   filterStatus = '';
   filterPriority = '';
 
-  // Formulaires
-  // Formulaires création tâche enrichi
+  filteredTasks = computed(() =>
+    this.tasks().filter((t) => {
+      if (this.filterStatus   && t.status   !== this.filterStatus)   return false;
+      if (this.filterPriority && t.priority !== this.filterPriority) return false;
+      return true;
+    }),
+  );
+
+  // ── Formulaire tâche enrichi ───────────────────────────────────────────────
   newTaskTitle = '';
   newTaskPriority: Task['priority'] = 'MEDIUM';
   newTaskAssigneeIds: string[] = [];
@@ -80,156 +83,96 @@ export class ProjectDetailComponent implements OnInit {
   newTaskLabels = '';
   creatingTask = signal(false);
 
-  newAnnouncementTitle = '';
+  // ── Formulaire annonce ─────────────────────────────────────────────────────
+  newAnnouncementTitle   = '';
   newAnnouncementContent = '';
-  newAnnouncementPinned = false;
-  creatingAnnouncement = signal(false);
-  showAnnouncementForm = signal(false);
+  newAnnouncementPinned  = false;
+  showAnnouncementForm   = signal(false);
+  creatingAnnouncement   = signal(false);
 
-  // Fichiers — formulaire déclaration
-  showFileForm = signal(false);
-  newFileName = '';
-  newFileUrl = '';
-  newFileMime = 'application/octet-stream';
-
-  declareFile() {
-    if (!this.newFileUrl.trim() || !this.newFileName.trim()) return;
-    this.filesService.declare(this.projectId, {
-      name: this.newFileName,
-      size: 0,
-      mimeType: this.newFileMime || 'application/octet-stream',
-      url: this.newFileUrl,
-    }).subscribe({
-      next: (f) => {
-        this.files.update((list) => [f, ...list]);
-        this.newFileName = '';
-        this.newFileUrl = '';
-        this.newFileMime = 'application/octet-stream';
-        this.showFileForm.set(false);
-      },
-      error: () => {},
-    });
-  }
-  creatingDoc = signal(false);
-  showDocForm = signal(false);
-  newDocTitle = '';
-  newDocContent = '';
+  // ── Formulaire document / fichier ──────────────────────────────────────────
+  showDocForm     = signal(false);
   docFormType: 'file' | 'text' = 'file';
   docFileSelected = false;
-  docFileMime = '';
+  docFileMime     = '';
+  newDocTitle     = '';
+  newDocContent   = '';
+  creatingDoc     = signal(false);
 
-  onDocFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    this.newDocTitle = file.name;
-    this.docFileMime = file.type;
-    this.docFileSelected = true;
-    const reader = new FileReader();
-    reader.onload = (e) => { this.newDocContent = e.target?.result as string ?? ''; };
-    if (file.type.startsWith('text') || file.name.endsWith('.json') || file.name.endsWith('.md')) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsDataURL(file);
-    }
+  // ── Intégration GitHub ────────────────────────────────────────────────────
+  githubConnected    = signal(false);
+  connectingGithub   = signal(false);
+  githubRepo         = '';
+  githubToken        = '';
+  showGithubToken    = false;
+  githubRepos        = signal<{ name: string; fullName: string; private: boolean; description: string | null }[]>([]);
+  loadingRepos       = signal(false);
+  showRepoSelect     = signal(false);
+
+  get webhookUrl(): string {
+    return `${environment.apiUrl}/projects/${this.projectId}/github/webhook`;
   }
 
-  fileEmoji(mimeType: string): string {
-    if (!mimeType) return '📄';
-    if (mimeType.startsWith('image/')) return '🖼️';
-    if (mimeType.startsWith('video/')) return '🎬';
-    if (mimeType.startsWith('audio/')) return '🎵';
-    if (mimeType.includes('pdf')) return '📋';
-    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-    if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊';
-    return '📄';
-  }
-
-  projectId!: string;
-
-  filteredTasks = computed(() =>
-    this.tasks().filter((t) => {
-      if (this.filterStatus && t.status !== this.filterStatus) return false;
-      if (this.filterPriority && t.priority !== this.filterPriority) return false;
-      return true;
-    }),
-  );
-
+  // ── Injections ────────────────────────────────────────────────────────────
   constructor(
     private route: ActivatedRoute,
     private projectsService: ProjectsService,
     private tasksService: TasksService,
     private filesService: FilesService,
-    private deliverablesService: DeliverablesService,
     private announcementsService: AnnouncementsService,
     private documentsService: DocumentsService,
     private messagingService: MessagingService,
     private realtime: RealtimeService,
+    private http: HttpClient,
   ) {}
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit() {
     this.projectId = this.route.snapshot.paramMap.get('id')!;
     this.projectsService.get(this.projectId).subscribe((p) => this.project.set(p));
     this.loadTasks();
     this.loadChannels();
-
-    // Rejoindre la salle WebSocket du projet
     this.realtime.joinProject(this.projectId);
-
-    // Écouter les événements temps réel
-    this.realtime.on<Task>('task:created', (task) => {
-      this.tasks.update((list) => {
-        if (list.find((t) => t.id === task.id)) return list;
-        return [...list, task];
-      });
+    // Temps réel
+    this.realtime.on<Task>('task:created', (t) => {
+      if (!this.tasks().find((x) => x.id === t.id)) this.tasks.update((l) => [...l, t]);
     });
-    this.realtime.on<Task>('task:updated', (task) => {
-      this.tasks.update((list) => list.map((t) => (t.id === task.id ? { ...t, ...task } : t)));
+    this.realtime.on<Task>('task:updated', (t) => {
+      this.tasks.update((l) => l.map((x) => (x.id === t.id ? { ...x, ...t } : x)));
     });
   }
 
+  // ── Chargements ───────────────────────────────────────────────────────────
   loadTasks() {
     this.loading.set(true);
     this.tasksService.list(this.projectId).subscribe({
-      next: (tasks) => { this.tasks.set(tasks); this.loading.set(false); },
+      next: (t) => { this.tasks.set(t); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
   }
 
   loadChannels() {
     this.messagingService.listChannels(this.projectId).subscribe({
-      next: (channels) => this.channels.set(channels),
-      error: () => {},
+      next: (c) => this.channels.set(c), error: () => {},
     });
   }
 
   loadFiles() {
     this.filesService.list(this.projectId).subscribe({
-      next: (files) => this.files.set(files),
-      error: () => {},
-    });
-  }
-
-  loadAnnouncements() {
-    this.announcementsService.list(this.projectId).subscribe({
-      next: (items) => this.announcements.set(items),
-      error: () => {},
+      next: (f) => this.files.set(f), error: () => {},
     });
   }
 
   loadDocuments() {
     this.documentsService.list(this.projectId).subscribe({
-      next: (docs) => this.documents.set(docs),
-      error: () => {},
+      next: (d) => this.documents.set(d), error: () => {},
     });
   }
 
-  setView(v: ViewMode) {
-    this.view.set(v);
-    if (v === 'files') this.loadFiles();
-    if (v === 'announcements') this.loadAnnouncements();
-    if (v === 'documents') this.loadDocuments();
-    if (v === 'members') this.loadMembers();
+  loadAnnouncements() {
+    this.announcementsService.list(this.projectId).subscribe({
+      next: (a) => this.announcements.set(a), error: () => {},
+    });
   }
 
   loadMembers() {
@@ -242,8 +185,46 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
+  loadGithubCommits() {
+    this.http.get<any[]>(`${environment.apiUrl}/projects/${this.projectId}/activity`)
+      .subscribe({
+        next: (activities) => {
+          this.githubCommits.set(
+            activities.filter((a) => a.type === 'COMMIT_LINKED')
+          );
+        },
+        error: () => {},
+      });
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  setView(v: ViewMode) {
+    this.view.set(v);
+    if (v === 'documents')     { this.loadFiles(); this.loadDocuments(); }
+    if (v === 'announcements') this.loadAnnouncements();
+    if (v === 'members')       this.loadMembers();
+    if (v === 'github')        this.loadGithubCommits();
+  }
+
+  // ── Kanban drag & drop ────────────────────────────────────────────────────
   tasksByStatus(status: TaskStatus) {
     return this.tasks().filter((t) => t.status === status);
+  }
+
+  onDragStart(task: Task) { this.draggedTask = task; }
+
+  onDrop(status: TaskStatus) {
+    if (!this.draggedTask || this.draggedTask.status === status) return;
+    const task = this.draggedTask;
+    this.tasks.update((l) => l.map((t) => (t.id === task.id ? { ...t, status } : t)));
+    this.tasksService.updateStatus(this.projectId, task.id, status).subscribe();
+    this.draggedTask = null;
+  }
+
+  // ── Tâches ────────────────────────────────────────────────────────────────
+  openNewTaskForm() {
+    this.showNewTask.set(true);
+    this.loadMembers();
   }
 
   toggleNewTaskAssignee(userId: string) {
@@ -252,89 +233,151 @@ export class ProjectDetailComponent implements OnInit {
       : [...this.newTaskAssigneeIds, userId];
   }
 
-  onDragStart(task: Task) { this.draggedTask = task; }
-    if (!this.draggedTask || this.draggedTask.status === status) return;
-    const task = this.draggedTask;
-    this.tasks.update((list) => list.map((t) => (t.id === task.id ? { ...t, status } : t)));
-    this.tasksService.updateStatus(this.projectId, task.id, status).subscribe();
-    this.draggedTask = null;
-  }
-
   createTask() {
     if (!this.newTaskTitle.trim()) return;
     this.creatingTask.set(true);
     const labels = this.newTaskLabels
       ? this.newTaskLabels.split(',').map((l) => l.trim()).filter(Boolean)
       : [];
-    this.tasksService
-      .create(this.projectId, {
-        title: this.newTaskTitle,
-        priority: this.newTaskPriority,
-        assigneeIds: this.newTaskAssigneeIds.length ? this.newTaskAssigneeIds : undefined,
-        dueDate: this.newTaskDueDate || undefined,
-        labels,
-      } as any)
-      .subscribe({
-        next: (task) => {
-          this.tasks.update((list) => [...list, task]);
-          this.newTaskTitle = '';
-          this.newTaskPriority = 'MEDIUM';
-          this.newTaskAssigneeIds = [];
-          this.newTaskDueDate = '';
-          this.newTaskLabels = '';
-          this.showNewTask.set(false);
-          this.creatingTask.set(false);
-        },
-        error: () => this.creatingTask.set(false),
-      });
+    this.tasksService.create(this.projectId, {
+      title:      this.newTaskTitle,
+      priority:   this.newTaskPriority,
+      assigneeId: this.newTaskAssigneeIds[0] ?? undefined,
+      dueDate:    this.newTaskDueDate || undefined,
+      labels,
+    }).subscribe({
+      next: (task) => {
+        this.tasks.update((l) => [...l, task]);
+        this.newTaskTitle = ''; this.newTaskPriority = 'MEDIUM';
+        this.newTaskAssigneeIds = []; this.newTaskDueDate = ''; this.newTaskLabels = '';
+        this.showNewTask.set(false); this.creatingTask.set(false);
+      },
+      error: () => this.creatingTask.set(false),
+    });
   }
 
+  onTaskDetailChanged() { this.loadTasks(); }
+
+  // ── Annonces ──────────────────────────────────────────────────────────────
   createAnnouncement() {
     if (!this.newAnnouncementTitle.trim()) return;
     this.creatingAnnouncement.set(true);
-    this.announcementsService
-      .create(this.projectId, {
-        title: this.newAnnouncementTitle,
-        content: this.newAnnouncementContent,
-        pinned: this.newAnnouncementPinned,
-      })
-      .subscribe({
-        next: (a) => {
-          this.announcements.update((list) => [a, ...list]);
-          this.newAnnouncementTitle = '';
-          this.newAnnouncementContent = '';
-          this.newAnnouncementPinned = false;
-          this.showAnnouncementForm.set(false);
-          this.creatingAnnouncement.set(false);
-        },
-        error: () => this.creatingAnnouncement.set(false),
-      });
+    this.announcementsService.create(this.projectId, {
+      title:   this.newAnnouncementTitle,
+      content: this.newAnnouncementContent,
+      pinned:  this.newAnnouncementPinned,
+    }).subscribe({
+      next: (a) => {
+        this.announcements.update((l) => [a, ...l]);
+        this.newAnnouncementTitle = ''; this.newAnnouncementContent = '';
+        this.newAnnouncementPinned = false;
+        this.showAnnouncementForm.set(false); this.creatingAnnouncement.set(false);
+      },
+      error: () => this.creatingAnnouncement.set(false),
+    });
+  }
+
+  // ── Documents / Fichiers ──────────────────────────────────────────────────
+  onDocFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file  = input.files?.[0];
+    if (!file) return;
+    this.newDocTitle    = file.name;
+    this.docFileMime    = file.type;
+    this.docFileSelected = true;
+    const reader = new FileReader();
+    reader.onload = (e) => { this.newDocContent = (e.target?.result as string) ?? ''; };
+    if (file.type.startsWith('text') || file.name.match(/\.(json|md|csv|xml|yaml|yml)$/i)) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsDataURL(file);   // base64 pour les binaires
+    }
   }
 
   createDocument() {
     if (!this.newDocTitle.trim()) return;
     this.creatingDoc.set(true);
-    this.documentsService
-      .create(this.projectId, { title: this.newDocTitle, content: this.newDocContent })
+    this.documentsService.create(this.projectId, {
+      title:   this.newDocTitle,
+      content: this.newDocContent,
+    }).subscribe({
+      next: (doc) => {
+        this.documents.update((l) => [doc, ...l]);
+        this.newDocTitle = ''; this.newDocContent = ''; this.docFileSelected = false;
+        this.showDocForm.set(false); this.creatingDoc.set(false);
+      },
+      error: () => this.creatingDoc.set(false),
+    });
+  }
+
+  // ── GitHub ────────────────────────────────────────────────────────────────
+  loadGithubRepos() {
+    if (!this.githubToken.trim()) return;
+    this.loadingRepos.set(true);
+    this.http
+      .get<any[]>(
+        `${environment.apiUrl}/projects/${this.projectId}/github/repos?token=${encodeURIComponent(this.githubToken)}`,
+      )
       .subscribe({
-        next: (doc) => {
-          this.documents.update((list) => [doc, ...list]);
-          this.newDocTitle = '';
-          this.newDocContent = '';
-          this.showDocForm.set(false);
-          this.creatingDoc.set(false);
+        next: (repos) => {
+          this.githubRepos.set(repos);
+          this.showRepoSelect.set(true);
+          this.loadingRepos.set(false);
         },
-        error: () => this.creatingDoc.set(false),
+        error: (err) => {
+          this.loadingRepos.set(false);
+          this.showRepoSelect.set(false);
+          alert('Impossible de charger les depots : ' + (err?.error?.message ?? err?.message ?? 'Erreur'));
+        },
       });
   }
 
-  onTaskDetailChanged() {
-    this.loadTasks();
+  selectRepo(fullName: string) {
+    this.githubRepo = fullName;
+    this.showRepoSelect.set(false);
+  }
+
+  connectGithub() {
+    if (!this.githubRepo.trim() || !this.githubToken.trim()) return;
+    this.connectingGithub.set(true);
+    this.http
+      .post(`${environment.apiUrl}/projects/${this.projectId}/github/connect`, {
+        repoFullName: this.githubRepo,
+        githubToken:  this.githubToken,
+      })
+      .subscribe({
+        next: () => {
+          this.githubConnected.set(true);
+          this.githubToken = '';
+          this.connectingGithub.set(false);
+          this.loadGithubCommits();
+        },
+        error: () => this.connectingGithub.set(false),
+      });
+  }
+
+  copyWebhookUrl() {
+    navigator.clipboard.writeText(this.webhookUrl).catch(() => {});
+  }
+
+  // ── Utilitaires ───────────────────────────────────────────────────────────
+  fileEmoji(mimeType: string): string {
+    if (!mimeType)                                            return 'FIC';
+    if (mimeType.startsWith('image/'))                       return 'IMG';
+    if (mimeType.startsWith('video/'))                       return 'VID';
+    if (mimeType.startsWith('audio/'))                       return 'SON';
+    if (mimeType.includes('pdf'))                            return 'PDF';
+    if (mimeType.includes('word') || mimeType.includes('document')) return 'DOC';
+    if (mimeType.includes('sheet') || mimeType.includes('excel'))   return 'XLS';
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'PPT';
+    if (mimeType.includes('zip') || mimeType.includes('archive'))  return 'ZIP';
+    if (mimeType.includes('json') || mimeType.includes('xml'))     return 'CFG';
+    return 'FIC';
   }
 
   formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} o`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    if (!bytes || bytes < 1024)        return `${bytes ?? 0} o`;
+    if (bytes < 1024 * 1024)           return `${(bytes / 1024).toFixed(1)} Ko`;
     return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
   }
 }

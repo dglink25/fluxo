@@ -1,37 +1,18 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+/**
+ * Fluxo utilise exclusivement l'authentification OAuth (Google/GitHub).
+ * Il n'y a pas d'inscription par email/mot de passe.
+ * Ce composant redirige simplement vers la page de connexion.
+ */
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'flx-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './register.component.html',
-  styleUrl: '../login/login.component.scss',
+  template: '',
 })
 export class RegisterComponent {
-  fullName = '';
-  username = '';
-  email = '';
-  password = '';
-  loading = signal(false);
-  error = signal<string | null>(null);
-
-  constructor(private auth: AuthService, private router: Router) {}
-
-  submit() {
-    this.error.set(null);
-    this.loading.set(true);
-    this.auth
-      .register({ email: this.email, username: this.username, password: this.password, fullName: this.fullName })
-      .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
-        error: (err) => {
-          this.error.set(err?.error?.message ?? 'Inscription impossible');
-          this.loading.set(false);
-        },
-      });
+  constructor(router: Router) {
+    router.navigate(['/login'], { replaceUrl: true });
   }
 }

@@ -74,6 +74,25 @@
       <flx-theme-toggle></flx-theme-toggle>
     </div>
 
+    <!-- Notifications push -->
+    @if (pushSupported) {
+      <div class="flx-card row-card">
+        <div>
+          <span>Notifications push</span>
+          <p class="sub" style="font-size:12px;margin:2px 0 0">
+            @if (pushPermission() === 'granted') { Activées }
+            @else if (pushPermission() === 'denied') { Bloquées (autoriser dans les paramètres du navigateur) }
+            @else { Recevoir des alertes même quand l'app est fermée }
+          </p>
+        </div>
+        @if (pushPermission() === 'default') {
+          <button class="flx-btn flx-btn--primary" style="padding:7px 14px;font-size:13px" (click)="enablePush()">
+            Activer
+          </button>
+        }
+      </div>
+    }
+
     <!-- Déconnexion -->
     <button class="flx-btn flx-btn--ghost logout" (click)="auth.logout()">
       <flx-icon name="logout" [size]="16"></flx-icon>

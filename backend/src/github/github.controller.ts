@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
+  HttpCode,
+  Logger,
   Param,
   Post,
+  Query,
   UseGuards,
-  Logger,
-  HttpCode,
 } from '@nestjs/common';
 import { IsString } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,7 +28,22 @@ export class GithubController {
 
   constructor(private github: GithubService) {}
 
-  /** Connecter un dépôt GitHub (Owner uniquement, authentification requise) */
+  /**
+   * Liste les dépôts GitHub accessibles avec le token fourni.
+   * Utilisé pour le sélecteur de repo dans le frontend.
+   * Accessible par les Owners uniquement.
+   */
+  @UseGuards(JwtAuthGuard, ProjectRolesGuard)
+  @Roles('OWNER')
+  @Get('repos')
+  listRepos(@Query('token') token: string) {
+    if (!token) {
+      return { error: 'Parametre token manquant' };
+    }
+    return this.github.listUserRepos(token);
+  }
+
+  /** Connecter un dépôt GitHub au projet (crée le webhook automatiquement) */
   @UseGuards(JwtAuthGuard, ProjectRolesGuard)
   @Roles('OWNER')
   @Post('connect')
@@ -39,24 +56,21 @@ export class GithubController {
   }
 
   /**
-   * Webhook GitHub — endpoint public (pas de JwtAuthGuard).
-   * GitHub envoie un POST avec l'événement push.
-   * On vérifie le X-GitHub-Event header pour n'accepter que les push.
+   * Webhook GitHub — reçoit les événements push.
+   * Endpoint public (pas de JWT) — GitHub envoie directement ici.
    */
   @Post('webhook')
   @HttpCode(200)
   async handleWebhook(
     @Param('projectId') projectId: string,
     @Headers('x-github-event') event: string,
-    @Headers('x-hub-signature-256') signature: string,
     @Body() payload: any,
   ) {
     if (event !== 'push') {
-      this.logger.debug(`Événement GitHub ignoré : ${event}`);
+      this.logger.debug(`Evenement GitHub ignore : ${event}`);
       return { ok: true, skipped: true };
     }
-
-    this.logger.log(`Webhook push reçu pour le projet ${projectId}`);
+    this.logger.log(`Webhook push recu pour le projet ${projectId}`);
     return this.github.handlePushEvent(projectId, payload);
   }
 }

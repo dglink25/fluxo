@@ -212,7 +212,62 @@
   flex-wrap: wrap;
 }
 
-/* ── Kanban ── */
+/* ── Formulaire nouvelle tâche enrichi ── */
+.new-task-panel {
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.new-task-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.flex1 { flex: 1; min-width: 140px; }
+.sel-sm { width: 140px; flex-shrink: 0; }
+
+/* Assignation rapide */
+.quick-assign {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.assign-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--flx-text-faint);
+  flex-shrink: 0;
+}
+.quick-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 2px solid var(--flx-border);
+  font-size: 11px;
+  font-weight: 700;
+  overflow: hidden;
+  transition: border-color 0.1s, background 0.1s;
+}
+.quick-chip img { width: 100%; height: 100%; object-fit: cover; }
+.quick-chip.selected {
+  border-color: var(--flx-accent);
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+}
+.new-task-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.btn-sm { padding: 7px 14px; font-size: 13px; }
 .kanban {
   display: flex;
   gap: 14px;
@@ -479,4 +534,339 @@
   .list-filters .flx-input { max-width: none; flex: 1 1 120px; }
   .list-row .assignee { display: none; }
   .file-grid { grid-template-columns: 1fr; }
+}
+
+/* ══ Documents unifiés ══════════════════════════════════════════════════════ */
+
+/* Formulaire d'ajout document */
+.new-doc-panel {
+  padding: 22px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.doc-form-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+}
+.doc-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Zone d'upload drag-and-drop */
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border: 2px dashed var(--flx-border);
+  border-radius: var(--flx-radius-lg);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--flx-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.upload-area:hover {
+  border-color: var(--flx-accent);
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+}
+.upload-hint { font-size: 12px; color: var(--flx-text-faint); font-weight: 400; }
+
+/* Fichier sélectionné */
+.file-selected-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--flx-accent-soft);
+  border: 1px solid var(--flx-accent);
+  border-radius: var(--flx-radius-md);
+}
+.file-sel-name { font-size: 14px; font-weight: 600; margin: 0; }
+.file-sel-type { font-size: 11px; color: var(--flx-text-faint); }
+.file-emoji-lg { font-size: 28px; flex-shrink: 0; line-height: 1; }
+
+/* Zone de texte document */
+.doc-textarea {
+  resize: vertical;
+  font-family: var(--flx-font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 140px;
+}
+
+/* Grille documents */
+.docs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  transition: border-color 0.12s, background 0.12s;
+}
+.doc-item:hover { border-color: var(--flx-accent); background: var(--flx-bg-sunken); }
+.doc-item-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--flx-radius-md);
+  background: var(--flx-bg-sunken);
+  display: grid; place-items: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.text-item .doc-item-icon {
+  background: var(--flx-accent-soft);
+}
+.doc-item-info { flex: 1; min-width: 0; }
+.doc-item-name {
+  font-size: 14px; font-weight: 600; margin: 0 0 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.doc-item-meta { font-size: 11px; color: var(--flx-text-faint); }
+.doc-action { padding: 7px 10px; }
+
+/* ── Valeur / mot de passe field ── */
+.value-row {
+  display: flex;
+}
+.value-row .flx-input { flex: 1; border-radius: var(--flx-radius-sm) 0 0 var(--flx-radius-sm); }
+.eye-btn {
+  padding: 0 12px;
+  background: var(--flx-bg-sunken);
+  border: 1px solid var(--flx-border);
+  border-left: none;
+  border-radius: 0 var(--flx-radius-sm) var(--flx-radius-sm) 0;
+  color: var(--flx-text-muted);
+  cursor: pointer;
+}
+.eye-btn:hover { background: var(--flx-border); }
+.mono-input { font-family: var(--flx-font-mono); font-size: 13px; }
+
+/* ══ GitHub ══════════════════════════════════════════════════════════════════ */
+
+.github-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Carte connexion */
+.gh-connect-card {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.gh-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.gh-hero h3 { font-size: 18px; margin: 0; }
+.gh-hero .sub { max-width: 480px; }
+
+.gh-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 540px;
+}
+.gh-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--flx-text-muted);
+}
+.gh-hint {
+  font-size: 11px;
+  color: var(--flx-text-faint);
+  font-weight: 400;
+}
+.gh-hint code {
+  background: var(--flx-bg-sunken);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--flx-font-mono);
+}
+
+/* Comment ça marche */
+.gh-howto {
+  background: var(--flx-bg-sunken);
+  border-radius: var(--flx-radius-md);
+  padding: 16px 20px;
+}
+.gh-howto h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--flx-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.gh-howto ol {
+  margin: 0 0 14px;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--flx-text);
+  line-height: 1.8;
+}
+.gh-howto code {
+  background: var(--flx-bg-raised);
+  border: 1px solid var(--flx-border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--flx-font-mono);
+  font-size: 12px;
+  color: var(--flx-accent);
+}
+
+/* URL webhook */
+.gh-webhook-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--flx-text-muted);
+}
+.gh-webhook-url {
+  background: var(--flx-bg-raised);
+  border: 1px solid var(--flx-border);
+  padding: 5px 10px;
+  border-radius: var(--flx-radius-sm);
+  font-family: var(--flx-font-mono);
+  font-size: 12px;
+  color: var(--flx-text);
+  flex: 1;
+  min-width: 200px;
+  word-break: break-all;
+}
+
+/* Dépôt connecté */
+.gh-connected {
+  padding: 18px 22px;
+}
+.gh-connected-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.gh-repo-name { font-size: 14px; font-weight: 700; margin: 0 0 3px; }
+.gh-status { font-size: 12px; color: var(--flx-accent); }
+
+/* Commits */
+.commits-list { display: flex; flex-direction: column; gap: 8px; }
+.commit-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+.commit-sha {
+  font-size: 12px;
+  background: var(--flx-bg-sunken);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--flx-text-muted);
+  flex-shrink: 0;
+}
+.commit-info { flex: 1; min-width: 0; }
+.commit-msg {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.commit-meta { font-size: 11px; color: var(--flx-text-faint); }
+
+/* Mobile GitHub */
+@media (max-width: 768px) {
+  .gh-connect-card { padding: 20px; }
+  .gh-form { max-width: 100%; }
+  .gh-webhook-url { font-size: 11px; }
+  .docs-grid .doc-item { flex-wrap: wrap; }
+}
+
+/* ── Sélecteur de repo GitHub ── */
+.repo-select { display: flex; flex-direction: column; gap: 8px; }
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--flx-border);
+  border-radius: var(--flx-radius-md);
+  background: var(--flx-bg-raised);
+  scrollbar-width: thin;
+}
+
+.repo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--flx-border);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.1s;
+}
+.repo-item:last-child { border-bottom: none; }
+.repo-item:hover { background: var(--flx-bg-sunken); }
+.repo-item.selected { background: var(--flx-accent-soft); }
+
+.repo-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.repo-name  { font-size: 13px; font-weight: 600; color: var(--flx-text); }
+.repo-desc  { font-size: 11px; color: var(--flx-text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.repo-badge {
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--flx-accent-soft); color: var(--flx-accent);
+  flex-shrink: 0;
+}
+.repo-badge.private { background: var(--flx-bg-sunken); color: var(--flx-text-faint); }
+
+.selected-repo {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--flx-accent-soft);
+  border: 1px solid var(--flx-accent);
+  border-radius: var(--flx-radius-md);
+  font-size: 13px; color: var(--flx-accent);
+}
+.selected-repo .flx-mono { flex: 1; }
+.clear-btn { background: none; border: none; color: var(--flx-accent); cursor: pointer; line-height: 0; padding: 0; }
+
+/* Badge commit fermé */
+.closed-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 7px; border-radius: 999px;
+  background: var(--flx-accent-soft); color: var(--flx-accent);
+  margin-left: 8px;
 }

@@ -237,14 +237,14 @@ export class TaskDetailComponent implements OnInit {
   }
 
   fileIcon(type?: string | null): string {
-    if (!type) return '📄';
-    if (type.startsWith('image/')) return '🖼️';
-    if (type.startsWith('audio/')) return '🎵';
-    if (type.startsWith('video/')) return '🎬';
-    if (type.includes('pdf')) return '📋';
-    if (type.includes('word')) return '📝';
-    if (type.includes('sheet')) return '📊';
-    return '📎';
+    if (!type) return 'DOC';
+    if (type.startsWith('image/')) return 'IMG';
+    if (type.startsWith('audio/')) return 'SON';
+    if (type.startsWith('video/')) return 'VID';
+    if (type.includes('pdf')) return 'PDF';
+    if (type.includes('word')) return 'DOC';
+    if (type.includes('sheet')) return 'XLS';
+    return 'FIC';
   }
 
   assigneesLabel(): string {

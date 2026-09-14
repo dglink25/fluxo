@@ -337,10 +337,10 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
   lastMessage(conv: DirectMessageConversation): string {
     const last = conv.messages?.[0];
     if (!last) return '';
-    if (last.type === 'IMAGE') return '🖼️ Image';
-    if (last.type === 'AUDIO') return '🎵 Audio';
-    if (last.type === 'VIDEO') return '🎬 Vidéo';
-    if (last.type === 'FILE') return '📎 Fichier';
+    if (last.type === 'IMAGE') return '[Image]';
+    if (last.type === 'AUDIO') return '[Audio]';
+    if (last.type === 'VIDEO') return '[Video]';
+    if (last.type === 'FILE') return '[Fichier]';
     return last.content;
   }
 

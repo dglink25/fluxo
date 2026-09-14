@@ -277,6 +277,81 @@ export class MailService {
     await this.send(to, subject, html, text);
   }
 
+  /** Email commit lié à une tâche — notifie tous les membres */
+  async sendCommitLinkedEmail(
+    to: string, taskTitle: string, code: string, sha: string,
+    commitMsg: string, author: string, newStatus: string | null,
+  ) {
+    const statusLine = newStatus ? `<p style="color:#374151;">Nouveau statut : <strong style="color:#166553;">${newStatus}</strong></p>` : '';
+    const statusText = newStatus ? `Nouveau statut : ${newStatus}\n` : '';
+    const subject = `[${code}] Commit ${sha} — ${taskTitle}`;
+    const text = `Commit ${sha} lié à la tâche [${code}] "${taskTitle}".\nAuteur : ${author}\n${statusText}Message : "${commitMsg}"\n\nConnectez-vous à Fluxo pour voir les détails.`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr><td style="background:#166553;padding:20px;text-align:center;">
+          <span style="font-size:24px;font-weight:900;color:white;">Fluxo</span>
+        </td></tr>
+        <tr><td style="padding:28px 32px;">
+          <h2 style="color:#111827;margin:0 0 12px;font-size:18px;">
+            Nouveau commit lié à <code style="background:#f3f4f6;padding:2px 8px;border-radius:4px;">${code}</code>
+          </h2>
+          <p style="color:#374151;font-size:15px;line-height:1.6;">
+            Tâche : <strong>${taskTitle}</strong><br/>
+            Commit : <code style="font-family:monospace;">${sha}</code><br/>
+            Auteur : ${author}
+          </p>
+          ${statusLine}
+          <p style="background:#f9fafb;border-left:3px solid #166553;padding:10px 14px;font-style:italic;color:#6b7280;margin:16px 0;font-size:13px;">"${commitMsg}"</p>
+        </td></tr>
+        <tr><td style="background:#f9fafb;padding:12px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+          <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+    await this.send(to, subject, html, text);
+  }
+
+  /** Email d'avertissement — code non trouvé ou commit sans code */
+  async sendCommitWarningEmail(to: string, code: string, sha: string, commitMsg: string) {
+    const codeLabel = code === 'aucun' ? 'aucun code de tâche' : `code ${code} introuvable`;
+    const subject = `[Fluxo] Push détecté — ${codeLabel}`;
+    const text = `Un push a été détecté (commit ${sha}) mais ${codeLabel} n'a pas pu être identifié.\n\nMessage du commit : "${commitMsg}"\n\nUtilisez le format : git commit -m "message -_statut(CODE)"`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr><td style="background:#d97706;padding:20px;text-align:center;">
+          <span style="font-size:24px;font-weight:900;color:white;">Fluxo</span>
+        </td></tr>
+        <tr><td style="padding:28px 32px;">
+          <h2 style="color:#111827;margin:0 0 12px;font-size:18px;">Push détecté sans correspondance</h2>
+          <p style="color:#374151;font-size:15px;line-height:1.6;">
+            Le commit <code style="font-family:monospace;">${sha}</code> a été reçu
+            mais <strong>${codeLabel}</strong> dans ce projet.
+          </p>
+          <p style="background:#fef3c7;border-left:3px solid #d97706;padding:10px 14px;font-size:13px;margin:16px 0;">
+            <strong>Format attendu :</strong><br/>
+            <code>git commit -m "message -_close(FLX-001)"</code>
+          </p>
+          <p style="color:#6b7280;font-size:13px;font-style:italic;">"${commitMsg}"</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+    await this.send(to, subject, html, text);
+  }
+
   /** Test de connexion SMTP (utilisé par /api/health) */
   async testConnection(): Promise<{ ok: boolean; message: string; hint?: string }> {
     if (!this.transporter) {

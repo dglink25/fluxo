@@ -81,6 +81,18 @@ export class TaskDetailComponent implements OnInit {
     });
   }
 
+  // ── Code tâche ────────────────────────────────────────────────────────────
+  codeCopied = signal(false);
+
+  copyTaskCode() {
+    const code = this.task()?.code;
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => {
+      this.codeCopied.set(true);
+      setTimeout(() => this.codeCopied.set(false), 2000);
+    }).catch(() => {});
+  }
+
   // ── Modifier / Supprimer tâche ────────────────────────────────────────────
 
   editMode = signal(false);

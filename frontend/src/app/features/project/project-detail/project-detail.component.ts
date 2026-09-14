@@ -101,11 +101,9 @@ export class ProjectDetailComponent implements OnInit {
   creatingDoc     = signal(false);
 
   // ── Intégration GitHub ────────────────────────────────────────────────────
-  githubConnected    = signal(false);
+  githubConnectedRepos = signal<{ id: string; repoFullName: string; createdAt: string }[]>([]);
   connectingGithub   = signal(false);
   githubRepo         = '';
-  githubToken        = '';
-  showGithubToken    = false;
   githubRepos        = signal<{ name: string; fullName: string; private: boolean; description: string | null }[]>([]);
   loadingRepos       = signal(false);
   showRepoSelect     = signal(false);
@@ -200,6 +198,12 @@ export class ProjectDetailComponent implements OnInit {
             activities.filter((a) => a.type === 'COMMIT_LINKED')
           );
         },
+        error: () => {},
+      });
+    // Charger aussi les repos connectés depuis la BDD
+    this.http.get<any[]>(`${environment.apiUrl}/projects/${this.projectId}/github/connected`)
+      .subscribe({
+        next: (repos) => this.githubConnectedRepos.set(repos),
         error: () => {},
       });
   }
@@ -319,7 +323,7 @@ export class ProjectDetailComponent implements OnInit {
 
   // ── GitHub ────────────────────────────────────────────────────────────────
 
-  /** Charge les repos depuis l'API (token stocké côté backend) */
+  /** Charge les repos disponibles (token stocké côté backend) */
   loadGithubRepos() {
     this.loadingRepos.set(true);
     this.http
@@ -347,12 +351,18 @@ export class ProjectDetailComponent implements OnInit {
     if (!this.githubRepo.trim()) return;
     this.connectingGithub.set(true);
     this.http
-      .post(`${environment.apiUrl}/projects/${this.projectId}/github/connect`, {
+      .post<any>(`${environment.apiUrl}/projects/${this.projectId}/github/connect`, {
         repoFullName: this.githubRepo,
       })
       .subscribe({
-        next: () => {
-          this.githubConnected.set(true);
+        next: (repo) => {
+          // Persiste dans la liste des repos connectés
+          this.githubConnectedRepos.update((list) => {
+            const exists = list.find((r) => r.repoFullName === repo.repoFullName);
+            return exists ? list : [...list, repo];
+          });
+          this.githubRepo = '';
+          this.showRepoSelect.set(false);
           this.connectingGithub.set(false);
           this.loadGithubCommits();
         },
@@ -360,13 +370,25 @@ export class ProjectDetailComponent implements OnInit {
       });
   }
 
-  /** Redirige l'utilisateur vers le flux OAuth GitHub pour lier son compte */
+  disconnectRepo(repoFullName: string) {
+    if (!confirm(`Déconnecter ${repoFullName} du projet ?`)) return;
+    this.http
+      .delete(`${environment.apiUrl}/projects/${this.projectId}/github/disconnect?repo=${encodeURIComponent(repoFullName)}`)
+      .subscribe({
+        next: () => this.githubConnectedRepos.update((l) => l.filter((r) => r.repoFullName !== repoFullName)),
+        error: () => {},
+      });
+  }
+
+  /** Redirige vers le flux OAuth GitHub pour lier son compte */
   linkGithubAccount() {
     const token = this.authService.getAccessToken();
     if (!token) return;
-    // On passe le JWT en query param — l'endpoint /init est public,
-    // il vérifie le token lui-même et stocke le userId dans un cookie httpOnly.
     window.location.href = `${environment.apiUrl}/auth/github/link/init?token=${encodeURIComponent(token)}`;
+  }
+
+  isRepoConnected(fullName: string): boolean {
+    return this.githubConnectedRepos().some((r) => r.repoFullName === fullName);
   }
 
   copyWebhookUrl() {

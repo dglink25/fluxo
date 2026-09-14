@@ -9,6 +9,7 @@ export interface TaskAssignee {
 export interface Task {
   id: string;
   projectId: string;
+  code?: string | null;
   title: string;
   description?: string | null;
   status: TaskStatus;

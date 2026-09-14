@@ -6,6 +6,7 @@ import { GithubAuthGuard } from './guards/github-auth.guard';
 import { GithubLinkGuard } from './guards/github-link.guard';
 import { PendingPhoneGuard } from './guards/pending-phone.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -203,7 +204,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtRefreshGuard)
   refresh(@CurrentUser() user: any) {
     return this.authService.refresh(user.userId);
   }

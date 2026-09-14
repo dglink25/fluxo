@@ -1,14 +1,14 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, User } from '../models/user.model';
 
-const ACCESS_TOKEN_KEY = 'fluxo-access-token';
+const ACCESS_TOKEN_KEY  = 'fluxo-access-token';
 const REFRESH_TOKEN_KEY = 'fluxo-refresh-token';
 const PENDING_TOKEN_KEY = 'fluxo-pending-token';
-const USER_KEY = 'fluxo-user';
+const USER_KEY          = 'fluxo-user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -68,6 +68,38 @@ export class AuthService {
 
   getAccessToken(): string | null {
     return localStorage.getItem(ACCESS_TOKEN_KEY);
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  }
+
+  /**
+   * Utilise le refreshToken pour obtenir un nouveau accessToken.
+   * Appelé automatiquement par l'interceptor sur les 401.
+   * Retourne le nouveau accessToken (string).
+   */
+  refreshAccessToken() {
+    const refreshToken = this.getRefreshToken();
+    // On envoie le refreshToken dans le header pour que le backend puisse vérifier
+    return this.http.post<AuthResponse>(
+      `${environment.apiUrl}/auth/refresh`,
+      {},
+      { headers: { Authorization: `Bearer ${refreshToken}` } },
+    ).pipe(
+      tap((res) => {
+        // Mettre à jour les tokens sans toucher à la session utilisateur
+        localStorage.setItem(ACCESS_TOKEN_KEY, res.accessToken);
+        if (res.refreshToken) {
+          localStorage.setItem(REFRESH_TOKEN_KEY, res.refreshToken);
+        }
+        if (res.user) {
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          this.currentUser.set(res.user);
+        }
+      }),
+      map((res) => res.accessToken),
+    );
   }
 
   private readStoredUser(): User | null {

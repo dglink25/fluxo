@@ -21,25 +21,29 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Si l'utilisateur est déjà connecté, rafraîchir silencieusement
-    // pour mettre à jour avatarUrl, provider, githubLinked, etc.
     if (this.auth.isAuthenticated()) {
       this.realtime.connect();
-      const token = this.auth.getAccessToken();
-      if (token) {
-        this.http.post<any>(`${environment.apiUrl}/auth/refresh`, {}).subscribe({
-          next: (session) => {
-            if (!session.pending && session.user) {
-              this.auth.storeFullSession({
-                accessToken: session.accessToken,
-                refreshToken: session.refreshToken,
-                user: session.user,
+      // Rafraîchir silencieusement le profil au démarrage via /users/me
+      // (utilise l'accessToken courant, pas de besoin de refresh si pas expiré)
+      this.http.get<any>(`${environment.apiUrl}/users/me`).subscribe({
+        next: (user) => {
+          if (user) {
+            const current = this.auth.currentUser();
+            if (current) {
+              this.auth.currentUser.set({
+                ...current,
+                avatarUrl:     user.avatarUrl     ?? current.avatarUrl,
+                fullName:      user.fullName      ?? current.fullName,
+                provider:      user.provider      ?? current.provider,
+                githubLinked:  user.githubLinked  ?? current.githubLinked,
+                githubUsername: user.githubUsername ?? current.githubUsername,
               });
+              localStorage.setItem('fluxo-user', JSON.stringify(this.auth.currentUser()));
             }
-          },
-          error: () => {}, // silencieux — session peut-être expirée
-        });
-      }
+          }
+        },
+        error: () => {}, // silencieux — l'interceptor gère le refresh si 401
+      });
     }
   }
 }

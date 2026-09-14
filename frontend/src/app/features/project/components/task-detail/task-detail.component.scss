@@ -378,3 +378,34 @@ h2 {
   .assignee-item { min-width: 56px; padding: 6px; }
   .assignee-avatar { width: 30px; height: 30px; }
 }
+
+/* Code unique de tâche */
+.task-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 6px;
+}
+.task-code {
+  font-family: var(--flx-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+.copy-code-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  background: var(--flx-bg-sunken); border: 1px solid var(--flx-border);
+  color: var(--flx-text-muted); cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  &:hover { background: var(--flx-accent-soft); color: var(--flx-accent); }
+}
+.commit-hint {
+  font-size: 10px; color: var(--flx-text-faint);
+  background: var(--flx-bg-sunken); padding: 2px 7px; border-radius: 4px;
+}

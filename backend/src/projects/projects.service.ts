@@ -22,6 +22,13 @@ export class ProjectsService {
   }
 
   async create(userId: string, dto: CreateProjectDto) {
+    // Générer un préfixe depuis le nom (3 lettres majuscules)
+    const taskPrefix = dto.name
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 3)
+      .padEnd(3, 'X') || 'FLX';
+
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.create({
         data: {
@@ -30,6 +37,7 @@ export class ProjectsService {
           visibility: dto.visibility ?? 'PRIVATE',
           ownerId: userId,
           workspaceId: dto.workspaceId ?? null,
+          taskPrefix,
         },
       });
       // Inscrire le créateur comme OWNER

@@ -29,11 +29,20 @@ export class UsersService {
         avatarUrl: true,
         bio: true,
         phoneVerified: true,
+        provider: true,
+        githubAccessToken: true,
+        githubUsername: true,
         createdAt: true,
       },
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
-    return user;
+
+    // Ne pas exposer le token GitHub brut — juste indiquer s'il est lié
+    const { githubAccessToken, ...rest } = user;
+    return {
+      ...rest,
+      githubLinked: !!githubAccessToken,
+    };
   }
 
   async findByUsername(username: string) {

@@ -16,6 +16,16 @@
     <h1>Bienvenue sur Fluxo</h1>
     <p class="sub">Connectez-vous avec votre compte Google ou GitHub pour continuer.</p>
 
+    <!-- Message d'erreur OAuth -->
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+        </svg>
+        {{ errorMessage() }}
+      </div>
+    }
+
     <div class="providers">
       <button class="flx-btn provider-btn google-btn" type="button" (click)="loginWith('google')">
         <svg class="provider-icon" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">

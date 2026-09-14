@@ -20,6 +20,21 @@ export class TasksService {
     _count: { select: { comments: true } },
   };
 
+  /**
+   * Génère un code unique pour une tâche dans un projet.
+   * Format : PREFIX-NNN (ex. FLX-001, API-042)
+   * Le compteur est incrémenté atomiquement via une transaction Prisma.
+   */
+  private async generateTaskCode(projectId: string): Promise<string> {
+    const project = await this.prisma.project.update({
+      where: { id: projectId },
+      data: { taskCounter: { increment: 1 } },
+      select: { taskCounter: true, taskPrefix: true },
+    });
+    const num = project.taskCounter.toString().padStart(3, '0');
+    return `${project.taskPrefix}-${num}`;
+  }
+
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
   async findAllForProject(
@@ -65,9 +80,13 @@ export class TasksService {
   async create(projectId: string, userId: string, dto: CreateTaskDto) {
     const { assigneeIds, ...rest } = dto as any;
 
+    // Générer un code unique pour la tâche (FLX-001, FLX-002, etc.)
+    const code = await this.generateTaskCode(projectId);
+
     const task = await this.prisma.task.create({
       data: {
         projectId,
+        code,
         title: dto.title,
         description: dto.description,
         priority: dto.priority ?? 'MEDIUM',

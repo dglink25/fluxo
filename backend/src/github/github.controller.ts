@@ -1,14 +1,6 @@
 import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  HttpCode,
-  Logger,
-  Param,
-  Post,
-  Query,
-  UseGuards,
+  Body, Controller, Delete, Get, Headers,
+  HttpCode, Logger, Param, Post, Query, UseGuards,
 } from '@nestjs/common';
 import { IsString } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -27,41 +19,48 @@ export class GithubController {
 
   constructor(private github: GithubService) {}
 
-  /**
-   * Liste les dépôts GitHub de l'utilisateur connecté.
-   * Utilise le token GitHub stocké lors de la connexion OAuth — aucun token manuel requis.
-   */
+  /** Liste les repos GitHub disponibles (via token stocké) */
   @UseGuards(JwtAuthGuard, ProjectRolesGuard)
-  @Roles('OWNER')
+  @Roles('OWNER', 'ADMIN')
   @Get('repos')
-  async listRepos(@CurrentUser() user: any) {
+  async listAvailableRepos(@CurrentUser() user: any) {
     const token = await this.github.getTokenForUser(user.userId);
     return this.github.listUserRepos(token);
   }
 
-  /**
-   * Connecter un dépôt GitHub au projet (crée le webhook automatiquement).
-   * Le token est récupéré depuis le compte de l'utilisateur connecté.
-   */
+  /** Liste les repos connectés au projet (depuis la BDD) */
   @UseGuards(JwtAuthGuard, ProjectRolesGuard)
-  @Roles('OWNER')
+  @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')
+  @Get('connected')
+  listConnected(@Param('projectId') projectId: string) {
+    return this.github.listProjectRepositories(projectId);
+  }
+
+  /** Connecter un dépôt au projet */
+  @UseGuards(JwtAuthGuard, ProjectRolesGuard)
+  @Roles('OWNER', 'ADMIN')
   @Post('connect')
-  async connectRepository(
+  connectRepository(
     @Param('projectId') projectId: string,
     @CurrentUser() user: any,
     @Body() dto: ConnectRepoDto,
   ) {
-    const token = await this.github.getTokenForUser(user.userId);
-    return this.github.connectRepository(projectId, user.userId, {
-      repoFullName: dto.repoFullName,
-      githubToken: token,
-    });
+    return this.github.connectRepository(projectId, user.userId, dto.repoFullName);
   }
 
-  /**
-   * Webhook GitHub — reçoit les événements push.
-   * Endpoint public (pas de JWT) — GitHub envoie directement ici.
-   */
+  /** Déconnecter un dépôt */
+  @UseGuards(JwtAuthGuard, ProjectRolesGuard)
+  @Roles('OWNER', 'ADMIN')
+  @Delete('disconnect')
+  disconnectRepository(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: any,
+    @Query('repo') repo: string,
+  ) {
+    return this.github.disconnectRepository(projectId, repo, user.userId);
+  }
+
+  /** Webhook GitHub — push events */
   @Post('webhook')
   @HttpCode(200)
   async handleWebhook(
@@ -70,7 +69,6 @@ export class GithubController {
     @Body() payload: any,
   ) {
     if (event !== 'push') {
-      this.logger.debug(`Evenement GitHub ignore : ${event}`);
       return { ok: true, skipped: true };
     }
     this.logger.log(`Webhook push recu pour le projet ${projectId}`);

@@ -176,6 +176,10 @@ model Project {
   archived    Boolean           @default(false)
   ownerId     String
   workspaceId String?
+  /// Préfixe du code de tâche (ex. FLX, API, WEB) — généré depuis le nom
+  taskPrefix  String            @default("FLX")
+  /// Compteur auto-incrémenté pour les codes de tâche
+  taskCounter Int               @default(0)
 
   owner     User       @relation("ProjectOwner", fields: [ownerId], references: [id])
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
@@ -183,14 +187,15 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members     ProjectMember[]
-  tasks       Task[]
-  invitations Invitation[]
-  activities  Activity[]
-  channels    Channel[]
-  files       ProjectFile[]
-  secrets     Secret[]
+  members           ProjectMember[]
+  tasks             Task[]
+  invitations       Invitation[]
+  activities        Activity[]
+  channels          Channel[]
+  files             ProjectFile[]
+  secrets           Secret[]
   confidentialFiles ConfidentialFile[]
+  repositories      ProjectRepository[]
 }
 
 model ProjectMember {
@@ -231,11 +236,12 @@ model Invitation {
 model Task {
   id          String       @id @default(uuid())
   projectId   String
+  code        String?      /// Code unique ex. FLX-042 — généré à la création
   title       String
   description String?
   status      TaskStatus   @default(TODO)
   priority    TaskPriority @default(MEDIUM)
-  assigneeId  String?      /// Assigné principal (rétrocompat)
+  assigneeId  String?
   dueDate     DateTime?
   labels      String[]     @default([])
   position    Int          @default(0)
@@ -248,6 +254,8 @@ model Task {
   comments     Comment[]
   deliverables Deliverable[]
   assignees    TaskAssignee[]
+
+  @@unique([projectId, code])
 }
 
 model SubTask {
@@ -456,6 +464,22 @@ model ConfidentialFileAccessLog {
   createdAt  DateTime @default(now())
 
   file ConfidentialFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+// ─── Intégration GitHub ───────────────────────────────────────────────────────
+
+/// Dépôt GitHub connecté à un projet (persisté en BDD)
+model ProjectRepository {
+  id           String   @id @default(uuid())
+  projectId    String
+  repoFullName String
+  hookId       Int?     /// ID du webhook GitHub (0 si déjà existant)
+  connectedBy  String   /// userId de celui qui a connecté
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, repoFullName])
 }
 
 // ─── Activité & Notifications ─────────────────────────────────────────────────

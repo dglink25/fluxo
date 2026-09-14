@@ -4,7 +4,7 @@ import { GithubController } from './github.controller';
 import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
-  imports: [RealtimeModule],   // pour RealtimeGateway dans GithubService
+  imports: [RealtimeModule],
   controllers: [GithubController],
   providers: [GithubService],
 })

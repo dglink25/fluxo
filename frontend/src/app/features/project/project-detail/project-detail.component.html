@@ -434,48 +434,73 @@
           </div>
         }
 
-        <!-- Cas 2 : GitHub lié — sélection du repo -->
-        @else if (!githubConnected()) {
-          <div class="flx-card gh-connect-card">
+        <!-- Cas 2 : GitHub lié -->
+        @else {
+          <!-- Repos déjà connectés -->
+          @if (githubConnectedRepos().length > 0) {
+            <div class="flx-card gh-repos-card">
+              <h4 class="gh-repos-title">
+                <flx-icon name="github" [size]="16" color="var(--flx-accent)"></flx-icon>
+                Dépôts connectés ({{ githubConnectedRepos().length }})
+              </h4>
+              <div class="connected-repos-list">
+                @for (repo of githubConnectedRepos(); track repo.id) {
+                  <div class="connected-repo-item">
+                    <div class="repo-item-info">
+                      <span class="repo-item-name flx-mono">{{ repo.repoFullName }}</span>
+                      <span class="repo-item-date sub">Connecté le {{ repo.createdAt | date:'d MMM yyyy' }}</span>
+                    </div>
+                    <button class="flx-btn flx-btn--ghost btn-sm repo-disconnect-btn"
+                      (click)="disconnectRepo(repo.repoFullName)">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                      Déconnecter
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
 
+          <!-- Connecter un nouveau dépôt -->
+          <div class="flx-card gh-connect-card">
             <div class="gh-hero">
-              <flx-icon name="github" [size]="40" color="var(--flx-text-muted)"></flx-icon>
-              <h3>Connecter un dépôt GitHub</h3>
-              <p class="sub">
-                Sélectionnez un dépôt à associer à ce projet. Les commits seront automatiquement
-                liés aux tâches et les statuts mis à jour.
-              </p>
+              <flx-icon name="github" [size]="36" color="var(--flx-text-muted)"></flx-icon>
+              <h3>Connecter un dépôt</h3>
               @if (currentUser?.githubUsername) {
                 <span class="gh-account-badge">
                   <flx-icon name="github" [size]="13"></flx-icon>
-                  Connecté en tant que <strong>{{ currentUser?.githubUsername }}</strong>
+                  <strong>{{ currentUser?.githubUsername }}</strong>
                 </span>
               }
             </div>
 
             <div class="gh-form">
-
-              <!-- Charger les repos -->
               @if (!showRepoSelect() || githubRepos().length === 0) {
                 <button class="flx-btn flx-btn--primary" (click)="loadGithubRepos()"
                   [disabled]="loadingRepos()">
                   <flx-icon name="refresh" [size]="14" color="white"></flx-icon>
-                  {{ loadingRepos() ? 'Chargement des dépôts…' : 'Afficher mes dépôts' }}
+                  {{ loadingRepos() ? 'Chargement…' : 'Afficher mes dépôts' }}
                 </button>
               }
 
-              <!-- Sélecteur de repo -->
               @if (showRepoSelect() && githubRepos().length > 0) {
                 <div class="repo-select">
-                  <label class="gh-label">Sélectionnez un dépôt ({{ githubRepos().length }} dépôts)</label>
+                  <label class="gh-label">Sélectionnez un dépôt ({{ githubRepos().length }})</label>
                   <div class="repo-list">
                     @for (repo of githubRepos(); track repo.fullName) {
-                      <button class="repo-item" [class.selected]="githubRepo === repo.fullName"
+                      <button class="repo-item"
+                        [class.selected]="githubRepo === repo.fullName"
+                        [class.already-connected]="isRepoConnected(repo.fullName)"
                         (click)="selectRepo(repo.fullName)">
                         <div class="repo-info">
                           <span class="repo-name flx-mono">{{ repo.fullName }}</span>
                           @if (repo.description) {
                             <span class="repo-desc">{{ repo.description }}</span>
+                          }
+                          @if (isRepoConnected(repo.fullName)) {
+                            <span class="already-badge">Déjà connecté</span>
                           }
                         </div>
                         <span class="repo-badge" [class.private]="repo.private">
@@ -490,7 +515,6 @@
                 </div>
               }
 
-              <!-- Dépôt sélectionné -->
               @if (githubRepo) {
                 <div class="selected-repo">
                   <flx-icon name="github" [size]="14" color="var(--flx-accent)"></flx-icon>
@@ -499,7 +523,6 @@
                     <flx-icon name="x" [size]="12"></flx-icon>
                   </button>
                 </div>
-
                 <button class="flx-btn flx-btn--primary"
                   (click)="connectGithub()"
                   [disabled]="connectingGithub() || !githubRepo.trim()">
@@ -507,17 +530,20 @@
                   {{ connectingGithub() ? 'Connexion…' : 'Connecter ce dépôt' }}
                 </button>
               }
-
             </div>
 
             <div class="gh-howto">
-              <h4>Comment ça marche</h4>
-              <ol>
-                <li>Sélectionnez un dépôt — le webhook est configuré automatiquement</li>
-                <li>Dans vos commits, référencez une tâche : <code>#TASK-{{'{'}}id{{'}'}}</code></li>
-                <li>Pour fermer automatiquement : <code>closes #TASK-{{'{'}}id{{'}'}}</code></li>
-                <li>Chaque push notifie tous les membres par mail et notification</li>
-              </ol>
+              <h4>Format des commits</h4>
+              <div class="commit-format-box">
+                <code class="commit-example">git commit -m "message -_close(CODE)"</code>
+                <div class="commit-statuts">
+                  <span><code>-_close(CODE)</code> → DONE</span>
+                  <span><code>-_inprogress(CODE)</code> → IN_PROGRESS</span>
+                  <span><code>-_review(CODE)</code> → IN_REVIEW</span>
+                  <span><code>-_todo(CODE)</code> → TODO</span>
+                </div>
+                <p class="sub" style="margin-top:8px">Le code de chaque tâche est affiché dans sa fiche. Vous pouvez lier plusieurs tâches : <code>-_close(FLX-001,FLX-002)</code></p>
+              </div>
               <div class="gh-webhook-info">
                 <p>URL webhook (configurée automatiquement) :</p>
                 <code class="gh-webhook-url">{{ webhookUrl }}</code>
@@ -526,28 +552,10 @@
                 </button>
               </div>
             </div>
-
           </div>
-
-        } @else {
-
-          <!-- Dépôt connecté -->
-          <div class="flx-card gh-connected">
-            <div class="gh-connected-header">
-              <flx-icon name="github" [size]="22" color="var(--flx-accent)"></flx-icon>
-              <div>
-                <p class="gh-repo-name flx-mono">{{ githubRepo }}</p>
-                <span class="gh-status">Connecté — Webhook actif</span>
-              </div>
-              <button class="flx-btn flx-btn--ghost btn-sm"
-                (click)="githubConnected.set(false); githubRepos.set([]); showRepoSelect.set(false)">
-                Modifier
-              </button>
-            </div>
-          </div>
-
         }
 
+        <!-- Commits liés -->
         @if (githubCommits().length > 0) {
           <h4 class="section-label" style="margin-top:20px">
             <flx-icon name="activity" [size]="14"></flx-icon>
@@ -561,8 +569,11 @@
                   <p class="commit-msg">{{ commit.details.message }}</p>
                   <span class="commit-meta flx-mono">
                     &#64;{{ commit.details.author }} · {{ commit.createdAt | date:'d MMM HH:mm' }}
-                    @if (commit.details.closedTask) {
-                      <span class="closed-badge">tâche fermée</span>
+                    @if (commit.details.code) {
+                      <span class="code-badge">{{ commit.details.code }}</span>
+                    }
+                    @if (commit.details.newStatus) {
+                      <span class="closed-badge">→ {{ commit.details.newStatus }}</span>
                     }
                   </span>
                 </div>
@@ -574,12 +585,6 @@
                 }
               </div>
             }
-          </div>
-        } @else if (githubConnected()) {
-          <div class="flx-card empty-panel" style="margin-top:16px">
-            <flx-icon name="activity" [size]="28" color="var(--flx-text-faint)"></flx-icon>
-            <p>Aucun commit lié pour l'instant.</p>
-            <p class="sub">Utilisez <code>#TASK-id</code> dans vos messages de commit.</p>
           </div>
         }
 

@@ -28,9 +28,7 @@ import { environment } from '../../../../environments/environment';
       background: var(--flx-bg);
     }
     .spinner {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
+      width: 28px; height: 28px; border-radius: 50%;
       border: 3px solid var(--flx-border);
       border-top-color: var(--flx-accent);
       animation: spin 0.8s linear infinite;
@@ -48,13 +46,13 @@ export class AuthCallbackComponent implements OnInit {
 
   ngOnInit() {
     const params = this.route.snapshot.queryParamMap;
-    const pending = params.get('pending');
-    const accessToken = params.get('accessToken');
+    const pending      = params.get('pending');
+    const accessToken  = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
 
+    // ── Flux "téléphone en attente" ──────────────────────────────────────────
     if (pending) {
       this.auth.storePendingToken(pending);
-      // Vérifier si une invitation était en attente avant le login
       const pendingInvite = sessionStorage.getItem('fluxo-pending-invite');
       if (pendingInvite) {
         this.router.navigate(['/verify-phone'], {
@@ -66,23 +64,28 @@ export class AuthCallbackComponent implements OnInit {
       return;
     }
 
+    // ── Flux normal OAuth (tokens dans l'URL) ────────────────────────────────
     if (accessToken && refreshToken) {
-      // On récupère le profil complet via /auth/refresh pour peupler currentUser.
-      localStorage.setItem('fluxo-access-token', accessToken);
-      this.http.post<any>(`${environment.apiUrl}/auth/refresh`, {}).subscribe({
-        next: (session) => {
-          if (session.pending) {
-            // Le téléphone n'est pas encore vérifié
-            this.auth.storePendingToken(session.accessToken);
-            this.router.navigate(['/verify-phone']);
-            return;
-          }
+      // Stocker les tokens d'abord
+      localStorage.setItem('fluxo-access-token',  accessToken);
+      localStorage.setItem('fluxo-refresh-token', refreshToken);
+
+      // Récupérer le profil complet via /users/me (utilise l'accessToken qu'on vient de stocker)
+      this.http.get<any>(`${environment.apiUrl}/users/me`).subscribe({
+        next: (user) => {
+          // Stocker la session complète avec le profil à jour
           this.auth.storeFullSession({
-            accessToken: session.accessToken ?? accessToken,
-            refreshToken: session.refreshToken ?? refreshToken,
-            user: session.user,
+            accessToken,
+            refreshToken,
+            user: {
+              ...user,
+              // S'assurer que les champs OAuth sont présents
+              provider:      user.provider      ?? 'GOOGLE',
+              githubLinked:  user.githubLinked  ?? false,
+              githubUsername: user.githubUsername ?? null,
+            },
           });
-          // Reprendre une invitation en attente s'il y en a une
+
           const pendingInvite = sessionStorage.getItem('fluxo-pending-invite');
           if (pendingInvite) {
             sessionStorage.removeItem('fluxo-pending-invite');
@@ -91,7 +94,12 @@ export class AuthCallbackComponent implements OnInit {
             this.router.navigate(['/dashboard']);
           }
         },
-        error: () => this.router.navigate(['/login']),
+        error: () => {
+          // /users/me a échoué (token peut-être invalide) → login
+          localStorage.removeItem('fluxo-access-token');
+          localStorage.removeItem('fluxo-refresh-token');
+          this.router.navigate(['/login']);
+        },
       });
       return;
     }

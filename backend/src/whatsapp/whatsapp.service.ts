@@ -64,6 +64,59 @@ export class WhatsappService {
     ].join('\n');
   }
 
+  async sendCommitLinkedMessage(
+    phone: string, taskTitle: string, code: string, sha: string,
+    commitMsg: string, author: string, newStatus: string | null,
+  ) {
+    const statusLine = newStatus ? `\nNouveau statut : *${newStatus}*` : '';
+    const message = [
+      `*Fluxo* — Commit lié à la tâche`,
+      '',
+      `Tâche : *[${code}] ${taskTitle}*`,
+      `Commit : \`${sha}\` par ${author}`,
+      commitMsg ? `Message : "${commitMsg.slice(0, 80)}"` : '',
+      statusLine,
+      '',
+      'Connectez-vous à Fluxo pour voir les détails.',
+    ].filter(Boolean).join('\n');
+
+    return this.send(phone, message);
+  }
+
+  async sendCommitWarningMessage(
+    phone: string, code: string, sha: string, commitMsg: string,
+  ) {
+    const codeLabel = code === 'aucun' ? 'aucun code de tâche' : `code *${code}* introuvable`;
+    const message = [
+      `*Fluxo* — Push détecté sans correspondance`,
+      '',
+      `Commit : \`${sha}\``,
+      `Problème : ${codeLabel}`,
+      commitMsg ? `Message : "${commitMsg.slice(0, 80)}"` : '',
+      '',
+      'Format attendu : `git commit -m "message -_close(FLX-001)"`',
+    ].filter(Boolean).join('\n');
+
+    return this.send(phone, message);
+  }
+
+  private async send(phone: string, message: string) {
+    if (!this.apiKey) {
+      this.logger.warn(`[DEV] CONVESSA absent — message pour ${phone} : ${message.slice(0, 60)}...`);
+      return { success: true, dev: true };
+    }
+    const res = await fetch(`${this.baseUrl}/api/v1/send`, {
+      method: 'POST',
+      headers: { 'X-Api-Key': this.apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: phone, message }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      this.logger.error(`Echec Convessa (${res.status}) : ${JSON.stringify(data)}`);
+    }
+    return data;
+  }
+
   async sendInvitationMessage(
     phone: string,
     projectName: string,
@@ -77,27 +130,9 @@ export class WhatsappService {
       '',
       `${inviteUrl}`,
       '',
-      "Cette invitation expire dans 7 jours.",
+      'Cette invitation expire dans 7 jours.',
     ].join('\n');
 
-    if (!this.apiKey) {
-      this.logger.warn(`[DEV] CONVESSA_API_KEY absente — invitation pour ${phone} : ${inviteUrl}`);
-      return { success: true, dev: true };
-    }
-
-    const res = await fetch(`${this.baseUrl}/api/v1/send`, {
-      method: 'POST',
-      headers: { 'X-Api-Key': this.apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: phone, message }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      this.logger.error(`Échec d'envoi Convessa (${res.status}) : ${JSON.stringify(data)}`);
-      throw new InternalServerErrorException(
-        "Impossible d'envoyer l'invitation par WhatsApp pour le moment",
-      );
-    }
-    return data;
+    return this.send(phone, message);
   }
 }

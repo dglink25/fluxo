@@ -958,3 +958,49 @@
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* ── Repos connectés ── */
+.gh-repos-card { padding: 20px; margin-bottom: 16px; }
+.gh-repos-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 700; margin: 0 0 14px; color: var(--flx-text);
+}
+.connected-repos-list { display: flex; flex-direction: column; gap: 8px; }
+.connected-repo-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 12px; border-radius: var(--flx-radius-md);
+  background: var(--flx-bg-sunken); border: 1px solid var(--flx-border);
+}
+.repo-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.repo-item-name { font-size: 13px; font-weight: 600; }
+.repo-disconnect-btn { color: #dc2626; border-color: #dc2626; }
+.repo-disconnect-btn:hover { background: #fef2f2; }
+
+/* Repo déjà connecté dans le sélecteur */
+.repo-item.already-connected { opacity: 0.6; }
+.already-badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 999px;
+  background: var(--flx-accent-soft); color: var(--flx-accent); font-weight: 600;
+}
+
+/* Format commits */
+.commit-format-box {
+  background: var(--flx-bg-sunken); border-radius: var(--flx-radius-md);
+  padding: 14px 16px; margin-top: 10px;
+}
+.commit-example {
+  display: block; font-family: var(--flx-font-mono); font-size: 13px;
+  background: var(--flx-bg-raised); padding: 8px 12px; border-radius: 6px;
+  margin-bottom: 10px; color: var(--flx-accent); border: 1px solid var(--flx-border);
+}
+.commit-statuts {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 12px; color: var(--flx-text-muted);
+  code { font-size: 11px; background: var(--flx-bg-raised); padding: 1px 5px; border-radius: 3px; }
+}
+
+/* Badge code commit */
+.code-badge {
+  background: var(--flx-accent-soft); color: var(--flx-accent);
+  padding: 1px 7px; border-radius: 999px; font-weight: 700; font-size: 10px;
+}

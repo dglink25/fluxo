@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -16,7 +16,22 @@ export class GithubService {
     private realtime: RealtimeGateway,
   ) {}
 
-  // ── API GitHub ─────────────────────────────────────────────────────────────
+  // ── Récupération du token GitHub ───────────────────────────────────────────
+
+  /** Retourne le token GitHub stocké pour un utilisateur */
+  async getTokenForUser(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { githubAccessToken: true, provider: true },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (!user.githubAccessToken) {
+      throw new UnauthorizedException(
+        'Aucun compte GitHub lié. Veuillez lier votre compte GitHub depuis l\'onglet GitHub.',
+      );
+    }
+    return user.githubAccessToken;
+  }
 
   /** Liste les dépôts accessibles via un token GitHub */
   async listUserRepos(token: string) {

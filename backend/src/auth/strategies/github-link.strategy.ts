@@ -2,29 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-github2';
 
+/**
+ * Strategy utilisée uniquement pour lier un compte GitHub à un compte
+ * existant (ex. : utilisateur inscrit via Google qui veut connecter GitHub).
+ * Callback différent de la strategy principale pour ne pas écraser la session.
+ */
 @Injectable()
-export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
+export class GithubLinkStrategy extends PassportStrategy(Strategy, 'github-link') {
   constructor() {
     super({
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_CALLBACK_URL,
+      callbackURL: process.env.GITHUB_LINK_CALLBACK_URL ??
+        `${process.env.BACKEND_URL ?? 'http://localhost:3000'}/api/auth/github/link/callback`,
       scope: ['user:email', 'repo'],
     });
   }
 
   async validate(accessToken: string, _refreshToken: string, profile: any, done: any) {
-    const email =
-      profile.emails?.[0]?.value ?? `${profile.username}@users.noreply.github.com`;
     done(null, {
-      provider: 'GITHUB',
-      providerId: profile.id,
-      email,
-      fullName: profile.displayName ?? profile.username,
-      avatarUrl: profile.photos?.[0]?.value,
-      username: profile.username,
       githubAccessToken: accessToken,
       githubUsername: profile.username,
+      providerId: profile.id,
     });
   }
 }

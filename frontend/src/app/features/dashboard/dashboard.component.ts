@@ -1,14 +1,17 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { WorkspacesService } from '../../core/services/workspaces.service';
 import { ProjectsService } from '../../core/services/projects.service';
+import { AuthService } from '../../core/services/auth.service';
+import { HttpClient } from '@angular/common/http';
 import { Workspace } from '../../core/models/workspace.model';
 import { Project } from '../../core/models/project.model';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
+import { environment } from '../../../environments/environment';
 
 type ActiveTab = 'workspaces' | 'projects';
 
@@ -21,6 +24,7 @@ type ActiveTab = 'workspaces' | 'projects';
 })
 export class DashboardComponent implements OnInit {
   activeTab = signal<ActiveTab>('workspaces');
+  githubLinkStatus = signal<'success' | 'error' | null>(null);
 
   // Workspaces
   workspaces = signal<Workspace[]>([]);
@@ -42,11 +46,38 @@ export class DashboardComponent implements OnInit {
   constructor(
     private workspacesService: WorkspacesService,
     private projectsService: ProjectsService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private http: HttpClient,
   ) {}
 
   ngOnInit() {
     this.loadWorkspaces();
     this.loadProjects();
+    this.handleGithubLinkReturn();
+  }
+
+  /** Détecte le retour du flow OAuth GitHub et rafraîchit le profil utilisateur */
+  private handleGithubLinkReturn() {
+    const linkResult = this.route.snapshot.queryParamMap.get('github_link');
+    if (!linkResult) return;
+
+    if (linkResult === 'success') {
+      this.githubLinkStatus.set('success');
+      // Rafraîchir le profil pour mettre à jour githubLinked dans le state
+      this.http.post<any>(`${environment.apiUrl}/auth/refresh`, {}).subscribe({
+        next: (res) => {
+          if (res.user) {
+            this.authService.storeFullSession(res);
+          }
+          setTimeout(() => this.githubLinkStatus.set(null), 4000);
+        },
+        error: () => setTimeout(() => this.githubLinkStatus.set(null), 4000),
+      });
+    } else {
+      this.githubLinkStatus.set('error');
+      setTimeout(() => this.githubLinkStatus.set(null), 5000);
+    }
   }
 
   loadWorkspaces() {

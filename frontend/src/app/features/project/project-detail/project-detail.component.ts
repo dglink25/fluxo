@@ -10,6 +10,7 @@ import { AnnouncementsService, Announcement } from '../../../core/services/annou
 import { DocumentsService, ProjectDocument } from '../../../core/services/documents.service';
 import { MessagingService } from '../../../core/services/messaging.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Project } from '../../../core/models/project.model';
 import { Task, TaskStatus, TASK_STATUSES } from '../../../core/models/task.model';
 import { Channel } from '../../../core/models/message.model';
@@ -109,6 +110,11 @@ export class ProjectDetailComponent implements OnInit {
   loadingRepos       = signal(false);
   showRepoSelect     = signal(false);
 
+  /** Vrai si l'utilisateur connecté a un compte GitHub lié */
+  get currentUser() { return this.authService.currentUser(); }
+  get githubIsLinked(): boolean { return !!this.currentUser?.githubLinked; }
+  get isGithubProvider(): boolean { return this.currentUser?.provider === 'GITHUB'; }
+
   get webhookUrl(): string {
     return `${environment.apiUrl}/projects/${this.projectId}/github/webhook`;
   }
@@ -124,6 +130,7 @@ export class ProjectDetailComponent implements OnInit {
     private messagingService: MessagingService,
     private realtime: RealtimeService,
     private http: HttpClient,
+    private authService: AuthService,
   ) {}
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -311,13 +318,12 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   // ── GitHub ────────────────────────────────────────────────────────────────
+
+  /** Charge les repos depuis l'API (token stocké côté backend) */
   loadGithubRepos() {
-    if (!this.githubToken.trim()) return;
     this.loadingRepos.set(true);
     this.http
-      .get<any[]>(
-        `${environment.apiUrl}/projects/${this.projectId}/github/repos?token=${encodeURIComponent(this.githubToken)}`,
-      )
+      .get<any[]>(`${environment.apiUrl}/projects/${this.projectId}/github/repos`)
       .subscribe({
         next: (repos) => {
           this.githubRepos.set(repos);
@@ -327,7 +333,7 @@ export class ProjectDetailComponent implements OnInit {
         error: (err) => {
           this.loadingRepos.set(false);
           this.showRepoSelect.set(false);
-          alert('Impossible de charger les depots : ' + (err?.error?.message ?? err?.message ?? 'Erreur'));
+          alert('Impossible de charger les depots : ' + (err?.error?.message ?? 'Erreur'));
         },
       });
   }
@@ -338,22 +344,29 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   connectGithub() {
-    if (!this.githubRepo.trim() || !this.githubToken.trim()) return;
+    if (!this.githubRepo.trim()) return;
     this.connectingGithub.set(true);
     this.http
       .post(`${environment.apiUrl}/projects/${this.projectId}/github/connect`, {
         repoFullName: this.githubRepo,
-        githubToken:  this.githubToken,
       })
       .subscribe({
         next: () => {
           this.githubConnected.set(true);
-          this.githubToken = '';
           this.connectingGithub.set(false);
           this.loadGithubCommits();
         },
         error: () => this.connectingGithub.set(false),
       });
+  }
+
+  /** Redirige l'utilisateur vers le flux OAuth GitHub pour lier son compte */
+  linkGithubAccount() {
+    const token = this.authService.getAccessToken();
+    if (!token) return;
+    // On passe le JWT en query param — l'endpoint /init est public,
+    // il vérifie le token lui-même et stocke le userId dans un cookie httpOnly.
+    window.location.href = `${environment.apiUrl}/auth/github/link/init?token=${encodeURIComponent(token)}`;
   }
 
   copyWebhookUrl() {
@@ -379,5 +392,18 @@ export class ProjectDetailComponent implements OnInit {
     if (!bytes || bytes < 1024)        return `${bytes ?? 0} o`;
     if (bytes < 1024 * 1024)           return `${(bytes / 1024).toFixed(1)} Ko`;
     return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
+  }
+
+  /** Télécharge un document texte comme fichier .md */
+  downloadTextDoc(doc: any) {
+    const content = doc.details.content ?? '';
+    const title = doc.details.title ?? 'document';
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

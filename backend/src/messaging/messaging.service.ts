@@ -20,6 +20,76 @@ export class MessagingService {
     private realtime: RealtimeGateway,
   ) {}
 
+  /** Lister tous les channels de tous les projets de l'utilisateur */
+  async listAllChannels(userId: string) {
+    const memberships = await this.prisma.projectMember.findMany({
+      where: { userId },
+      include: {
+        project: {
+          include: {
+            channels: { orderBy: { createdAt: 'asc' } },
+          },
+        },
+      },
+    });
+
+    return memberships
+      .filter((m) => m.project.channels.length > 0)
+      .map((m) => ({
+        projectId: m.project.id,
+        projectName: m.project.name,
+        channels: m.project.channels,
+      }));
+  }
+
+  /** Créer un nouveau channel dans un projet */
+  async createChannel(projectId: string, userId: string, name: string) {
+    // Vérifier que l'utilisateur est OWNER ou ADMIN
+    const member = await this.prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId } },
+    });
+    if (!member || !['OWNER', 'ADMIN'].includes(member.role)) {
+      throw new ForbiddenException('Seuls les OWNER et ADMIN peuvent créer des channels');
+    }
+
+    const channel = await this.prisma.channel.create({
+      data: { projectId, name },
+    });
+
+    return channel;
+  }
+
+  /** Rechercher des utilisateurs par username/email pour démarrer une DM */
+  async searchUsers(query: string, currentUserId: string) {
+    return this.prisma.user.findMany({
+      where: {
+        id: { not: currentUserId },
+        OR: [
+          { username: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+          { fullName: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, username: true, fullName: true, avatarUrl: true },
+      take: 15,
+    });
+  }
+
+  /** Lister les membres d'un projet (pour créer un channel ou DM) */
+  async getProjectMembers(projectId: string, userId: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId } },
+    });
+    if (!member) throw new ForbiddenException('Accès refusé');
+
+    return this.prisma.projectMember.findMany({
+      where: { projectId },
+      include: {
+        user: { select: { id: true, username: true, fullName: true, avatarUrl: true } },
+      },
+    });
+  }
+
   // ── Channels projet ────────────────────────────────────────────────────────
 
   async listChannels(projectId: string) {

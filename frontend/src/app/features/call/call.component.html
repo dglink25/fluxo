@@ -1,42 +1,57 @@
 <div class="call-screen">
 
-  <!-- Vidéos -->
+  <!-- Zone vidéos -->
   <div class="videos">
-    <!-- Flux distant (grand) -->
     <div class="remote-video-wrap">
+
+      <!-- Flux distant : visible quand un pair est connecté -->
       @if (remoteStream()) {
         <video #remoteVideo class="remote-video" autoplay playsinline></video>
       } @else {
         <div class="waiting">
           <div class="waiting-avatar">
-            <flx-icon name="user" [size]="48" color="rgba(255,255,255,0.3)"></flx-icon>
+            <svg viewBox="0 0 24 24" width="52" height="52" fill="rgba(255,255,255,0.25)">
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
+            </svg>
           </div>
-          @if (status() === 'connecting') {
-            <p>Connexion en cours…</p>
-          } @else if (status() === 'ended') {
-            <p>Appel terminé</p>
-          } @else {
-            <p>En attente de l'autre participant…</p>
+          @switch (status()) {
+            @case ('connecting') {
+              <p>En attente d'un participant…</p>
+              <span class="pulse-dot"></span>
+            }
+            @case ('ended') {
+              <p>Appel terminé</p>
+            }
+            @default {
+              <p>En attente…</p>
+            }
           }
         </div>
       }
-      <!-- Flux local (petite vignette) -->
+
+      <!-- Flux local : vignette en bas à droite -->
       <div class="local-video-wrap" [class.cam-off]="isCamOff()">
-        @if (!isCamOff()) {
-          <video #localVideo class="local-video" autoplay playsinline muted></video>
-        } @else {
-          <div class="cam-off-placeholder"><flx-icon name="user" [size]="22" color="rgba(255,255,255,0.5)"></flx-icon></div>
+        <!-- Toujours rendu — srcObject géré par le component -->
+        <video #localVideo class="local-video" autoplay playsinline muted
+               [style.display]="isCamOff() ? 'none' : 'block'"></video>
+        @if (isCamOff()) {
+          <div class="cam-off-placeholder">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="rgba(255,255,255,0.4)">
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
+            </svg>
+          </div>
         }
       </div>
+
     </div>
   </div>
 
-  <!-- Informations -->
+  <!-- Indicateurs d'état -->
   <div class="call-info">
     @if (status() === 'connected') {
-      <span class="status-badge connected">● Connecté</span>
+      <span class="status-badge connected">&#9679; Connecté</span>
     } @else if (status() === 'connecting') {
-      <span class="status-badge connecting">◌ Connexion…</span>
+      <span class="status-badge connecting">&#9675; En attente…</span>
     }
     @if (isSharingScreen()) {
       <span class="screen-badge">Partage d'écran actif</span>
@@ -45,37 +60,30 @@
 
   <!-- Barre de contrôles -->
   <div class="controls">
+
     <!-- Mute micro -->
-    <button
-      class="ctrl-btn"
-      [class.active]="isMuted()"
-      (click)="toggleMute()"
-      [title]="isMuted() ? 'Activer le micro' : 'Couper le micro'"
-    >
+    <button class="ctrl-btn" [class.active]="isMuted()" (click)="toggleMute()"
+      [title]="isMuted() ? 'Activer le micro' : 'Couper le micro'">
       @if (isMuted()) {
-        <!-- Micro barré -->
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
-          <path d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v3m-3 0h6m-8.5-15.2L17 11M12 1a4 4 0 0 1 4 4v.5M12 1A4 4 0 0 0 8 5v6a4 4 0 0 0 6.5 3.1M3 3l18 18"/>
-          <line x1="3" y1="3" x2="21" y2="21" stroke="white" stroke-width="2"/>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+          <path d="M12 1a4 4 0 0 1 4 4v2M8 11V5a4 4 0 0 1 .5-2M19 11a7 7 0 0 1-7.5 6.97M5.07 10.1A7 7 0 0 0 19 11"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M12 19v3m-3 0h6"/>
         </svg>
       } @else {
         <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
-          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm7 10a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
         </svg>
       }
     </button>
 
     <!-- Couper caméra -->
-    <button
-      class="ctrl-btn"
-      [class.active]="isCamOff()"
-      (click)="toggleCamera()"
-      [title]="isCamOff() ? 'Activer la caméra' : 'Couper la caméra'"
-    >
+    <button class="ctrl-btn" [class.active]="isCamOff()" (click)="toggleCamera()"
+      [title]="isCamOff() ? 'Activer la caméra' : 'Couper la caméra'">
       @if (isCamOff()) {
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
-          <path d="M16 16L3 3 M3.5 7.5A2 2 0 0 0 2 9.5v5A2 2 0 0 0 4 16.5h10.5M8 6.5h6a2 2 0 0 1 2 2v3.5M16 6.5l5.5 3.5v4L16 17.5"/>
-          <line x1="2" y1="2" x2="22" y2="22" stroke="white" stroke-width="2"/>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+          <path d="M3.5 7.5A2 2 0 0 0 2 9.5v5A2 2 0 0 0 4 16.5h10.5M8 6.5h8a2 2 0 0 1 2 2v2.5M16 6.5l5.5 3.5v4L16 17.5"/>
+          <line x1="2" y1="2" x2="22" y2="22"/>
         </svg>
       } @else {
         <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
@@ -85,16 +93,11 @@
     </button>
 
     <!-- Partage d'écran -->
-    <button
-      class="ctrl-btn"
-      [class.active]="isSharingScreen()"
-      (click)="toggleScreenShare()"
-      title="Partager l'écran"
-    >
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
-        <rect x="2" y="3" width="20" height="14" rx="2" stroke="white" stroke-width="1.8" fill="none"/>
-        <path d="M9 21h6M12 17v4" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M12 7v6M9 10l3-3 3 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <button class="ctrl-btn" [class.active]="isSharingScreen()" (click)="toggleScreenShare()"
+      title="Partager l'écran">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M9 21h6M12 17v4M12 7v6M9 10l3-3 3 3"/>
       </svg>
     </button>
 
@@ -104,6 +107,7 @@
         <path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
       </svg>
     </button>
+
   </div>
 
 </div>

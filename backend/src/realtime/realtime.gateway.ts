@@ -95,6 +95,19 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.logger.debug(`User ${userId} offline`);
       }
     }
+
+    // Nettoyer les salles d'appel si le socket était dedans
+    for (const [room, participants] of this.callRooms.entries()) {
+      if (participants.has(socket.id)) {
+        participants.delete(socket.id);
+        if (participants.size === 0) {
+          this.callRooms.delete(room);
+        } else {
+          // Notifier les autres que ce participant a quitté
+          this.server.to(`call:${room}`).emit('call:ended', { room });
+        }
+      }
+    }
   }
 
   /** Rejoindre la salle d'un projet pour recevoir les événements live */
@@ -129,14 +142,36 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   // ── WebRTC Signalisation ─────────────────────────────────────────────────
 
+  /** Compteur de participants par salle d'appel */
+  private callRooms = new Map<string, Set<string>>();
+
   /** Un participant rejoint une salle d'appel */
   @SubscribeMessage('call:join')
   handleCallJoin(
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { room: string },
   ) {
-    socket.join(`call:${data.room}`);
-    this.logger.debug(`User joined call room: ${data.room}`);
+    const roomKey = `call:${data.room}`;
+    socket.join(roomKey);
+
+    // Gérer le compteur de participants
+    if (!this.callRooms.has(data.room)) {
+      this.callRooms.set(data.room, new Set());
+    }
+    const participants = this.callRooms.get(data.room)!;
+    const isInitiator = participants.size === 0; // 1er arrivé = initiateur
+    participants.add(socket.id);
+
+    this.logger.debug(`User joined call room: ${data.room} (initiator: ${isInitiator})`);
+
+    // Confirmer au rejoignant son rôle
+    socket.emit('call:joined', { room: data.room, isInitiator });
+
+    // Notifier l'initiateur qu'un pair a rejoint (déclenche la création de l'offre)
+    if (!isInitiator) {
+      socket.to(roomKey).emit('call:peer-joined', { room: data.room });
+    }
+
     return { joined: data.room };
   }
 
@@ -186,6 +221,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     socket.to(`call:${data.room}`).emit('call:ended', { room: data.room });
     socket.leave(`call:${data.room}`);
+    // Nettoyer le compteur
+    this.callRooms.delete(data.room);
     this.logger.debug(`Call ended in room: ${data.room}`);
   }
 

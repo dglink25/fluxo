@@ -7,6 +7,9 @@ export interface User {
   fullName?: string | null;
   avatarUrl?: string | null;
   phoneVerified: boolean;
+  provider: OAuthProvider;
+  githubLinked: boolean;
+  githubUsername?: string | null;
 }
 
 export interface AuthResponse {

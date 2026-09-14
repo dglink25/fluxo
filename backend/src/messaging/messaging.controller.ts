@@ -29,6 +29,32 @@ class SendMessageDto {
   fileUrl?: string;
 }
 
+class CreateChannelDto {
+  @IsString()
+  @MinLength(1)
+  name: string;
+}
+
+// ── Tous les channels de l'utilisateur ──────────────────────────────────────
+
+@UseGuards(JwtAuthGuard)
+@Controller('channels')
+export class AllChannelsController {
+  constructor(private messaging: MessagingService) {}
+
+  /** Tous les channels de tous les projets de l'utilisateur */
+  @Get()
+  listAll(@CurrentUser() user: any) {
+    return this.messaging.listAllChannels(user.userId);
+  }
+
+  /** Rechercher des utilisateurs pour démarrer une DM */
+  @Get('users/search')
+  searchUsers(@CurrentUser() user: any, @Query('q') q: string) {
+    return this.messaging.searchUsers(q ?? '', user.userId);
+  }
+}
+
 // ── Channels projet ─────────────────────────────────────────────────────────
 
 @UseGuards(JwtAuthGuard, ProjectRolesGuard)
@@ -40,6 +66,22 @@ export class ChannelsController {
   @Get()
   listChannels(@Param('projectId') projectId: string) {
     return this.messaging.listChannels(projectId);
+  }
+
+  @Roles('OWNER', 'ADMIN')
+  @Post()
+  createChannel(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: any,
+    @Body() dto: CreateChannelDto,
+  ) {
+    return this.messaging.createChannel(projectId, user.userId, dto.name);
+  }
+
+  @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')
+  @Get('members')
+  getMembers(@Param('projectId') projectId: string, @CurrentUser() user: any) {
+    return this.messaging.getProjectMembers(projectId, user.userId);
   }
 
   @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')

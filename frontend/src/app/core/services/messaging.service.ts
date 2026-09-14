@@ -3,11 +3,29 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Channel, ChatMessage, DirectMessageConversation } from '../models/message.model';
 
+export interface ProjectChannelGroup {
+  projectId: string;
+  projectName: string;
+  channels: Channel[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class MessagingService {
   constructor(private http: HttpClient) {}
 
-  // ── Channels projet ─────────────────────────────────────────────────────
+  // ── Tous les channels ────────────────────────────────────────────────────
+
+  listAllChannels() {
+    return this.http.get<ProjectChannelGroup[]>(`${environment.apiUrl}/channels`);
+  }
+
+  searchUsers(query: string) {
+    return this.http.get<any[]>(`${environment.apiUrl}/channels/users/search`, {
+      params: { q: query },
+    });
+  }
+
+  // ── Channels projet ──────────────────────────────────────────────────────
 
   listChannels(projectId: string) {
     return this.http.get<Channel[]>(
@@ -15,7 +33,24 @@ export class MessagingService {
     );
   }
 
-  getChannelMessages(projectId: string, channelId: string, opts: { limit?: number; before?: string } = {}) {
+  createChannel(projectId: string, name: string) {
+    return this.http.post<Channel>(
+      `${environment.apiUrl}/projects/${projectId}/channels`,
+      { name },
+    );
+  }
+
+  getProjectMembers(projectId: string) {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/projects/${projectId}/channels/members`,
+    );
+  }
+
+  getChannelMessages(
+    projectId: string,
+    channelId: string,
+    opts: { limit?: number; before?: string } = {},
+  ) {
     let params = new HttpParams();
     if (opts.limit) params = params.set('limit', opts.limit.toString());
     if (opts.before) params = params.set('before', opts.before);
@@ -25,7 +60,11 @@ export class MessagingService {
     );
   }
 
-  sendToChannel(projectId: string, channelId: string, payload: { content: string; type?: string }) {
+  sendToChannel(
+    projectId: string,
+    channelId: string,
+    payload: { content: string; type?: string; fileUrl?: string },
+  ) {
     return this.http.post<ChatMessage>(
       `${environment.apiUrl}/projects/${projectId}/channels/${channelId}/messages`,
       payload,
@@ -65,7 +104,7 @@ export class MessagingService {
     return this.http.get<ChatMessage[]>(`${environment.apiUrl}/dm/${dmId}/messages`, { params });
   }
 
-  sendDm(dmId: string, payload: { content: string; type?: string }) {
+  sendDm(dmId: string, payload: { content: string; type?: string; fileUrl?: string }) {
     return this.http.post<ChatMessage>(`${environment.apiUrl}/dm/${dmId}/messages`, payload);
   }
 

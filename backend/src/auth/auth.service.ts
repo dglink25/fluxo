@@ -22,6 +22,8 @@ export interface OAuthProfile {
   fullName?: string;
   avatarUrl?: string;
   username?: string;
+  githubAccessToken?: string;
+  githubUsername?: string;
 }
 
 @Injectable()
@@ -34,67 +36,97 @@ export class AuthService {
 
   /** Appelé depuis les callbacks Google/GitHub : crée le compte si besoin */
   async findOrCreateFromOAuth(profile: OAuthProfile) {
-  const provider = profile.provider as OAuthProvider;
+    const provider = profile.provider as OAuthProvider;
 
-  // 1. Chercher d'abord le compte avec provider + providerId
-  let user = await this.prisma.user.findUnique({
-    where: {
-      provider_providerId: {
-        provider,
-        providerId: profile.providerId,
-      },
-    },
-  });
+    // 1. Chercher d'abord le compte avec provider + providerId
+    let user = await this.prisma.user.findUnique({
+      where: { provider_providerId: { provider, providerId: profile.providerId } },
+    });
 
-  // Compte OAuth déjà lié
-  if (user) {
-    return user;
-  }
+    // Compte OAuth déjà lié : mettre à jour le token GitHub si présent
+    if (user) {
+      if (profile.githubAccessToken) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            githubAccessToken: profile.githubAccessToken,
+            githubUsername: profile.githubUsername ?? user.githubUsername,
+          },
+        });
+      }
+      return user;
+    }
 
-  // 2. Vérifier si un utilisateur existe déjà avec cet email
-  user = await this.prisma.user.findUnique({
-    where: {
-      email: profile.email,
-    },
-  });
+    // 2. Vérifier si un utilisateur existe déjà avec cet email
+    user = await this.prisma.user.findUnique({ where: { email: profile.email } });
 
-  // 3. L'email existe déjà :
-  // on rattache le compte OAuth existant
-  if (user) {
-    user = await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
+    // 3. L'email existe déjà : on rattache le compte OAuth existant
+    if (user) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          provider,
+          providerId: profile.providerId,
+          avatarUrl: profile.avatarUrl ?? user.avatarUrl,
+          fullName: profile.fullName ?? user.fullName,
+          ...(profile.githubAccessToken && {
+            githubAccessToken: profile.githubAccessToken,
+            githubUsername: profile.githubUsername,
+          }),
+        },
+      });
+      return user;
+    }
+
+    // 4. Aucun utilisateur avec cet email : créer un nouveau compte
+    const username = await this.generateUniqueUsername(
+      profile.username ?? profile.email.split('@')[0],
+    );
+
+    user = await this.prisma.user.create({
       data: {
+        email: profile.email,
+        username,
+        fullName: profile.fullName,
+        avatarUrl: profile.avatarUrl,
         provider,
         providerId: profile.providerId,
-        avatarUrl: profile.avatarUrl ?? user.avatarUrl,
-        fullName: profile.fullName ?? user.fullName,
+        ...(profile.githubAccessToken && {
+          githubAccessToken: profile.githubAccessToken,
+          githubUsername: profile.githubUsername,
+        }),
       },
     });
 
     return user;
   }
 
-  // 4. Aucun utilisateur avec cet email :
-  // on crée un nouveau compte
-  const username = await this.generateUniqueUsername(
-    profile.username ?? profile.email.split('@')[0],
-  );
+  /**
+   * Liaison GitHub pour un utilisateur déjà connecté (ex. inscrit via Google).
+   * Stocke son token GitHub sans changer son provider principal.
+   */
+  async linkGithubAccount(
+    userId: string,
+    data: { githubAccessToken: string; githubUsername: string; githubProviderId: string },
+  ) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        githubAccessToken: data.githubAccessToken,
+        githubUsername: data.githubUsername,
+      },
+    });
+    return user;
+  }
 
-  user = await this.prisma.user.create({
-    data: {
-      email: profile.email,
-      username,
-      fullName: profile.fullName,
-      avatarUrl: profile.avatarUrl,
-      provider,
-      providerId: profile.providerId,
-    },
-  });
-
-  return user;
-}
+  /** Récupère le token GitHub stocké d'un utilisateur */
+  async getGithubToken(userId: string): Promise<string | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { githubAccessToken: true },
+    });
+    return user?.githubAccessToken ?? null;
+  }
 
 
   /** Jeton émis juste après l'OAuth : accès limité, uniquement pour vérifier le téléphone */
@@ -179,10 +211,6 @@ export class AuthService {
   async refresh(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
-    // Qu'il ait vérifié son téléphone ou non, on renvoie toujours
-    // une structure connue. Si le téléphone n'est pas vérifié, on renvoie
-    // un pendingToken et un accessToken/refreshToken vides pour que le
-    // frontend puisse détecter l'état.
     if (!user.phoneVerified) {
       const pendingToken = this.issuePendingToken(user);
       return {
@@ -195,6 +223,9 @@ export class AuthService {
           fullName: user.fullName,
           avatarUrl: user.avatarUrl,
           phoneVerified: false,
+          provider: user.provider,
+          githubLinked: !!user.githubAccessToken,
+          githubUsername: user.githubUsername ?? null,
         },
         pending: true,
       };
@@ -220,6 +251,9 @@ export class AuthService {
     fullName: string | null;
     avatarUrl: string | null;
     phoneVerified: boolean;
+    provider?: string;
+    githubAccessToken?: string | null;
+    githubUsername?: string | null;
   }) {
     const payload = { sub: user.id, email: user.email, username: user.username, scope: 'full' as const };
     const accessToken = this.jwt.sign(payload, {
@@ -241,6 +275,9 @@ export class AuthService {
         fullName: user.fullName,
         avatarUrl: user.avatarUrl,
         phoneVerified: user.phoneVerified,
+        provider: user.provider ?? 'GOOGLE',
+        githubLinked: !!user.githubAccessToken,
+        githubUsername: user.githubUsername ?? null,
       },
     };
   }

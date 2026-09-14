@@ -2,6 +2,19 @@
 
 <main class="page">
 
+  <!-- Bannière retour liaison GitHub -->
+  @if (githubLinkStatus()) {
+    <div class="github-link-banner" [class.success]="githubLinkStatus() === 'success'" [class.error]="githubLinkStatus() === 'error'">
+      @if (githubLinkStatus() === 'success') {
+        <flx-icon name="check" [size]="16"></flx-icon>
+        Compte GitHub lié avec succès. Vous pouvez maintenant connecter vos dépôts depuis vos projets.
+      } @else {
+        <flx-icon name="x" [size]="16"></flx-icon>
+        La liaison GitHub a échoué. Veuillez réessayer depuis l'onglet GitHub d'un projet.
+      }
+    </div>
+  }
+
   <!-- En-tête avec onglets -->
   <div class="head">
     <div>

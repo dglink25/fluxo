@@ -255,9 +255,20 @@
                 <p class="doc-item-name">{{ file.name }}</p>
                 <span class="doc-item-meta flx-mono">{{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}</span>
               </div>
-              <a [href]="file.url" target="_blank" rel="noopener" class="flx-btn flx-btn--ghost doc-action" title="Ouvrir / Télécharger">
-                <flx-icon name="send" [size]="14"></flx-icon>
-              </a>
+              <div class="doc-actions-row">
+                <!-- Ouvrir dans un nouvel onglet -->
+                <a [href]="file.url" target="_blank" rel="noopener"
+                   class="flx-btn flx-btn--ghost doc-action" title="Ouvrir">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>
+                  </svg>
+                </a>
+                <!-- Télécharger -->
+                <a [href]="file.url" [download]="file.name"
+                   class="flx-btn flx-btn--ghost doc-action" title="Télécharger">
+                  <flx-icon name="send" [size]="14"></flx-icon>
+                </a>
+              </div>
             </div>
           }
           <!-- Documents texte -->
@@ -271,7 +282,15 @@
                 <span class="doc-item-meta flx-mono">
                   v{{ doc.details.version }} · &#64;{{ doc.user.username }} · {{ doc.createdAt | date:'d MMM' }}
                 </span>
+                @if (doc.details.content) {
+                  <p class="doc-preview">{{ doc.details.content | slice:0:120 }}{{ doc.details.content.length > 120 ? '…' : '' }}</p>
+                }
               </div>
+              <button class="flx-btn flx-btn--ghost doc-action"
+                title="Télécharger"
+                (click)="downloadTextDoc(doc)">
+                <flx-icon name="send" [size]="14"></flx-icon>
+              </button>
             </div>
           }
         </div>
@@ -354,44 +373,62 @@
     @else if (view() === 'github') {
       <div class="github-panel">
 
-        @if (!githubConnected()) {
+        <!-- Cas 1 : GitHub non lié (utilisateur Google sans liaison) -->
+        @if (!githubIsLinked && !isGithubProvider) {
+          <div class="flx-card gh-connect-card">
+            <div class="gh-hero">
+              <flx-icon name="github" [size]="40" color="var(--flx-text-muted)"></flx-icon>
+              <h3>Lier votre compte GitHub</h3>
+              <p class="sub">
+                Votre compte est connecté via Google. Liez votre compte GitHub une seule fois
+                pour accéder à tous vos dépôts directement.
+              </p>
+            </div>
+            <button class="flx-btn flx-btn--primary gh-link-btn" (click)="linkGithubAccount()">
+              <flx-icon name="github" [size]="17" color="white"></flx-icon>
+              Lier mon compte GitHub
+            </button>
+            <p class="gh-hint-note">
+              Vous serez redirigé vers GitHub pour autoriser l'accès à vos dépôts.
+              Cette liaison est unique — plus besoin de token manuel.
+            </p>
+          </div>
+        }
+
+        <!-- Cas 2 : GitHub lié — sélection du repo -->
+        @else if (!githubConnected()) {
           <div class="flx-card gh-connect-card">
 
             <div class="gh-hero">
               <flx-icon name="github" [size]="40" color="var(--flx-text-muted)"></flx-icon>
               <h3>Connecter un dépôt GitHub</h3>
-              <p class="sub">Liez un dépôt GitHub à ce projet pour associer automatiquement les commits aux tâches et mettre à jour leurs statuts.</p>
+              <p class="sub">
+                Sélectionnez un dépôt à associer à ce projet. Les commits seront automatiquement
+                liés aux tâches et les statuts mis à jour.
+              </p>
+              @if (currentUser?.githubUsername) {
+                <span class="gh-account-badge">
+                  <flx-icon name="github" [size]="13"></flx-icon>
+                  Connecté en tant que <strong>{{ currentUser?.githubUsername }}</strong>
+                </span>
+              }
             </div>
 
             <div class="gh-form">
 
-              <!-- 1. Token -->
-              <label class="gh-label">
-                Token GitHub (Personal Access Token)
-                <div class="value-row">
-                  <input class="flx-input mono-input"
-                    [type]="showGithubToken ? 'text' : 'password'"
-                    [(ngModel)]="githubToken"
-                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                    autocomplete="new-password" />
-                  <button type="button" class="eye-btn" (click)="showGithubToken = !showGithubToken">
-                    <flx-icon [name]="showGithubToken ? 'x' : 'search'" [size]="15"></flx-icon>
-                  </button>
-                </div>
-                <span class="gh-hint">Permissions requises : <code>repo</code> — <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" rel="noopener">Générer ici</a></span>
-              </label>
+              <!-- Charger les repos -->
+              @if (!showRepoSelect() || githubRepos().length === 0) {
+                <button class="flx-btn flx-btn--primary" (click)="loadGithubRepos()"
+                  [disabled]="loadingRepos()">
+                  <flx-icon name="refresh" [size]="14" color="white"></flx-icon>
+                  {{ loadingRepos() ? 'Chargement des dépôts…' : 'Afficher mes dépôts' }}
+                </button>
+              }
 
-              <!-- 2. Charger les repos -->
-              <button class="flx-btn flx-btn--ghost btn-sm" (click)="loadGithubRepos()"
-                [disabled]="loadingRepos() || !githubToken.trim()">
-                <flx-icon name="refresh" [size]="13"></flx-icon>
-                {{ loadingRepos() ? 'Chargement des dépôts…' : 'Charger mes dépôts' }}
-              </button>
-
-              <!-- 3. Sélecteur de repo -->
+              <!-- Sélecteur de repo -->
               @if (showRepoSelect() && githubRepos().length > 0) {
                 <div class="repo-select">
-                  <label class="gh-label">Sélectionnez un dépôt</label>
+                  <label class="gh-label">Sélectionnez un dépôt ({{ githubRepos().length }} dépôts)</label>
                   <div class="repo-list">
                     @for (repo of githubRepos(); track repo.fullName) {
                       <button class="repo-item" [class.selected]="githubRepo === repo.fullName"
@@ -423,25 +460,24 @@
                     <flx-icon name="x" [size]="12"></flx-icon>
                   </button>
                 </div>
-              }
 
-              <!-- 4. Bouton connexion -->
-              <button class="flx-btn flx-btn--primary"
-                (click)="connectGithub()"
-                [disabled]="connectingGithub() || !githubRepo.trim() || !githubToken.trim()">
-                <flx-icon name="github" [size]="15" color="white"></flx-icon>
-                {{ connectingGithub() ? 'Connexion…' : 'Connecter ce dépôt' }}
-              </button>
+                <button class="flx-btn flx-btn--primary"
+                  (click)="connectGithub()"
+                  [disabled]="connectingGithub() || !githubRepo.trim()">
+                  <flx-icon name="github" [size]="15" color="white"></flx-icon>
+                  {{ connectingGithub() ? 'Connexion…' : 'Connecter ce dépôt' }}
+                </button>
+              }
 
             </div>
 
             <div class="gh-howto">
               <h4>Comment ça marche</h4>
               <ol>
-                <li>Connectez votre dépôt avec votre token GitHub</li>
+                <li>Sélectionnez un dépôt — le webhook est configuré automatiquement</li>
                 <li>Dans vos commits, référencez une tâche : <code>#TASK-{{'{'}}id{{'}'}}</code></li>
-                <li>Pour fermer automatiquement une tâche : <code>closes #TASK-{{'{'}}id{{'}'}}</code></li>
-                <li>Chaque push notifie tous les membres du projet</li>
+                <li>Pour fermer automatiquement : <code>closes #TASK-{{'{'}}id{{'}'}}</code></li>
+                <li>Chaque push notifie tous les membres par mail et notification</li>
               </ol>
               <div class="gh-webhook-info">
                 <p>URL webhook (configurée automatiquement) :</p>
@@ -455,6 +491,8 @@
           </div>
 
         } @else {
+
+          <!-- Dépôt connecté -->
           <div class="flx-card gh-connected">
             <div class="gh-connected-header">
               <flx-icon name="github" [size]="22" color="var(--flx-accent)"></flx-icon>
@@ -468,6 +506,7 @@
               </button>
             </div>
           </div>
+
         }
 
         @if (githubCommits().length > 0) {

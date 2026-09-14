@@ -19,7 +19,6 @@ import { GithubService } from './github.service';
 
 class ConnectRepoDto {
   @IsString() repoFullName: string;
-  @IsString() githubToken: string;
 }
 
 @Controller('projects/:projectId/github')
@@ -29,30 +28,34 @@ export class GithubController {
   constructor(private github: GithubService) {}
 
   /**
-   * Liste les dépôts GitHub accessibles avec le token fourni.
-   * Utilisé pour le sélecteur de repo dans le frontend.
-   * Accessible par les Owners uniquement.
+   * Liste les dépôts GitHub de l'utilisateur connecté.
+   * Utilise le token GitHub stocké lors de la connexion OAuth — aucun token manuel requis.
    */
   @UseGuards(JwtAuthGuard, ProjectRolesGuard)
   @Roles('OWNER')
   @Get('repos')
-  listRepos(@Query('token') token: string) {
-    if (!token) {
-      return { error: 'Parametre token manquant' };
-    }
+  async listRepos(@CurrentUser() user: any) {
+    const token = await this.github.getTokenForUser(user.userId);
     return this.github.listUserRepos(token);
   }
 
-  /** Connecter un dépôt GitHub au projet (crée le webhook automatiquement) */
+  /**
+   * Connecter un dépôt GitHub au projet (crée le webhook automatiquement).
+   * Le token est récupéré depuis le compte de l'utilisateur connecté.
+   */
   @UseGuards(JwtAuthGuard, ProjectRolesGuard)
   @Roles('OWNER')
   @Post('connect')
-  connectRepository(
+  async connectRepository(
     @Param('projectId') projectId: string,
     @CurrentUser() user: any,
     @Body() dto: ConnectRepoDto,
   ) {
-    return this.github.connectRepository(projectId, user.userId, dto);
+    const token = await this.github.getTokenForUser(user.userId);
+    return this.github.connectRepository(projectId, user.userId, {
+      repoFullName: dto.repoFullName,
+      githubToken: token,
+    });
   }
 
   /**

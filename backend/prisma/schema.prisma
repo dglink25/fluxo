@@ -88,6 +88,11 @@ model User {
   provider      OAuthProvider
   providerId    String
 
+  /// Token GitHub OAuth (stocké lors de la connexion GitHub ou liaison ultérieure)
+  githubAccessToken String?
+  /// Username GitHub (pour l'affichage)
+  githubUsername    String?
+
   /// Vérification du numéro de téléphone par code OTP WhatsApp (Convessa)
   phone         String?       @unique
   phoneVerified Boolean       @default(false)

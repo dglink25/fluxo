@@ -134,6 +134,21 @@
           }
         </div>
         <div class="header-actions">
+          @if (activePane() === 'channels') {
+            <!-- Paramètres channel -->
+            <button class="ctrl-icon-btn" (click)="openChannelSettings()" title="Paramètres du channel">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <!-- Recherche -->
+            <button class="ctrl-icon-btn" (click)="showSearch.set(!showSearch())" title="Rechercher">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
+          }
           <!-- Appel vidéo -->
           <a class="ctrl-icon-btn"
             [routerLink]="['/call']"
@@ -143,13 +158,6 @@
               <path d="M4 6.5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l5 3V7.5l-5 3v-2a2 2 0 0 0-2-2H4z"/>
             </svg>
           </a>
-          @if (activePane() === 'channels') {
-            <button class="ctrl-icon-btn" (click)="showSearch.set(!showSearch())" title="Rechercher">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </button>
-          }
         </div>
       </header>
 
@@ -203,37 +211,72 @@
                 @if (!isMine(msg)) {
                   <span class="sender-name flx-mono">&#64;{{ msg.sender.username }}</span>
                 }
-                <div class="bubble" [class.bubble-mine]="isMine(msg)">
-                  @if (msg.type === 'IMAGE' && msg.fileUrl) {
-                    <img class="msg-image" [src]="msg.fileUrl" alt="image" loading="lazy" />
-                    @if (msg.content && msg.content !== msg.fileUrl) { <p>{{ msg.content }}</p> }
-                  } @else if (msg.type === 'AUDIO' && msg.fileUrl) {
-                    <div class="audio-msg">
-                      <svg class="mic-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                        <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
-                      </svg>
-                      <audio [src]="msg.fileUrl" controls class="audio-player"></audio>
+
+                <!-- Mode édition inline -->
+                @if (editingMessageId() === msg.id) {
+                  <div class="edit-inline">
+                    <input class="flx-input edit-input" [(ngModel)]="editingContent"
+                      (keydown.enter)="saveEditMessage(msg)"
+                      (keydown.escape)="cancelEditMessage()" autofocus />
+                    <div class="edit-actions">
+                      <button class="flx-btn flx-btn--ghost btn-sm" (click)="cancelEditMessage()">Annuler</button>
+                      <button class="flx-btn flx-btn--primary btn-sm" (click)="saveEditMessage(msg)">Enregistrer</button>
                     </div>
-                  } @else if (msg.type === 'VIDEO' && msg.fileUrl) {
-                    <video class="msg-video" [src]="msg.fileUrl" controls></video>
-                  } @else if (msg.type === 'FILE' && msg.fileUrl) {
-                    <div class="file-msg-wrap">
-                      <a class="file-msg" [href]="msg.fileUrl" [download]="msg.content" target="_blank">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                          <polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                        <div class="file-msg-info">
-                          <span class="file-msg-name">{{ msg.content }}</span>
-                          <span class="file-msg-hint flx-mono">Télécharger</span>
+                  </div>
+                } @else {
+                  <div class="bubble-wrap">
+                    <div class="bubble" [class.bubble-mine]="isMine(msg)">
+                      @if (msg.type === 'IMAGE' && msg.fileUrl) {
+                        <img class="msg-image" [src]="msg.fileUrl" alt="image" loading="lazy" />
+                        @if (msg.content && msg.content !== msg.fileUrl) { <p>{{ msg.content }}</p> }
+                      } @else if (msg.type === 'AUDIO' && msg.fileUrl) {
+                        <div class="audio-msg">
+                          <svg class="mic-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                            <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+                          </svg>
+                          <audio [src]="msg.fileUrl" controls class="audio-player"></audio>
                         </div>
-                      </a>
+                      } @else if (msg.type === 'VIDEO' && msg.fileUrl) {
+                        <video class="msg-video" [src]="msg.fileUrl" controls></video>
+                      } @else if (msg.type === 'FILE' && msg.fileUrl) {
+                        <div class="file-msg-wrap">
+                          <a class="file-msg" [href]="msg.fileUrl" [download]="msg.content" target="_blank">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                              <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <div class="file-msg-info">
+                              <span class="file-msg-name">{{ msg.content }}</span>
+                              <span class="file-msg-hint flx-mono">Télécharger</span>
+                            </div>
+                          </a>
+                        </div>
+                      } @else {
+                        <p>{{ msg.content }}</p>
+                      }
+                      <span class="time flx-mono">{{ msg.createdAt | date:'HH:mm' }}</span>
                     </div>
-                  } @else {
-                    <p>{{ msg.content }}</p>
-                  }
-                  <span class="time flx-mono">{{ msg.createdAt | date:'HH:mm' }}</span>
-                </div>
+
+                    <!-- Actions (survol) -->
+                    @if (isMine(msg)) {
+                      <div class="msg-actions">
+                        <button class="msg-action-btn" (click)="startEditMessage(msg)" title="Modifier">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        <button class="msg-action-btn msg-action-del" (click)="deleteMessage(msg)" title="Supprimer">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+
                 @if (msg.reactions.length) {
                   <div class="reactions">
                     @for (r of msg.reactions; track r.id) {
@@ -309,6 +352,38 @@
   </section>
 
 </div>
+
+<!-- ══ MODAL PARAMÈTRES CHANNEL ══ -->
+@if (showChannelSettings()) {
+  <div class="modal-overlay" (click)="showChannelSettings.set(false)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Paramètres du channel</h3>
+        <button class="modal-close" (click)="showChannelSettings.set(false)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub">Projet : <strong>{{ activeChannelName()?.project }}</strong></p>
+      <label style="font-size:13px;font-weight:600;color:var(--flx-text-muted)">Nom du channel</label>
+      <input class="flx-input" [(ngModel)]="channelSettingsName"
+        placeholder="Nom du channel…"
+        (keydown.enter)="saveChannelSettings()" autofocus />
+      <div class="modal-actions" style="justify-content:space-between">
+        <button class="flx-btn flx-btn--ghost" style="color:#dc2626;border-color:#dc2626"
+          (click)="deleteActiveChannel()" [disabled]="deletingChannel()">
+          {{ deletingChannel() ? 'Suppression…' : 'Supprimer le channel' }}
+        </button>
+        <div style="display:flex;gap:8px">
+          <button class="flx-btn flx-btn--ghost" (click)="showChannelSettings.set(false)">Annuler</button>
+          <button class="flx-btn flx-btn--primary" (click)="saveChannelSettings()"
+            [disabled]="savingChannelSettings() || !channelSettingsName.trim()">
+            {{ savingChannelSettings() ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- ══ MODAL NOUVEAU CHANNEL ══ -->
 @if (showNewChannelModal()) {

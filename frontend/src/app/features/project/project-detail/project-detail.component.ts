@@ -373,6 +373,49 @@ export class ProjectDetailComponent implements OnInit {
     navigator.clipboard.writeText(this.webhookUrl).catch(() => {});
   }
 
+  // ── Modifier / Supprimer projet ───────────────────────────────────────────
+  showEditProject = signal(false);
+  editProjectName = '';
+  editProjectDescription = '';
+  editProjectVisibility: 'PRIVATE' | 'PUBLIC' = 'PRIVATE';
+  savingProject = signal(false);
+  deletingProject = signal(false);
+
+  openEditProject() {
+    const p = this.project();
+    if (!p) return;
+    this.editProjectName = p.name;
+    this.editProjectDescription = p.description ?? '';
+    this.editProjectVisibility = p.visibility as 'PRIVATE' | 'PUBLIC';
+    this.showEditProject.set(true);
+  }
+
+  saveProject() {
+    if (!this.editProjectName.trim()) return;
+    this.savingProject.set(true);
+    this.projectsService.update(this.projectId, {
+      name: this.editProjectName,
+      description: this.editProjectDescription,
+      visibility: this.editProjectVisibility,
+    }).subscribe({
+      next: (updated) => {
+        this.project.update((p) => p ? { ...p, ...updated } : p);
+        this.showEditProject.set(false);
+        this.savingProject.set(false);
+      },
+      error: () => this.savingProject.set(false),
+    });
+  }
+
+  deleteProject() {
+    if (!confirm(`Supprimer définitivement le projet "${this.project()?.name}" ? Cette action est irréversible.`)) return;
+    this.deletingProject.set(true);
+    this.projectsService.delete(this.projectId).subscribe({
+      next: () => { import('@angular/router').then(m => { /* navigate to dashboard */ }); window.location.href = '/dashboard'; },
+      error: () => this.deletingProject.set(false),
+    });
+  }
+
   // ── Utilitaires ───────────────────────────────────────────────────────────
   fileEmoji(mimeType: string): string {
     if (!mimeType)                                            return 'FIC';

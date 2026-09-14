@@ -583,3 +583,42 @@
 
 /* DM item dans sidebar */
 .dm-item { gap: 10px; }
+
+/* ── Edition message inline ── */
+.bubble-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.message-row.mine .bubble-wrap { flex-direction: row-reverse; }
+
+.msg-actions {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
+}
+.bubble-wrap:hover .msg-actions { display: flex; }
+
+.msg-action-btn {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  background: var(--flx-bg-sunken);
+  border: 1px solid var(--flx-border);
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--flx-text-muted);
+  transition: background 0.1s, color 0.1s;
+}
+.msg-action-btn:hover { background: var(--flx-bg-raised); color: var(--flx-text); }
+.msg-action-del:hover { color: #dc2626; border-color: #dc2626; }
+
+.edit-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 400px;
+}
+.edit-input { font-size: 14px; }
+.edit-actions { display: flex; gap: 6px; justify-content: flex-end; }

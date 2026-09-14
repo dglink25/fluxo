@@ -82,7 +82,7 @@
         <h3 class="section-title"><flx-icon name="user" [size]="14"></flx-icon> Membres</h3>
         <div class="result-list">
           @for (u of r.users; track u.id) {
-            <div class="flx-card result-item user-item">
+            <a class="flx-card result-item user-item" [routerLink]="['/users', u.username]">
               <div class="user-avatar">
                 @if (u.avatarUrl) {
                   <img [src]="u.avatarUrl" [alt]="u.username" />
@@ -96,7 +96,10 @@
                   <p class="result-sub">{{ u.fullName }}</p>
                 }
               </div>
-            </div>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--flx-text-faint)" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
           }
         </div>
       </section>

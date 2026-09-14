@@ -313,6 +313,120 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  // ── Modifier / Supprimer messages ────────────────────────────────────────
+  editingMessageId = signal<string | null>(null);
+  editingContent = '';
+
+  startEditMessage(msg: ChatMessage) {
+    this.editingMessageId.set(msg.id);
+    this.editingContent = msg.content;
+  }
+
+  cancelEditMessage() {
+    this.editingMessageId.set(null);
+    this.editingContent = '';
+  }
+
+  saveEditMessage(msg: ChatMessage) {
+    if (!this.editingContent.trim()) return;
+    const pid = this.activeProjectId();
+    const cid = this.activeChannelId();
+    const did = this.activeDmId();
+    const edit$ = this.activePane() === 'channels' && pid && cid
+      ? this.messaging.editMessage(pid, cid, msg.id, this.editingContent)
+      : did ? this.messaging.editDmMessage(did, msg.id, this.editingContent) : null;
+    if (!edit$) return;
+    edit$.subscribe({
+      next: (updated) => {
+        if (this.activePane() === 'channels') {
+          this.channelMessages.update((l) => l.map((m) => m.id === updated.id ? updated : m));
+        } else {
+          this.dmMessages.update((l) => l.map((m) => m.id === updated.id ? updated : m));
+        }
+        this.cancelEditMessage();
+      },
+    });
+  }
+
+  deleteMessage(msg: ChatMessage) {
+    if (!confirm('Supprimer ce message ?')) return;
+    const pid = this.activeProjectId();
+    const cid = this.activeChannelId();
+    const did = this.activeDmId();
+    const del$ = this.activePane() === 'channels' && pid && cid
+      ? this.messaging.deleteChannelMessage(pid, cid, msg.id)
+      : did ? this.messaging.deleteDmMessage(did, msg.id) : null;
+    if (!del$) return;
+    del$.subscribe({
+      next: () => {
+        if (this.activePane() === 'channels') {
+          this.channelMessages.update((l) => l.filter((m) => m.id !== msg.id));
+        } else {
+          this.dmMessages.update((l) => l.filter((m) => m.id !== msg.id));
+        }
+      },
+    });
+  }
+
+  // ── Paramètres channel ────────────────────────────────────────────────────
+  showChannelSettings = signal(false);
+  channelSettingsName = '';
+  savingChannelSettings = signal(false);
+  deletingChannel = signal(false);
+
+  openChannelSettings() {
+    const info = this.activeChannelName();
+    if (!info) return;
+    this.channelSettingsName = info.channel;
+    this.showChannelSettings.set(true);
+  }
+
+  saveChannelSettings() {
+    const pid = this.activeProjectId();
+    const cid = this.activeChannelId();
+    if (!pid || !cid || !this.channelSettingsName.trim()) return;
+    this.savingChannelSettings.set(true);
+    this.messaging.updateChannel(pid, cid, this.channelSettingsName.trim()).subscribe({
+      next: (updated) => {
+        this.projectGroups.update((groups) =>
+          groups.map((g) =>
+            g.projectId === pid
+              ? { ...g, channels: g.channels.map((c) => c.id === cid ? { ...c, name: updated.name } : c) }
+              : g,
+          ),
+        );
+        this.showChannelSettings.set(false);
+        this.savingChannelSettings.set(false);
+      },
+      error: () => this.savingChannelSettings.set(false),
+    });
+  }
+
+  deleteActiveChannel() {
+    const pid = this.activeProjectId();
+    const cid = this.activeChannelId();
+    const info = this.activeChannelName();
+    if (!pid || !cid) return;
+    if (!confirm(`Supprimer le channel #${info?.channel} ?`)) return;
+    this.deletingChannel.set(true);
+    this.messaging.deleteChannel(pid, cid).subscribe({
+      next: () => {
+        this.projectGroups.update((groups) =>
+          groups.map((g) =>
+            g.projectId === pid
+              ? { ...g, channels: g.channels.filter((c) => c.id !== cid) }
+              : g,
+          ),
+        );
+        this.activeChannelId.set(null);
+        this.channelMessages.set([]);
+        this.showChannelSettings.set(false);
+        this.deletingChannel.set(false);
+      },
+      error: () => this.deletingChannel.set(false),
+    });
+  }
+
   // ── Fichier attaché ──────────────────────────────────────────────────────
 
   onFileSelect(event: Event) {

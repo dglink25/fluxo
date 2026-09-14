@@ -1,0 +1,99 @@
+<flx-navbar></flx-navbar>
+
+<main class="page">
+
+  @if (loading()) {
+    <div class="center-state"><p class="sub">Chargement du profil…</p></div>
+  } @else if (!profile()) {
+    <div class="center-state">
+      <p>Utilisateur introuvable.</p>
+      <a class="flx-btn flx-btn--ghost" routerLink="/dashboard">Retour</a>
+    </div>
+  } @else {
+
+    <!-- En-tête profil -->
+    <div class="profile-header flx-card">
+      <div class="profile-avatar-wrap">
+        @if (profile()!.avatarUrl) {
+          <img class="profile-avatar" [src]="profile()!.avatarUrl" [alt]="profile()!.username" />
+        } @else {
+          <div class="profile-avatar-placeholder">
+            {{ profile()!.username.slice(0,1).toUpperCase() }}
+          </div>
+        }
+      </div>
+      <div class="profile-info">
+        <h1 class="profile-name">{{ profile()!.fullName || profile()!.username }}</h1>
+        <p class="profile-username flx-mono">&#64;{{ profile()!.username }}</p>
+        @if (profile()!.bio) { <p class="profile-bio">{{ profile()!.bio }}</p> }
+        <p class="profile-joined sub">Membre depuis {{ profile()!.createdAt | date:'MMMM yyyy' }}</p>
+      </div>
+      <div class="profile-actions">
+        <button class="flx-btn flx-btn--primary" (click)="startDm()" [disabled]="startingDm()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="white">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          {{ startingDm() ? 'Ouverture…' : 'Envoyer un message' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Heatmap activité -->
+    <div class="flx-card heatmap-card">
+      <h3 class="section-title">Activité — 12 derniers mois</h3>
+      <div class="heatmap-scroll">
+        <div class="heatmap-grid">
+          @for (week of heatmapGrid; track $index) {
+            <div class="heatmap-col">
+              @for (day of week; track day.date) {
+                <div class="heatmap-cell level-{{ day.level }}"
+                  [title]="day.count + ' action(s) le ' + day.date"></div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <div class="heatmap-legend">
+        <span class="sub">Moins</span>
+        <span class="legend-cell level-0"></span>
+        <span class="legend-cell level-1"></span>
+        <span class="legend-cell level-2"></span>
+        <span class="legend-cell level-3"></span>
+        <span class="legend-cell level-4"></span>
+        <span class="sub">Plus</span>
+      </div>
+    </div>
+
+    <!-- Projets publics -->
+    @if (profile()!.publicProjects.length > 0) {
+      <div class="section">
+        <h3 class="section-title">Projets publics ({{ profile()!.publicProjects.length }})</h3>
+        <div class="projects-grid">
+          @for (proj of profile()!.publicProjects; track proj.id) {
+            <a class="flx-card project-card" [routerLink]="['/projects', proj.id]">
+              <div class="project-card-header">
+                <span class="project-name">{{ proj.name }}</span>
+                <span class="badge public">Public</span>
+              </div>
+              @if (proj.description) {
+                <p class="project-desc sub">{{ proj.description }}</p>
+              }
+              <div class="project-stats flx-mono">
+                <span>{{ proj._count.tasks }} tâches</span>
+                <span>{{ proj._count.members }} membres</span>
+              </div>
+            </a>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="flx-card empty-panel">
+        <p class="sub">Cet utilisateur n'a pas de projets publics.</p>
+      </div>
+    }
+
+  }
+
+</main>
+
+<flx-bottom-nav></flx-bottom-nav>

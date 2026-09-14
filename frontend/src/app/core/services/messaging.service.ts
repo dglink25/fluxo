@@ -40,6 +40,45 @@ export class MessagingService {
     );
   }
 
+  updateChannel(projectId: string, channelId: string, name: string) {
+    return this.http.patch<Channel>(
+      `${environment.apiUrl}/projects/${projectId}/channels/${channelId}`,
+      { name },
+    );
+  }
+
+  deleteChannel(projectId: string, channelId: string) {
+    return this.http.delete(
+      `${environment.apiUrl}/projects/${projectId}/channels/${channelId}`,
+    );
+  }
+
+  editMessage(projectId: string, channelId: string, messageId: string, content: string) {
+    return this.http.patch<ChatMessage>(
+      `${environment.apiUrl}/projects/${projectId}/channels/${channelId}/messages/${messageId}`,
+      { content },
+    );
+  }
+
+  deleteChannelMessage(projectId: string, channelId: string, messageId: string) {
+    return this.http.delete(
+      `${environment.apiUrl}/projects/${projectId}/channels/${channelId}/messages/${messageId}`,
+    );
+  }
+
+  editDmMessage(dmId: string, messageId: string, content: string) {
+    return this.http.patch<ChatMessage>(
+      `${environment.apiUrl}/dm/${dmId}/messages/${messageId}`,
+      { content },
+    );
+  }
+
+  deleteDmMessage(dmId: string, messageId: string) {
+    return this.http.delete(
+      `${environment.apiUrl}/dm/${dmId}/messages/${messageId}`,
+    );
+  }
+
   getProjectMembers(projectId: string) {
     return this.http.get<any[]>(
       `${environment.apiUrl}/projects/${projectId}/channels/members`,

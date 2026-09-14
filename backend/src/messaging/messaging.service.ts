@@ -20,19 +20,17 @@ export class MessagingService {
     private realtime: RealtimeGateway,
   ) {}
 
-  /** Lister tous les channels de tous les projets de l'utilisateur */
+  // ── Agrégation tous projets ───────────────────────────────────────────────
+
   async listAllChannels(userId: string) {
     const memberships = await this.prisma.projectMember.findMany({
       where: { userId },
       include: {
         project: {
-          include: {
-            channels: { orderBy: { createdAt: 'asc' } },
-          },
+          include: { channels: { orderBy: { createdAt: 'asc' } } },
         },
       },
     });
-
     return memberships
       .filter((m) => m.project.channels.length > 0)
       .map((m) => ({
@@ -42,31 +40,13 @@ export class MessagingService {
       }));
   }
 
-  /** Créer un nouveau channel dans un projet */
-  async createChannel(projectId: string, userId: string, name: string) {
-    // Vérifier que l'utilisateur est OWNER ou ADMIN
-    const member = await this.prisma.projectMember.findUnique({
-      where: { projectId_userId: { projectId, userId } },
-    });
-    if (!member || !['OWNER', 'ADMIN'].includes(member.role)) {
-      throw new ForbiddenException('Seuls les OWNER et ADMIN peuvent créer des channels');
-    }
-
-    const channel = await this.prisma.channel.create({
-      data: { projectId, name },
-    });
-
-    return channel;
-  }
-
-  /** Rechercher des utilisateurs par username/email pour démarrer une DM */
   async searchUsers(query: string, currentUserId: string) {
     return this.prisma.user.findMany({
       where: {
         id: { not: currentUserId },
         OR: [
           { username: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
+          { email:    { contains: query, mode: 'insensitive' } },
           { fullName: { contains: query, mode: 'insensitive' } },
         ],
       },
@@ -75,13 +55,11 @@ export class MessagingService {
     });
   }
 
-  /** Lister les membres d'un projet (pour créer un channel ou DM) */
   async getProjectMembers(projectId: string, userId: string) {
     const member = await this.prisma.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId } },
     });
     if (!member) throw new ForbiddenException('Accès refusé');
-
     return this.prisma.projectMember.findMany({
       where: { projectId },
       include: {
@@ -90,7 +68,7 @@ export class MessagingService {
     });
   }
 
-  // ── Channels projet ────────────────────────────────────────────────────────
+  // ── Channels projet ───────────────────────────────────────────────────────
 
   async listChannels(projectId: string) {
     return this.prisma.channel.findMany({
@@ -111,18 +89,57 @@ export class MessagingService {
     return channel;
   }
 
-  async getChannelMessages(
-    channelId: string,
-    userId: string,
-    opts: { limit?: number; before?: string } = {},
-  ) {
-    // Vérifier l'accès au channel via le projet
+  async createChannel(projectId: string, userId: string, name: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId } },
+    });
+    if (!member || !['OWNER', 'ADMIN'].includes(member.role)) {
+      throw new ForbiddenException('Seuls les OWNER et ADMIN peuvent créer des channels');
+    }
+    return this.prisma.channel.create({ data: { projectId, name } });
+  }
+
+  async updateChannel(channelId: string, userId: string, dto: { name?: string }) {
     const channel = await this.prisma.channel.findUnique({
       where: { id: channelId },
       include: { project: { include: { members: true } } },
     });
     if (!channel) throw new NotFoundException('Channel introuvable');
+    const member = channel.project.members.find((m) => m.userId === userId);
+    if (!member || !['OWNER', 'ADMIN'].includes(member.role)) {
+      throw new ForbiddenException('Seuls les OWNER et ADMIN peuvent modifier ce channel');
+    }
+    return this.prisma.channel.update({
+      where: { id: channelId },
+      data: { ...(dto.name && { name: dto.name }) },
+    });
+  }
 
+  async deleteChannel(channelId: string, userId: string) {
+    const channel = await this.prisma.channel.findUnique({
+      where: { id: channelId },
+      include: { project: { include: { members: true } } },
+    });
+    if (!channel) throw new NotFoundException('Channel introuvable');
+    const member = channel.project.members.find((m) => m.userId === userId);
+    if (!member || !['OWNER', 'ADMIN'].includes(member.role)) {
+      throw new ForbiddenException('Accès refusé');
+    }
+    return this.prisma.channel.delete({ where: { id: channelId } });
+  }
+
+  // ── Messages channel ──────────────────────────────────────────────────────
+
+  async getChannelMessages(
+    channelId: string,
+    userId: string,
+    opts: { limit?: number; before?: string } = {},
+  ) {
+    const channel = await this.prisma.channel.findUnique({
+      where: { id: channelId },
+      include: { project: { include: { members: true } } },
+    });
+    if (!channel) throw new NotFoundException('Channel introuvable');
     const isMember = channel.project.members.some((m) => m.userId === userId);
     if (!isMember) throw new ForbiddenException('Accès refusé');
 
@@ -138,8 +155,7 @@ export class MessagingService {
       orderBy: { createdAt: 'desc' },
       take: opts.limit ?? 50,
     });
-
-    return messages.reverse(); // retourner dans l'ordre chronologique
+    return messages.reverse();
   }
 
   async sendToChannel(channelId: string, senderId: string, input: SendMessageInput) {
@@ -148,7 +164,6 @@ export class MessagingService {
       include: { project: { include: { members: true } } },
     });
     if (!channel) throw new NotFoundException('Channel introuvable');
-
     const isMember = channel.project.members.some((m) => m.userId === senderId);
     if (!isMember) throw new ForbiddenException('Accès refusé');
 
@@ -165,15 +180,52 @@ export class MessagingService {
         reactions: true,
       },
     });
-
-    // Diffuser en temps réel à tous les membres du channel
     this.realtime.emitToChannel(channelId, 'message:new', message);
-
     return message;
   }
 
+  async editMessage(messageId: string, userId: string, content: string) {
+    const message = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!message) throw new NotFoundException('Message introuvable');
+    if (message.senderId !== userId) {
+      throw new ForbiddenException('Vous ne pouvez modifier que vos propres messages');
+    }
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { content },
+      include: {
+        sender: { select: { id: true, username: true, avatarUrl: true } },
+        reactions: true,
+      },
+    });
+    const roomId = message.channelId ?? message.dmId ?? '';
+    this.realtime.emitToChannel(roomId, 'message:edited', updated);
+    return updated;
+  }
+
+  async deleteMessage(messageId: string, userId: string) {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      include: {
+        channel: { include: { project: { include: { members: true } } } },
+      },
+    });
+    if (!message) throw new NotFoundException('Message introuvable');
+
+    const isAuthor  = message.senderId === userId;
+    const member    = message.channel?.project.members.find((m) => m.userId === userId);
+    const isManager = member && ['OWNER', 'ADMIN'].includes(member.role);
+
+    if (!isAuthor && !isManager) {
+      throw new ForbiddenException('Vous ne pouvez supprimer que vos propres messages');
+    }
+    await this.prisma.message.delete({ where: { id: messageId } });
+    const roomId = message.channelId ?? message.dmId ?? '';
+    this.realtime.emitToChannel(roomId, 'message:deleted', { id: messageId });
+    return { deleted: true };
+  }
+
   async searchChannelMessages(channelId: string, userId: string, query: string) {
-    // Vérifier accès
     const channel = await this.prisma.channel.findUnique({
       where: { id: channelId },
       include: { project: { include: { members: true } } },
@@ -182,43 +234,42 @@ export class MessagingService {
     if (!channel.project.members.some((m) => m.userId === userId)) {
       throw new ForbiddenException('Accès refusé');
     }
-
     const hits = await this.prisma.message.findMany({
-      where: {
-        channelId,
-        content: { contains: query, mode: 'insensitive' },
-      },
+      where: { channelId, content: { contains: query, mode: 'insensitive' } },
       include: { sender: { select: { id: true, username: true, avatarUrl: true } } },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
-
     return hits.reverse();
   }
 
-  // ── Messages directs (DM) ──────────────────────────────────────────────────
+  // ── Messages directs (DM) ─────────────────────────────────────────────────
 
-  /** Trouver ou créer une conversation DM entre deux utilisateurs */
   async getOrCreateDm(userId1: string, userId2: string) {
-    // Chercher une DM existante entre ces deux utilisateurs
-    const existing = await this.prisma.directMessage.findFirst({
-      where: {
-        participants: {
-          every: { userId: { in: [userId1, userId2] } },
-        },
-      },
-      include: { participants: true },
+    // Chercher une DM existante à EXACTEMENT 2 participants
+    const participations = await this.prisma.directMessageParticipant.findMany({
+      where: { userId: userId1 },
+      include: { dm: { include: { participants: true } } },
     });
-
-    if (existing && existing.participants.length === 2) return existing;
+    const existing = participations
+      .map((p) => p.dm)
+      .find(
+        (dm) =>
+          dm.participants.length === 2 &&
+          dm.participants.some((p) => p.userId === userId2),
+      );
+    if (existing) return existing;
 
     return this.prisma.directMessage.create({
       data: {
-        participants: {
-          create: [{ userId: userId1 }, { userId: userId2 }],
-        },
+        participants: { create: [{ userId: userId1 }, { userId: userId2 }] },
       },
-      include: { participants: true },
+      include: {
+        participants: {
+          include: { user: { select: { id: true, username: true, avatarUrl: true } } },
+        },
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
     });
   }
 
@@ -231,7 +282,6 @@ export class MessagingService {
     if (!dm.participants.some((p) => p.userId === userId)) {
       throw new ForbiddenException('Accès refusé');
     }
-
     const messages = await this.prisma.message.findMany({
       where: { dmId },
       include: {
@@ -241,7 +291,6 @@ export class MessagingService {
       orderBy: { createdAt: 'desc' },
       take: opts.limit ?? 50,
     });
-
     return messages.reverse();
   }
 
@@ -254,7 +303,6 @@ export class MessagingService {
     if (!dm.participants.some((p) => p.userId === senderId)) {
       throw new ForbiddenException('Accès refusé');
     }
-
     const dmMessage = await this.prisma.message.create({
       data: {
         senderId,
@@ -268,20 +316,14 @@ export class MessagingService {
         reactions: true,
       },
     });
-
-    // Diffuser en temps réel aux participants
     this.realtime.emitToChannel(dmId, 'message:new', dmMessage);
-
-    // Notifier le/les autre(s) participant(s)
-    const other = dm.participants.filter((p) => p.userId !== senderId);
-    for (const p of other) {
+    const others = dm.participants.filter((p) => p.userId !== senderId);
+    for (const p of others) {
       this.realtime.emitToUser(p.userId, 'notification:new', { type: 'DM' });
     }
-
     return dmMessage;
   }
 
-  /** Lister les DMs d'un utilisateur */
   async listDms(userId: string) {
     const participations = await this.prisma.directMessageParticipant.findMany({
       where: { userId },
@@ -293,19 +335,14 @@ export class MessagingService {
                 user: { select: { id: true, username: true, avatarUrl: true } },
               },
             },
-            messages: {
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
+            messages: { orderBy: { createdAt: 'desc' }, take: 1 },
           },
         },
       },
     });
-
     return participations.map((p) => p.dm);
   }
 
-  /** Marquer les messages d'un channel/DM comme lus */
   async markMessagesRead(roomId: string, userId: string, isChannel: boolean) {
     await this.prisma.message.updateMany({
       where: {
@@ -317,18 +354,15 @@ export class MessagingService {
     });
   }
 
-  /** Réagir à un message avec un emoji */
   async toggleReaction(messageId: string, userId: string, emoji: string) {
     const existing = await this.prisma.messageReaction.findUnique({
       where: { messageId_userId_emoji: { messageId, userId, emoji } },
     });
-
     if (existing) {
       return this.prisma.messageReaction.delete({
         where: { messageId_userId_emoji: { messageId, userId, emoji } },
       });
     }
-
     return this.prisma.messageReaction.create({
       data: { messageId, userId, emoji },
     });

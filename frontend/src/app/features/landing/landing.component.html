@@ -1,0 +1,290 @@
+<!-- ══════════════════════════════════════════════════════════
+     FLUXO — Page d'accueil
+     Structure inspirée de eschool.bj
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- ── NAVBAR MARKETING ── -->
+<header class="nav">
+  <div class="nav-inner">
+    <!-- Logo -->
+    <a routerLink="/" class="nav-brand">
+      <img src="assets/logo_fluxo.png" alt="Fluxo" class="nav-logo" />
+      <span class="nav-name">Fluxo</span>
+    </a>
+
+    <!-- Liens -->
+    <nav class="nav-links" aria-label="Navigation principale">
+      <a href="#features" class="nav-link">Fonctionnalités</a>
+      <a href="#testimonials" class="nav-link">Témoignages</a>
+      <a href="#stats" class="nav-link">Pourquoi Fluxo</a>
+    </nav>
+
+    <!-- Actions -->
+    <div class="nav-actions">
+      @if (isLoggedIn) {
+        <!-- Connecté : afficher le dashboard -->
+        <a routerLink="/dashboard" class="btn-primary">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          Mon dashboard
+        </a>
+      } @else {
+        <!-- Non connecté : connexion + inscription -->
+        <a routerLink="/login" class="btn-outline">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+          </svg>
+          Connexion
+        </a>
+        <a routerLink="/login" class="btn-primary">
+          Commencer gratuitement
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      }
+    </div>
+
+    <!-- Hamburger mobile -->
+    <button class="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ══ SECTION HERO ══ -->
+<section class="hero">
+  <div class="hero-inner">
+    <!-- Texte gauche -->
+    <div class="hero-text">
+      <span class="hero-badge">Gestion de projet collaborative</span>
+      <h1 class="hero-title">
+        La gestion de projet<br />
+        <span class="hero-accent">qu'on attendait.</span>
+      </h1>
+      <p class="hero-sub">
+        Tâches, messagerie, visioconférence, GitHub, secrets — tout depuis une seule plateforme.
+        Conçu pour les équipes africaines et mondiales, 100&nbsp;% privé.
+      </p>
+
+      <div class="hero-ctas">
+        @if (isLoggedIn) {
+          <a routerLink="/dashboard" class="btn-primary btn-lg">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            Accéder à mon dashboard
+          </a>
+        } @else {
+          <a routerLink="/login" class="btn-primary btn-lg">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+            </svg>
+            Se connecter
+          </a>
+          <a href="#features" class="btn-ghost btn-lg">Voir les fonctionnalités</a>
+        }
+      </div>
+
+      <div class="hero-checks">
+        <span class="check-item">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Connexion Google ou GitHub
+        </span>
+        <span class="check-item">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Données 100&nbsp;% privées
+        </span>
+        <span class="check-item">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Prêt en 5 minutes
+        </span>
+      </div>
+    </div>
+
+    <!-- Screenshot droite -->
+    <div class="hero-visual">
+      <div class="laptop-wrap">
+        <div class="laptop-screen">
+          <!-- Screenshot simulé de l'interface Fluxo -->
+          <div class="app-preview">
+            <div class="preview-sidebar">
+              <div class="preview-logo">
+                <img src="assets/logo_fluxo.png" alt="" style="width:20px;height:20px;object-fit:contain" />
+                <span>Fluxo</span>
+              </div>
+              <div class="preview-nav-items">
+                <div class="pni active">Kanban</div>
+                <div class="pni">Liste</div>
+                <div class="pni">Membres</div>
+                <div class="pni">GitHub</div>
+                <div class="pni">Secrets</div>
+              </div>
+            </div>
+            <div class="preview-main">
+              <div class="preview-header">
+                <span class="preview-title">Projet Alpha</span>
+                <div class="preview-actions">
+                  <span class="preview-btn-ghost">Inviter</span>
+                  <span class="preview-btn-green">+ Tâche</span>
+                </div>
+              </div>
+              <div class="preview-kanban">
+                <div class="pk-col">
+                  <div class="pk-head">À faire</div>
+                  <div class="pk-card">Intégration API paiement</div>
+                  <div class="pk-card">Design maquette mobile</div>
+                </div>
+                <div class="pk-col">
+                  <div class="pk-head">En cours</div>
+                  <div class="pk-card pk-active">Développement backend</div>
+                  <div class="pk-card">Tests unitaires</div>
+                </div>
+                <div class="pk-col">
+                  <div class="pk-head">Terminé</div>
+                  <div class="pk-card pk-done">Cahier des charges</div>
+                  <div class="pk-card pk-done">Architecture DB</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="laptop-base"></div>
+        <div class="laptop-foot"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ STATS ══ -->
+<section class="stats" id="stats">
+  <div class="stats-inner">
+    @for (s of stats; track s.value) {
+      <div class="stat-item">
+        <span class="stat-value">{{ s.value }}</span>
+        <span class="stat-label">{{ s.label }}</span>
+        <span class="stat-sub">{{ s.sub }}</span>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ══ FONCTIONNALITÉS ══ -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-badge">Fonctionnalités</span>
+      <h2>Tout ce dont votre équipe a besoin</h2>
+      <p class="section-sub">Une plateforme unifiée qui remplace Trello, Slack, Notion et GitHub Projects.</p>
+    </div>
+
+    <div class="features-grid">
+      @for (f of features; track f.title) {
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              @if (f.icon === 'kanban') {
+                <rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="10" rx="1"/>
+              } @else if (f.icon === 'comment') {
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              } @else if (f.icon === 'video') {
+                <path d="M4 6.5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l5 3V7.5l-5 3v-2a2 2 0 0 0-2-2H4z"/>
+              } @else if (f.icon === 'lock') {
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              } @else if (f.icon === 'github') {
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+              } @else {
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+              }
+            </svg>
+          </div>
+          <h3 class="feature-title">{{ f.title }}</h3>
+          <p class="feature-desc">{{ f.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══ TÉMOIGNAGES ══ -->
+<section class="testimonials" id="testimonials">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-badge">Témoignages</span>
+      <h2>Ils font confiance à Fluxo</h2>
+    </div>
+    <div class="testimonials-grid">
+      @for (t of testimonials; track t.name) {
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="testi-text">"{{ t.text }}"</p>
+          <div class="testi-author">
+            <div class="testi-avatar">{{ t.avatar }}</div>
+            <div>
+              <p class="testi-name">{{ t.name }}</p>
+              <p class="testi-role">{{ t.role }}</p>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA FINAL ══ -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <img src="assets/logo_fluxo.png" alt="Fluxo" class="cta-logo" />
+    <h2 class="cta-title">Prêt à booster votre équipe ?</h2>
+    <p class="cta-sub">Connexion Google ou GitHub — opérationnel en moins de 5 minutes.</p>
+    <div class="cta-actions">
+      @if (isLoggedIn) {
+        <a routerLink="/dashboard" class="btn-primary btn-lg">
+          Accéder à mon dashboard
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      } @else {
+        <a routerLink="/login" class="btn-primary btn-lg">
+          Commencer maintenant
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo_fluxo.png" alt="Fluxo" class="footer-logo" />
+      <span class="footer-name">Fluxo</span>
+      <p class="footer-tagline">Gestion de projet collaborative.</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>Produit</h4>
+        <a href="#features">Fonctionnalités</a>
+        <a href="#stats">Pourquoi Fluxo</a>
+        <a href="#testimonials">Témoignages</a>
+      </div>
+      <div class="footer-col">
+        <h4>Accès</h4>
+        <a routerLink="/login">Connexion</a>
+        <a routerLink="/login">Créer un compte</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Fluxo. Tous droits réservés.</span>
+  </div>
+</footer>

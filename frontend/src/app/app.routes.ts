@@ -2,7 +2,13 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  // ── Page d'accueil publique ──────────────────────────────────────────────
+  {
+    path: '',
+    loadComponent: () =>
+      import('./features/landing/landing.component').then((m) => m.LandingComponent),
+    pathMatch: 'full',
+  },
 
   // ── Auth (routes publiques) ──────────────────────────────────────────────
   {
@@ -87,6 +93,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'users/:username',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/user-profile/user-profile.component').then(
+        (m) => m.UserProfileComponent,
+      ),
   },
 
   // Fallback

@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,46 +18,38 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { MessagingService } from './messaging.service';
 
 class SendMessageDto {
-  @IsOptional()
-  @IsEnum(MessageType)
-  type?: MessageType;
-
-  @IsString()
-  @MinLength(1)
-  content: string;
-
-  @IsOptional()
-  @IsString()
-  fileUrl?: string;
+  @IsOptional() @IsEnum(MessageType) type?: MessageType;
+  @IsString()  @MinLength(1)         content: string;
+  @IsOptional() @IsString()          fileUrl?: string;
 }
 
 class CreateChannelDto {
-  @IsString()
-  @MinLength(1)
-  name: string;
+  @IsString() @MinLength(1) name: string;
 }
 
-// ── Tous les channels de l'utilisateur ──────────────────────────────────────
+class UpdateChannelDto {
+  @IsOptional() @IsString() @MinLength(1) name?: string;
+}
+
+// ── Tous les channels de l'utilisateur (agrégation) ──────────────────────────
 
 @UseGuards(JwtAuthGuard)
 @Controller('channels')
 export class AllChannelsController {
   constructor(private messaging: MessagingService) {}
 
-  /** Tous les channels de tous les projets de l'utilisateur */
   @Get()
   listAll(@CurrentUser() user: any) {
     return this.messaging.listAllChannels(user.userId);
   }
 
-  /** Rechercher des utilisateurs pour démarrer une DM */
   @Get('users/search')
   searchUsers(@CurrentUser() user: any, @Query('q') q: string) {
     return this.messaging.searchUsers(q ?? '', user.userId);
   }
 }
 
-// ── Channels projet ─────────────────────────────────────────────────────────
+// ── Channels d'un projet ──────────────────────────────────────────────────────
 
 @UseGuards(JwtAuthGuard, ProjectRolesGuard)
 @Controller('projects/:projectId/channels')
@@ -76,6 +70,25 @@ export class ChannelsController {
     @Body() dto: CreateChannelDto,
   ) {
     return this.messaging.createChannel(projectId, user.userId, dto.name);
+  }
+
+  @Roles('OWNER', 'ADMIN')
+  @Patch(':channelId')
+  updateChannel(
+    @Param('channelId') channelId: string,
+    @CurrentUser() user: any,
+    @Body() dto: UpdateChannelDto,
+  ) {
+    return this.messaging.updateChannel(channelId, user.userId, dto);
+  }
+
+  @Roles('OWNER', 'ADMIN')
+  @Delete(':channelId')
+  deleteChannel(
+    @Param('channelId') channelId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.messaging.deleteChannel(channelId, user.userId);
   }
 
   @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')
@@ -108,6 +121,25 @@ export class ChannelsController {
     return this.messaging.sendToChannel(channelId, user.userId, dto);
   }
 
+  @Roles('OWNER', 'ADMIN', 'MEMBER')
+  @Patch(':channelId/messages/:messageId')
+  editMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+    @Body('content') content: string,
+  ) {
+    return this.messaging.editMessage(messageId, user.userId, content);
+  }
+
+  @Roles('OWNER', 'ADMIN', 'MEMBER')
+  @Delete(':channelId/messages/:messageId')
+  deleteMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.messaging.deleteMessage(messageId, user.userId);
+  }
+
   @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')
   @Get(':channelId/messages/search')
   searchMessages(
@@ -129,7 +161,7 @@ export class ChannelsController {
   }
 }
 
-// ── Messages directs ─────────────────────────────────────────────────────────
+// ── Messages directs ──────────────────────────────────────────────────────────
 
 @UseGuards(JwtAuthGuard)
 @Controller('dm')
@@ -164,6 +196,23 @@ export class DirectMessagesController {
     @Body() dto: SendMessageDto,
   ) {
     return this.messaging.sendDm(dmId, user.userId, dto);
+  }
+
+  @Patch(':dmId/messages/:messageId')
+  editDmMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+    @Body('content') content: string,
+  ) {
+    return this.messaging.editMessage(messageId, user.userId, content);
+  }
+
+  @Delete(':dmId/messages/:messageId')
+  deleteDmMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.messaging.deleteMessage(messageId, user.userId);
   }
 
   @Post(':dmId/read')

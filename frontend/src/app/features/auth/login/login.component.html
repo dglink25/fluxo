@@ -1,78 +1,16 @@
 <div class="auth-screen">
+  <!-- Lien retour accueil -->
+  <a routerLink="/" class="back-home">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    Accueil
+  </a>
+
   <div class="auth-card flx-card">
     <div class="mark" aria-hidden="true">
-      <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <!-- Dégradé vert principal -->
-          <linearGradient id="fxGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#0B6B2E"/>
-            <stop offset="35%" stop-color="#1FA34A"/>
-            <stop offset="70%" stop-color="#3FCB5C"/>
-            <stop offset="100%" stop-color="#0A5C28"/>
-          </linearGradient>
-          <!-- Dégradé vert clair (reflet lumineux) -->
-          <linearGradient id="fxGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#4FD66E"/>
-            <stop offset="50%" stop-color="#A8F0A8"/>
-            <stop offset="100%" stop-color="#1FA34A"/>
-          </linearGradient>
-          <!-- Dégradé pour l'ombre -->
-          <radialGradient id="fxShadow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="rgba(0,0,0,0.35)"/>
-            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
-          </radialGradient>
-        </defs>
-
-        <!-- Ombre au sol -->
-        <ellipse cx="60" cy="74" rx="32" ry="3.5" fill="url(#fxShadow)"/>
-
-        <!-- Boucle gauche -->
-        <path d="M60 40
-                 C 60 20, 40 8, 24 8
-                 C 8 8, 4 22, 4 34
-                 C 4 48, 12 58, 26 58
-                 C 40 58, 50 48, 60 40 Z"
-              fill="url(#fxGrad1)"/>
-
-        <!-- Boucle droite -->
-        <path d="M60 40
-                 C 60 20, 80 8, 96 8
-                 C 112 8, 116 22, 116 34
-                 C 116 48, 108 58, 94 58
-                 C 80 58, 70 48, 60 40 Z"
-              fill="url(#fxGrad1)"/>
-
-        <!-- Ruban clair gauche (reflet) -->
-        <path d="M60 40
-                 C 52 30, 42 22, 28 22
-                 C 18 22, 12 28, 12 36
-                 C 12 44, 20 50, 30 50
-                 C 42 50, 52 46, 60 40 Z"
-              fill="url(#fxGrad2)" opacity="0.9"/>
-
-        <!-- Ruban clair droit (reflet) -->
-        <path d="M60 40
-                 C 68 30, 78 22, 92 22
-                 C 102 22, 108 28, 108 36
-                 C 108 44, 100 50, 90 50
-                 C 78 50, 68 46, 60 40 Z"
-              fill="url(#fxGrad2)" opacity="0.9"/>
-
-        <!-- Courbe blanche en S (signature) -->
-        <path d="M42 34
-                 C 52 30, 56 42, 62 44
-                 C 68 46, 74 42, 78 34"
-              stroke="#ffffff" stroke-width="4" fill="none"
-              stroke-linecap="round"/>
-
-        <!-- Ombre interne pour profondeur -->
-        <path d="M60 40
-                 C 60 20, 40 8, 24 8
-                 C 8 8, 4 22, 4 34
-                 C 4 48, 12 58, 26 58
-                 C 40 58, 50 48, 60 40 Z"
-              fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
-      </svg>
+      <img src="assets/logo_fluxo.png" alt="Fluxo" class="logo-img" />
+      <span class="app-name">Fluxo</span>
     </div>
 
     <h1>Bienvenue sur Fluxo</h1>

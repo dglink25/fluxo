@@ -81,6 +81,60 @@ export class TaskDetailComponent implements OnInit {
     });
   }
 
+  // ── Modifier / Supprimer tâche ────────────────────────────────────────────
+
+  editMode = signal(false);
+  editTitle = '';
+  editDescription = '';
+  editPriority: Task['priority'] = 'MEDIUM';
+  editDueDate = '';
+  savingEdit = signal(false);
+  deletingTask = signal(false);
+
+  startEdit() {
+    const t = this.task();
+    if (!t) return;
+    this.editTitle = t.title;
+    this.editDescription = t.description ?? '';
+    this.editPriority = t.priority;
+    this.editDueDate = t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : '';
+    this.editMode.set(true);
+  }
+
+  saveEdit() {
+    if (!this.editTitle.trim()) return;
+    this.savingEdit.set(true);
+    this.tasksService.update(this.projectId, this.taskId, {
+      title: this.editTitle,
+      description: this.editDescription,
+      priority: this.editPriority,
+      dueDate: this.editDueDate || undefined,
+    }).subscribe({
+      next: (updated: any) => {
+        this.task.update((t) => t ? { ...t, ...updated } : t);
+        this.editMode.set(false);
+        this.savingEdit.set(false);
+        this.changed.emit();
+      },
+      error: () => this.savingEdit.set(false),
+    });
+  }
+
+  canEditTask(): boolean {
+    const me = this.auth.currentUser()?.id;
+    const myRole = this.projectMembers().find((m) => m.userId === me)?.role;
+    return ['OWNER', 'ADMIN', 'MEMBER'].includes(myRole ?? '');
+  }
+
+  deleteTask() {
+    if (!confirm('Supprimer définitivement cette tâche ?')) return;
+    this.deletingTask.set(true);
+    this.tasksService.remove(this.projectId, this.taskId).subscribe({
+      next: () => { this.changed.emit(); this.close.emit(); },
+      error: () => this.deletingTask.set(false),
+    });
+  }
+
   // ── Statut ────────────────────────────────────────────────────────────────
 
   canChangeStatus(): boolean {

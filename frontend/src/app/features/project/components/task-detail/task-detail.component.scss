@@ -40,7 +40,13 @@
   background: var(--flx-bg-raised);
   z-index: 1;
 }
-.modal-header > div { flex: 1; min-width: 0; }
+.modal-title-block { flex: 1; min-width: 0; }
+.modal-header-actions { display: flex; align-items: flex-start; gap: 2px; flex-shrink: 0; }
+
+/* Formulaire édition inline de tâche */
+.task-edit-form { display: flex; flex-direction: column; gap: 8px; }
+.task-edit-row  { display: flex; gap: 8px; }
+.task-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
 .id {
   font-size: 11px;

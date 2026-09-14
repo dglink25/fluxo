@@ -21,6 +21,14 @@ export class ProjectsService {
     return this.http.post<Project>(this.base, payload);
   }
 
+  update(projectId: string, payload: { name?: string; description?: string; visibility?: ProjectVisibility }) {
+    return this.http.patch<Project>(`${this.base}/${projectId}`, payload);
+  }
+
+  delete(projectId: string) {
+    return this.http.delete(`${this.base}/${projectId}`);
+  }
+
   getMembers(projectId: string) {
     return this.http.get<any>(`${this.base}/${projectId}/members`);
   }
@@ -31,5 +39,10 @@ export class ProjectsService {
 
   removeMember(projectId: string, userId: string) {
     return this.http.delete(`${this.base}/${projectId}/members/${userId}`);
+  }
+
+  /** Profil public d'un utilisateur */
+  getPublicProfile(username: string) {
+    return this.http.get<any>(`${environment.apiUrl}/users/profile/${username}`);
   }
 }

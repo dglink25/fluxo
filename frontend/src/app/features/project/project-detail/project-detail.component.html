@@ -16,6 +16,11 @@
         </div>
       </div>
       <div class="actions">
+        <!-- Modifier projet -->
+        <button class="flx-btn flx-btn--ghost" (click)="openEditProject()" title="Modifier le projet">
+          <flx-icon name="tasks" [size]="14"></flx-icon>
+          Modifier
+        </button>
         <button class="flx-btn flx-btn--ghost" (click)="showInvite.set(true)">
           <flx-icon name="mail" [size]="15"></flx-icon>
           Inviter
@@ -40,6 +45,40 @@
         }
       </div>
     </div>
+
+    <!-- ── Modal modifier projet ── -->
+    @if (showEditProject()) {
+      <div class="modal-overlay" (click)="showEditProject.set(false)">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Modifier le projet</h3>
+            <button class="modal-close" (click)="showEditProject.set(false)">
+              <flx-icon name="x" [size]="16"></flx-icon>
+            </button>
+          </div>
+          <input class="flx-input" [(ngModel)]="editProjectName" placeholder="Nom du projet…" autofocus />
+          <textarea class="flx-input" [(ngModel)]="editProjectDescription" rows="3"
+            placeholder="Description…"></textarea>
+          <select class="flx-input" [(ngModel)]="editProjectVisibility">
+            <option value="PRIVATE">Privé</option>
+            <option value="PUBLIC">Public</option>
+          </select>
+          <div class="modal-actions" style="justify-content:space-between">
+            <button class="flx-btn flx-btn--ghost" style="color:#dc2626"
+              (click)="deleteProject()" [disabled]="deletingProject()">
+              {{ deletingProject() ? 'Suppression…' : 'Supprimer le projet' }}
+            </button>
+            <div style="display:flex;gap:8px">
+              <button class="flx-btn flx-btn--ghost" (click)="showEditProject.set(false)">Annuler</button>
+              <button class="flx-btn flx-btn--primary" (click)="saveProject()"
+                [disabled]="savingProject() || !editProjectName.trim()">
+                {{ savingProject() ? 'Enregistrement…' : 'Enregistrer' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- ── Onglets de navigation ── -->
     <div class="view-tabs">

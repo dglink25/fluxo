@@ -14,6 +14,12 @@ export class LandingComponent {
   constructor(public auth: AuthService) {}
 
   get isLoggedIn(): boolean { return this.auth.isAuthenticated(); }
+
+  mobileMenuOpen = false;
+
+  toggleMobileMenu() { this.mobileMenuOpen = !this.mobileMenuOpen; }
+  closeMobileMenu()  { this.mobileMenuOpen = false; }
+
   features = [
     {
       icon: 'kanban',

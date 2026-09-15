@@ -1,6 +1,5 @@
 <!-- ══════════════════════════════════════════════════════════
      FLUXO — Page d'accueil
-     Structure inspirée de eschool.bj
      ══════════════════════════════════════════════════════════ -->
 
 <!-- ── NAVBAR MARKETING ── -->
@@ -12,34 +11,32 @@
       <span class="nav-name">Fluxo</span>
     </a>
 
-    <!-- Liens -->
+    <!-- Liens (desktop) -->
     <nav class="nav-links" aria-label="Navigation principale">
       <a href="#features" class="nav-link">Fonctionnalités</a>
       <a href="#testimonials" class="nav-link">Témoignages</a>
       <a href="#stats" class="nav-link">Pourquoi Fluxo</a>
     </nav>
 
-    <!-- Actions -->
+    <!-- Actions (desktop) -->
     <div class="nav-actions">
       @if (isLoggedIn) {
-        <!-- Connecté : afficher le dashboard -->
         <a routerLink="/dashboard" class="btn-primary">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
             <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
           </svg>
-          Mon dashboard
+          <span>Mon dashboard</span>
         </a>
       } @else {
-        <!-- Non connecté : connexion + inscription -->
         <a routerLink="/login" class="btn-outline">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
           </svg>
-          Connexion
+          <span>Connexion</span>
         </a>
         <a routerLink="/login" class="btn-primary">
-          Commencer gratuitement
+          <span>Commencer gratuitement</span>
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -48,9 +45,28 @@
     </div>
 
     <!-- Hamburger mobile -->
-    <button class="nav-hamburger" aria-label="Menu">
+    <button class="nav-hamburger" (click)="toggleMobileMenu()" [class.open]="mobileMenuOpen" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
+  </div>
+
+  <!-- Menu mobile déroulant -->
+  <div class="mobile-menu" [class.open]="mobileMenuOpen">
+    <nav class="mobile-links">
+      <a href="#features" (click)="closeMobileMenu()">Fonctionnalités</a>
+      <a href="#testimonials" (click)="closeMobileMenu()">Témoignages</a>
+      <a href="#stats" (click)="closeMobileMenu()">Pourquoi Fluxo</a>
+    </nav>
+    <div class="mobile-actions">
+      @if (isLoggedIn) {
+        <a routerLink="/dashboard" class="btn-primary btn-block" (click)="closeMobileMenu()">
+          Mon dashboard
+        </a>
+      } @else {
+        <a routerLink="/login" class="btn-outline btn-block" (click)="closeMobileMenu()">Connexion</a>
+        <a routerLink="/login" class="btn-primary btn-block" (click)="closeMobileMenu()">Commencer gratuitement</a>
+      }
+    </div>
   </div>
 </header>
 
@@ -109,7 +125,6 @@
     <div class="hero-visual">
       <div class="laptop-wrap">
         <div class="laptop-screen">
-          <!-- Screenshot simulé de l'interface Fluxo -->
           <div class="app-preview">
             <div class="preview-sidebar">
               <div class="preview-logo">
@@ -220,11 +235,9 @@
       @for (t of testimonials; track t.name) {
         <div class="testi-card">
           <div class="testi-stars">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            @for (i of [1,2,3,4,5]; track i) {
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            }
           </div>
           <p class="testi-text">"{{ t.text }}"</p>
           <div class="testi-author">

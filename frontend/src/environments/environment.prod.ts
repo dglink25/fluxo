@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
   // Remplacer par l'URL de l'API déployée (ex. Railway/Render)
-  apiUrl: 'https://api.fluxo.app/api',
+  apiUrl: 'https://fluxo-gmtz.onrender.com',
 };

@@ -150,14 +150,11 @@
             </button>
           }
           <!-- Appel vidéo -->
-          <a class="ctrl-icon-btn"
-            [routerLink]="['/call']"
-            [queryParams]="{ room: activePane() === 'channels' ? activeChannelId() : activeDmId() }"
-            title="Démarrer un appel">
+          <button class="ctrl-icon-btn" (click)="openCallModal()" title="Démarrer un appel">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
               <path d="M4 6.5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l5 3V7.5l-5 3v-2a2 2 0 0 0-2-2H4z"/>
             </svg>
-          </a>
+          </button>
         </div>
       </header>
 
@@ -449,6 +446,17 @@
       </div>
     </div>
   </div>
+}
+
+<!-- ══ MODAL APPEL VIDÉO ══ -->
+@if (showCallModal()) {
+  <flx-start-call-modal
+    [channelId]="activePane() === 'channels' ? activeChannelId()! : undefined"
+    [dmId]="activePane() === 'dm' ? activeDmId()! : undefined"
+    [projectId]="activeProjectId() ?? undefined"
+    [availableParticipants]="callParticipants()"
+    (close)="showCallModal.set(false)"
+  ></flx-start-call-modal>
 }
 
 <flx-bottom-nav></flx-bottom-nav>

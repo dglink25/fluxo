@@ -12,6 +12,7 @@ import { Channel, ChatMessage, DirectMessageConversation } from '../../core/mode
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
+import { StartCallModalComponent, CallParticipant } from '../../shared/components/start-call-modal/start-call-modal.component';
 import { debounceTime, Subject, takeUntil } from 'rxjs';
 
 type ActivePane = 'channels' | 'dm';
@@ -19,7 +20,7 @@ type ActivePane = 'channels' | 'dm';
 @Component({
   selector: 'flx-messaging',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent, BottomNavComponent, IconComponent],
+  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent, BottomNavComponent, IconComponent, StartCallModalComponent],
   templateUrl: './messaging.component.html',
   styleUrl: './messaging.component.scss',
 })
@@ -548,6 +549,43 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (mime.startsWith('video/')) return 'VIDEO';
     if (mime.startsWith('audio/')) return 'AUDIO';
     return 'FILE';
+  }
+
+  // ── Modal appel vidéo ────────────────────────────────────────────────────
+  showCallModal     = signal(false);
+  callParticipants  = signal<CallParticipant[]>([]);
+
+  openCallModal() {
+    // Collecter les participants selon le contexte (channel → membres projet, DM → l'autre)
+    if (this.activePane() === 'channels') {
+      const pid = this.activeProjectId();
+      if (!pid) return;
+      this.messaging.getProjectMembers(pid).subscribe({
+        next: (members) => {
+          const me = this.auth.currentUser()?.id;
+          this.callParticipants.set(
+            members
+              .filter((m: any) => m.userId !== me)
+              .map((m: any) => ({
+                id:       m.user.id,
+                username: m.user.username,
+                fullName: m.user.fullName,
+                avatarUrl: m.user.avatarUrl,
+              })),
+          );
+          this.showCallModal.set(true);
+        },
+        error: () => this.showCallModal.set(true),
+      });
+    } else {
+      // DM : juste l'autre participant
+      const conv = this.conversations().find((c) => c.id === this.activeDmId());
+      const other = conv ? this.getOtherParticipant(conv) : null;
+      this.callParticipants.set(other ? [{
+        id: other.id, username: other.username, avatarUrl: other.avatarUrl ?? undefined,
+      }] : []);
+      this.showCallModal.set(true);
+    }
   }
 
   // ── Utilitaires ───────────────────────────────────────────────────────────

@@ -35,7 +35,7 @@ export class VideoCallService {
           create: [
             { userId: hostId },
             ...input.participantIds
-              .filter((id) => id !== hostId)
+              .filter((id) => id && id !== hostId)
               .map((userId) => ({ userId })),
           ],
         },
@@ -105,7 +105,7 @@ export class VideoCallService {
           create: [
             { userId: hostId },
             ...input.participantIds
-              .filter((id) => id !== hostId)
+              .filter((id) => id && id !== hostId)
               .map((userId) => ({ userId })),
           ],
         },

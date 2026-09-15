@@ -25,13 +25,13 @@ export class VideoCallController {
   /** POST /video-calls/start — Lancer un appel immédiat */
   @Post('start')
   startCall(
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { userId: string },
     @Body() dto: StartCallDto,
   ) {
     if (!dto.channelId && !dto.dmId) {
       throw new BadRequestException('channelId ou dmId est requis');
     }
-    return this.videoCallService.startCall(user.id, {
+    return this.videoCallService.startCall(user.userId, {
       title: dto.title,
       channelId: dto.channelId,
       dmId: dto.dmId,
@@ -42,7 +42,7 @@ export class VideoCallController {
   /** POST /video-calls/schedule — Planifier un appel */
   @Post('schedule')
   scheduleCall(
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { userId: string },
     @Body() dto: ScheduleCallDto,
   ) {
     if (!dto.channelId && !dto.dmId) {
@@ -52,7 +52,7 @@ export class VideoCallController {
     if (scheduledAt <= new Date()) {
       throw new BadRequestException('La date planifiée doit être dans le futur');
     }
-    return this.videoCallService.scheduleCall(user.id, {
+    return this.videoCallService.scheduleCall(user.userId, {
       title: dto.title,
       scheduledAt,
       channelId: dto.channelId,
@@ -66,9 +66,9 @@ export class VideoCallController {
   @HttpCode(HttpStatus.OK)
   endCall(
     @Param('id') id: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { userId: string },
   ) {
-    return this.videoCallService.endCall(id, user.id);
+    return this.videoCallService.endCall(id, user.userId);
   }
 
   /** DELETE /video-calls/:id/cancel — Annuler un appel planifié */
@@ -76,9 +76,9 @@ export class VideoCallController {
   @HttpCode(HttpStatus.OK)
   cancelCall(
     @Param('id') id: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { userId: string },
   ) {
-    return this.videoCallService.cancelCall(id, user.id);
+    return this.videoCallService.cancelCall(id, user.userId);
   }
 
   /** GET /video-calls?channelId=&dmId= — Lister les appels actifs/planifiés */

@@ -7,6 +7,18 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
+/** Endpoint global — tâches assignées à l'utilisateur connecté (pour le dashboard) */
+@UseGuards(JwtAuthGuard)
+@Controller('tasks')
+export class MyTasksController {
+  constructor(private tasksService: TasksService) {}
+
+  @Get('mine')
+  getMyTasks(@CurrentUser() user: any) {
+    return this.tasksService.findAllForUser(user.userId);
+  }
+}
+
 @UseGuards(JwtAuthGuard, ProjectRolesGuard)
 @Controller('projects/:projectId/tasks')
 export class TasksController {

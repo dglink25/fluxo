@@ -104,15 +104,26 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.setupRealtimeHandlers();
     this.setupSearchHandlers();
 
-    // Si on arrive depuis un projet spécifique
+    // Si on arrive depuis un projet spécifique ou avec un dmId
     this.route.queryParamMap.subscribe((params) => {
-      const pid = params.get('projectId');
+      const pid  = params.get('projectId');
+      const dmId = params.get('dmId');
+
       if (pid) {
         this.activePane.set('channels');
-        // Sélectionner le premier channel de ce projet une fois chargé
-        this.projectGroups$.subscribe((groups) => {
+        this.messaging.listAllChannels().subscribe((groups) => {
           const group = groups.find((g) => g.projectId === pid);
           if (group?.channels.length) this.selectChannel(group.channels[0], group.projectId);
+        });
+      }
+
+      if (dmId) {
+        this.activePane.set('dm');
+        // Ouvrir la DM directement par son ID
+        this.messaging.listDms().subscribe((convs) => {
+          this.conversations.set(convs);
+          const conv = convs.find((c) => c.id === dmId);
+          if (conv) this.selectDm(conv);
         });
       }
     });

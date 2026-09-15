@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MailService } from '../mail/mail.service';
+import { VideoCallService } from '../video-call/video-call.service';
 
 @Injectable()
 export class SchedulerService {
@@ -12,6 +13,7 @@ export class SchedulerService {
     private prisma: PrismaService,
     private realtime: RealtimeGateway,
     private mail: MailService,
+    private videoCallService: VideoCallService,
   ) {}
 
   /**
@@ -115,5 +117,31 @@ export class SchedulerService {
     if (result.count > 0) {
       this.logger.log(`${result.count} invitation(s) expirée(s)`);
     }
+  }
+
+  // ── Rappels visioconférence ───────────────────────────────────────────────
+
+  /**
+   * Rappels à 1h avant — tourne toutes les 5 minutes pour ne pas rater la fenêtre.
+   */
+  @Cron('*/5 * * * *')
+  async sendCallReminders1h() {
+    await this.videoCallService.sendReminders('1h');
+  }
+
+  /**
+   * Rappels à 5min avant — tourne toutes les minutes.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async sendCallReminders5min() {
+    await this.videoCallService.sendReminders('5min');
+  }
+
+  /**
+   * Transition LIVE à l'heure exacte + notification "c'est l'heure" — toutes les minutes.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async sendCallRemindersNow() {
+    await this.videoCallService.sendReminders('now');
   }
 }

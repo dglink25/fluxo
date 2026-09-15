@@ -1,5 +1,5 @@
 .page {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 28px 24px 100px;
 }
@@ -8,7 +8,7 @@
 .github-link-banner {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 16px; border-radius: var(--flx-radius-md);
-  font-size: 14px; font-weight: 500; margin-bottom: 16px;
+  font-size: 14px; font-weight: 500; margin-bottom: 20px;
   animation: slideDown 0.2s ease;
   &.success { background: color-mix(in srgb, var(--flx-accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--flx-accent) 30%, transparent); color: var(--flx-accent); }
   &.error   { background: color-mix(in srgb, #e53e3e 10%, transparent); border: 1px solid color-mix(in srgb, #e53e3e 25%, transparent); color: #e53e3e; }
@@ -18,39 +18,48 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Layout deux colonnes */
+.dash-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 28px;
+  align-items: start;
+}
+.dash-col--main {}
+.dash-col--side {}
+
 /* En-tête */
 .head {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+  gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
 }
-.head h1 { font-size: 24px; margin: 0 0 2px; }
+.head h1 { font-size: 22px; margin: 0 0 2px; }
 .sub { font-size: 13px; color: var(--flx-text-muted); margin: 0; }
 .loading { margin: 16px 0; }
 
 /* Formulaire */
 .create-form {
-  padding: 24px; display: flex; flex-direction: column;
-  gap: 14px; margin-bottom: 24px;
+  padding: 20px; display: flex; flex-direction: column;
+  gap: 12px; margin-bottom: 20px;
 }
 .create-form label {
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 5px;
   font-size: 13px; font-weight: 600; color: var(--flx-text-muted);
 }
-.actions { display: flex; justify-content: flex-end; gap: 10px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; }
 
-/* Grille */
+/* Grille projets */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
 }
 
 /* Carte projet */
 .project-card {
-  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+  padding: 18px; display: flex; flex-direction: column; gap: 10px;
   text-decoration: none !important; color: var(--flx-text) !important;
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-  cursor: pointer;
 }
 .project-card:hover {
   transform: translateY(-2px);
@@ -59,33 +68,81 @@
 }
 .card-top { display: flex; align-items: center; justify-content: space-between; }
 .project-icon {
-  width: 40px; height: 40px; border-radius: var(--flx-radius-md);
+  width: 36px; height: 36px; border-radius: var(--flx-radius-md);
   background: var(--flx-accent-soft); display: grid; place-items: center;
 }
-.project-card h3 { font-size: 16px; font-weight: 700; margin: 0; }
+.project-card h3 { font-size: 15px; font-weight: 700; margin: 0; }
 .desc {
-  font-size: 13px; color: var(--flx-text-muted); margin: 0;
+  font-size: 12px; color: var(--flx-text-muted); margin: 0;
   display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden;
 }
-.meta { display: flex; gap: 14px; font-size: 12px; color: var(--flx-text-faint); }
+.meta { display: flex; gap: 12px; font-size: 11px; color: var(--flx-text-faint); }
 .meta span { display: flex; align-items: center; gap: 4px; }
 
 .badge {
-  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
   background: var(--flx-bg-sunken); color: var(--flx-text-faint);
 }
 .badge.public { background: var(--flx-accent-soft); color: var(--flx-accent); }
 
 /* État vide */
 .empty {
-  padding: 56px 32px; display: flex; flex-direction: column;
-  align-items: center; gap: 12px; text-align: center;
+  padding: 40px 24px; display: flex; flex-direction: column;
+  align-items: center; gap: 10px; text-align: center;
 }
-.empty p { margin: 0; font-size: 15px; font-weight: 600; }
+.empty p { margin: 0; font-size: 14px; font-weight: 600; }
+
+/* ── Colonne tâches ── */
+.side-header { margin-bottom: 14px; }
+.side-header h2 { font-size: 16px; font-weight: 800; margin: 0 0 2px; }
+
+.empty-due {
+  padding: 24px; display: flex; flex-direction: column;
+  align-items: center; gap: 8px; text-align: center;
+}
+
+.due-list { display: flex; flex-direction: column; gap: 10px; }
+
+.due-card {
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+  text-decoration: none !important; color: var(--flx-text) !important;
+  transition: border-color 0.12s, transform 0.1s;
+  &:hover { border-color: var(--flx-accent); transform: translateX(2px); }
+}
+
+.due-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-code {
+  font-size: 11px; font-weight: 700; color: var(--flx-accent);
+  background: var(--flx-accent-soft); padding: 2px 7px; border-radius: 4px;
+}
+.due-title { font-size: 14px; font-weight: 600; margin: 0; line-height: 1.3; }
+.due-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.due-project { font-size: 11px; color: var(--flx-text-faint); }
+
+/* Statut d'échéance */
+.due-status {
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  flex-shrink: 0;
+}
+.due-overdue { background: #fef2f2; color: #dc2626; }
+.due-today   { background: #fff7ed; color: #ea580c; }
+.due-soon    { background: #fefce8; color: #ca8a04; }
+.due-normal  { background: var(--flx-bg-sunken); color: var(--flx-text-faint); }
+
+/* Priorités */
+.prio-low    { background: var(--flx-bg-sunken); color: var(--flx-text-faint); font-size: 10px; padding: 2px 7px; border-radius: 999px; }
+.prio-medium { background: #eff6ff; color: #2563eb; font-size: 10px; padding: 2px 7px; border-radius: 999px; }
+.prio-high   { background: #fff7ed; color: #ea580c; font-size: 10px; padding: 2px 7px; border-radius: 999px; }
+.prio-urgent { background: #fef2f2; color: #dc2626; font-size: 10px; padding: 2px 7px; border-radius: 999px; }
+
+@media (max-width: 1024px) {
+  .dash-layout { grid-template-columns: 1fr; }
+  .dash-col--side { order: -1; }
+}
 
 @media (max-width: 768px) {
-  .page { padding: 20px 16px 90px; }
+  .page { padding: 16px 14px 90px; }
   .head { flex-direction: column; align-items: stretch; }
   .head button { width: 100%; justify-content: center; }
   .grid { grid-template-columns: 1fr; }

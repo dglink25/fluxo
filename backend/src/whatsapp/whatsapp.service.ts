@@ -135,4 +135,68 @@ export class WhatsappService {
 
     return this.send(phone, message);
   }
+
+  async sendCallInviteMessage(
+    phone: string,
+    hostName: string,
+    title: string,
+    callUrl: string,
+    scheduled: boolean,
+    scheduledAt?: Date,
+  ) {
+    let message: string;
+    if (scheduled && scheduledAt) {
+      const dt = scheduledAt.toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
+      message = [
+        '*Fluxo* — Visioconférence planifiée',
+        '',
+        `*${hostName}* a planifié une visioconférence :`,
+        `📅 *${title}*`,
+        `🕐 ${dt}`,
+        '',
+        `Rejoindre : ${callUrl}`,
+      ].join('\n');
+    } else {
+      message = [
+        '*Fluxo* — Visioconférence en cours',
+        '',
+        `*${hostName}* a lancé une visioconférence :`,
+        `📹 *${title}*`,
+        '',
+        `Rejoindre maintenant : ${callUrl}`,
+      ].join('\n');
+    }
+    return this.send(phone, message);
+  }
+
+  async sendCallReminderMessage(
+    phone: string,
+    title: string,
+    callUrl: string,
+    timeLabel: string,
+  ) {
+    const message = [
+      '*Fluxo* — Rappel de visioconférence',
+      '',
+      `⏰ La visioconférence *${title}* commence dans *${timeLabel}*.`,
+      '',
+      `Rejoindre : ${callUrl}`,
+    ].join('\n');
+    return this.send(phone, message);
+  }
+
+  async sendCallCancelledMessage(
+    phone: string,
+    hostName: string,
+    title: string,
+    scheduledAt: Date,
+  ) {
+    const dt = scheduledAt.toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
+    const message = [
+      '*Fluxo* — Visioconférence annulée',
+      '',
+      `La visioconférence *${title}* prévue le ${dt} a été annulée par *${hostName}*.`,
+    ].join('\n');
+    return this.send(phone, message);
+  }
 }

@@ -20,6 +20,7 @@ export interface Task {
   dueDate?: string | null;
   labels: string[];
   subtasks?: { id: string; title: string; done: boolean }[];
+  project?: { id: string; name: string } | null;
 }
 
 export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [

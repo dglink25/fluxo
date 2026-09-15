@@ -35,7 +35,24 @@ export class TasksService {
     return `${project.taskPrefix}-${num}`;
   }
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
+  /** Toutes les tâches assignées à un utilisateur (pour le dashboard) */
+  async findAllForUser(userId: string) {
+    return this.prisma.task.findMany({
+      where: {
+        status: { not: 'DONE' },
+        OR: [
+          { assigneeId: userId },
+          { assignees: { some: { userId } } },
+        ],
+      },
+      include: {
+        project: { select: { id: true, name: true } },
+        ...this.taskInclude,
+      },
+      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
+      take: 20,
+    });
+  }
 
   async findAllForProject(
     projectId: string,

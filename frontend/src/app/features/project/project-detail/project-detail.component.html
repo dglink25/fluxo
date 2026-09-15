@@ -196,6 +196,7 @@
             <span class="flx-mono id">#{{ task.id.slice(0,6) }}</span>
             <span class="title">{{ task.title }}</span>
             <span class="pill pill-status">{{ task.status }}</span>
+          
             <span class="pill prio-{{ task.priority.toLowerCase() }}">{{ task.priority }}</span>
             <span class="assignee flx-mono">{{ task.assignee ? '@'+task.assignee.username : '—' }}</span>
           </div>
@@ -381,25 +382,84 @@
 
     <!-- ══ MESSAGERIE ══ -->
     @else if (view() === 'messaging') {
-      <div class="flx-card panel">
-        <p class="sub" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-          <flx-icon name="comment" [size]="15"></flx-icon>
-          {{ channels().length }} channel(s) dans ce projet
-        </p>
+      <div class="flx-card panel messaging-panel">
+        <!-- En-tête -->
+        <div class="msg-panel-header">
+          <div>
+            <h3 style="margin:0 0 4px">Messagerie du projet</h3>
+            <p class="sub">{{ channels().length }} channel(s)</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <!-- Nouveau channel -->
+            <button class="flx-btn flx-btn--ghost" (click)="showNewChannelForm.set(!showNewChannelForm())">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                <path d="M12 8v4M10 10h4"/>
+              </svg>
+              Nouveau channel
+            </button>
+            <!-- Ouvrir la messagerie complète -->
+            <a class="flx-btn flx-btn--primary"
+               routerLink="/messaging" [queryParams]="{ projectId: projectId }">
+              <flx-icon name="comment" [size]="14" color="white"></flx-icon>
+              Ouvrir la messagerie
+            </a>
+          </div>
+        </div>
+
+        <!-- Formulaire nouveau channel -->
+        @if (showNewChannelForm()) {
+          <div class="new-channel-form">
+            <input class="flx-input" [(ngModel)]="newChannelName"
+              placeholder="Nom du channel (ex. design, backend…)"
+              (keydown.enter)="createChannelFromProject()"
+              autofocus />
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="flx-btn flx-btn--ghost btn-sm" (click)="showNewChannelForm.set(false); newChannelName=''">Annuler</button>
+              <button class="flx-btn flx-btn--primary btn-sm" (click)="createChannelFromProject()"
+                [disabled]="creatingChannel() || !newChannelName.trim()">
+                {{ creatingChannel() ? 'Création…' : 'Créer' }}
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Liste des channels -->
         @if (channels().length > 0) {
           <div class="channel-list">
             @for (ch of channels(); track ch.id) {
               <a class="channel-item" routerLink="/messaging" [queryParams]="{ projectId: projectId }">
-                <span class="hash">#</span> {{ ch.name }}
+                <span class="hash">#</span>
+                <span>{{ ch.name }}</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-left:auto;opacity:0.4">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
               </a>
             }
           </div>
+        } @else {
+          <p class="sub" style="text-align:center;padding:16px 0">Aucun channel. Créez-en un !</p>
         }
-        <a class="flx-btn flx-btn--primary" style="margin-top:16px;width:fit-content;"
-           routerLink="/messaging" [queryParams]="{ projectId: projectId }">
-          <flx-icon name="comment" [size]="14" color="white"></flx-icon>
-          Ouvrir la messagerie complète
-        </a>
+
+        <!-- DM avec membres -->
+        <div class="dm-section">
+          <h4 class="dm-section-title">Messages directs avec les membres</h4>
+          <div class="dm-members-list">
+            @for (m of members(); track m.userId) {
+              <button class="dm-member-btn" (click)="startDmWithMember(m.userId)">
+                @if (m.user.avatarUrl) {
+                  <img [src]="m.user.avatarUrl" [alt]="m.user.username" class="dm-member-avatar" />
+                } @else {
+                  <div class="dm-member-avatar-placeholder">{{ m.user.username.slice(0,1).toUpperCase() }}</div>
+                }
+                <span class="dm-member-name">&#64;{{ m.user.username }}</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-left:auto;opacity:0.4">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </button>
+            }
+          </div>
+        </div>
       </div>
     }
 

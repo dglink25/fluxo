@@ -28,6 +28,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { GithubModule } from './github/github.module';
 import { DocumentsModule } from './documents/documents.module';
 import { SearchModule } from './search/search.module';
+import { VideoCallModule } from './video-call/video-call.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { SearchModule } from './search/search.module';
 
     // Intégrations
     GithubModule,
+    VideoCallModule,
 
     // Utilitaires
     SearchModule,

@@ -64,6 +64,13 @@ export class InvitationTokenController {
     return this.invitationsService.accept(token, user.userId);
   }
 
+  /** Réparer : si une invitation est acceptée mais l'utilisateur pas dans les membres */
+  @UseGuards(JwtAuthGuard)
+  @Post('repair')
+  async repairMemberships(@CurrentUser() user: any) {
+    return this.invitationsService.repairAcceptedInvitations(user.userId);
+  }
+
   @Post(':token/decline')
   decline(@Param('token') token: string) {
     return this.invitationsService.decline(token);

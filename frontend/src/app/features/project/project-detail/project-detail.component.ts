@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ProjectsService } from '../../../core/services/projects.service';
 import { TasksService } from '../../../core/services/tasks.service';
@@ -120,6 +120,7 @@ export class ProjectDetailComponent implements OnInit {
   // ── Injections ────────────────────────────────────────────────────────────
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private projectsService: ProjectsService,
     private tasksService: TasksService,
     private filesService: FilesService,
@@ -215,6 +216,7 @@ export class ProjectDetailComponent implements OnInit {
     if (v === 'announcements') this.loadAnnouncements();
     if (v === 'members')       this.loadMembers();
     if (v === 'github')        this.loadGithubCommits();
+    if (v === 'messaging')     { this.loadChannels(); this.loadMembers(); }
   }
 
   // ── Kanban drag & drop ────────────────────────────────────────────────────
@@ -393,6 +395,38 @@ export class ProjectDetailComponent implements OnInit {
 
   copyWebhookUrl() {
     navigator.clipboard.writeText(this.webhookUrl).catch(() => {});
+  }
+
+  // ── Messagerie projet ─────────────────────────────────────────────────────
+  showNewChannelForm = signal(false);
+  newChannelName     = '';
+  creatingChannel    = signal(false);
+
+  createChannelFromProject() {
+    if (!this.newChannelName.trim()) return;
+    this.creatingChannel.set(true);
+    this.http.post<any>(
+      `${environment.apiUrl}/projects/${this.projectId}/channels`,
+      { name: this.newChannelName.trim() },
+    ).subscribe({
+      next: (ch) => {
+        this.channels.update((list) => [...list, ch]);
+        this.newChannelName = '';
+        this.showNewChannelForm.set(false);
+        this.creatingChannel.set(false);
+      },
+      error: () => this.creatingChannel.set(false),
+    });
+  }
+
+  startDmWithMember(targetUserId: string) {
+    this.http.post<any>(`${environment.apiUrl}/dm/${targetUserId}`, {}).subscribe({
+      next: (conv) => {
+        // Ouvrir la messagerie sur cette DM
+        this.router.navigate(['/messaging'], { queryParams: { dmId: conv.id } });
+      },
+      error: () => {},
+    });
   }
 
   // ── Modifier / Supprimer projet ───────────────────────────────────────────

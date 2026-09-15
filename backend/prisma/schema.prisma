@@ -117,6 +117,8 @@ model User {
   uploadedFiles        ProjectFile[]
   deliverables         Deliverable[]       @relation("DeliverableAuthor")
   validatedDeliverables Deliverable[]      @relation("DeliverableValidator")
+  hostedCalls          VideoCall[]         @relation("VideoCallHost")
+  callParticipations   VideoCallParticipant[]
 
   @@unique([provider, providerId])
 }
@@ -480,6 +482,49 @@ model ProjectRepository {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, repoFullName])
+}
+
+// ─── Visioconférence ─────────────────────────────────────────────────────────
+
+enum VideoCallStatus {
+  SCHEDULED   /// Planifiée pour une date future
+  LIVE        /// En cours
+  ENDED       /// Terminée
+  CANCELLED   /// Annulée
+}
+
+/// Appel vidéo — peut être immédiat (LIVE) ou planifié (SCHEDULED)
+model VideoCall {
+  id           String          @id @default(uuid())
+  roomId       String          @unique @default(uuid()) /// ID de la salle WebRTC
+  title        String?
+  hostId       String                                   /// Créateur de l'appel
+  status       VideoCallStatus @default(LIVE)
+  scheduledAt  DateTime?                                /// null = immédiat
+  startedAt    DateTime?
+  endedAt      DateTime?
+  channelId    String?                                  /// Channel où l'appel a été lancé
+  dmId         String?                                  /// DM où l'appel a été lancé
+  /// Rappels déjà envoyés (ex. ["1h","5min","now"])
+  remindersSent String[]       @default([])
+  createdAt    DateTime        @default(now())
+
+  host         User            @relation("VideoCallHost", fields: [hostId], references: [id])
+  participants VideoCallParticipant[]
+
+  @@index([scheduledAt, status])
+}
+
+model VideoCallParticipant {
+  id      String @id @default(uuid())
+  callId  String
+  userId  String
+  joinedAt DateTime?
+
+  call VideoCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([callId, userId])
 }
 
 // ─── Activité & Notifications ─────────────────────────────────────────────────

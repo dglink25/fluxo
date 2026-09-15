@@ -2,7 +2,7 @@
 
 <main class="page">
 
-  <!-- Bannière retour liaison GitHub -->
+  <!-- Bannière GitHub -->
   @if (githubLinkStatus()) {
     <div class="github-link-banner"
       [class.success]="githubLinkStatus() === 'success'"
@@ -15,90 +15,133 @@
     </div>
   }
 
-  <!-- En-tête -->
-  <div class="head">
-    <div>
-      <h1>Mes projets</h1>
-      <p class="sub">{{ projects().length }} projet(s)</p>
-    </div>
-    <button class="flx-btn flx-btn--primary"
-      (click)="showCreateProject.set(!showCreateProject())">
-      <flx-icon name="plus" [size]="16" color="white"></flx-icon>
-      Nouveau projet
-    </button>
-  </div>
+  <!-- Layout principal : projets à gauche, tâches à droite -->
+  <div class="dash-layout">
 
-  <!-- Formulaire création projet -->
-  @if (showCreateProject()) {
-    <form class="flx-card create-form" (ngSubmit)="createProject()">
-      <label>
-        Nom du projet
-        <input class="flx-input" [(ngModel)]="newName" name="name" required
-          placeholder="Ex. Refonte du site" autofocus />
-      </label>
-      <label>
-        Description
-        <textarea class="flx-input" [(ngModel)]="newDescription" name="description"
-          rows="2" placeholder="Optionnel"></textarea>
-      </label>
-      <label>
-        Visibilité
-        <select class="flx-input" [(ngModel)]="newVisibility" name="visibility">
-          <option value="PRIVATE">Privé</option>
-          <option value="PUBLIC">Public</option>
-        </select>
-      </label>
-      <div class="actions">
-        <button type="button" class="flx-btn flx-btn--ghost"
-          (click)="showCreateProject.set(false)">Annuler</button>
-        <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creating()">
-          {{ creating() ? 'Création…' : 'Créer le projet' }}
+    <!-- ── Colonne gauche : Mes projets ── -->
+    <div class="dash-col dash-col--main">
+      <div class="head">
+        <div>
+          <h1>Mes projets</h1>
+          <p class="sub">{{ projects().length }} projet(s)</p>
+        </div>
+        <button class="flx-btn flx-btn--primary"
+          (click)="showCreateProject.set(!showCreateProject())">
+          <flx-icon name="plus" [size]="16" color="white"></flx-icon>
+          Nouveau projet
         </button>
       </div>
-    </form>
-  }
 
-  <!-- Liste des projets -->
-  @if (loadingProjects()) {
-    <p class="sub loading">Chargement…</p>
-  } @else if (projects().length === 0 && !showCreateProject()) {
-    <div class="empty flx-card">
-      <flx-icon name="tasks" [size]="32" color="var(--flx-text-faint)"></flx-icon>
-      <p>Aucun projet pour l'instant.</p>
-      <p class="sub">Créez votre premier projet pour commencer.</p>
-      <button class="flx-btn flx-btn--primary" (click)="showCreateProject.set(true)">
-        <flx-icon name="plus" [size]="15" color="white"></flx-icon>
-        Nouveau projet
-      </button>
-    </div>
-  } @else {
-    <div class="grid">
-      @for (project of projects(); track project.id) {
-        <a class="flx-card project-card" [routerLink]="['/projects', project.id]">
-          <div class="card-top">
-            <div class="project-icon">
-              <flx-icon name="folder" [size]="20" color="var(--flx-accent)"></flx-icon>
-            </div>
-            <span class="badge" [class.public]="project.visibility === 'PUBLIC'">
-              {{ project.visibility === 'PUBLIC' ? 'Public' : 'Privé' }}
-            </span>
+      @if (showCreateProject()) {
+        <form class="flx-card create-form" (ngSubmit)="createProject()">
+          <label>
+            Nom du projet
+            <input class="flx-input" [(ngModel)]="newName" name="name" required
+              placeholder="Ex. Refonte du site" autofocus />
+          </label>
+          <label>
+            Description
+            <textarea class="flx-input" [(ngModel)]="newDescription" name="description"
+              rows="2" placeholder="Optionnel"></textarea>
+          </label>
+          <label>
+            Visibilité
+            <select class="flx-input" [(ngModel)]="newVisibility" name="visibility">
+              <option value="PRIVATE">Privé</option>
+              <option value="PUBLIC">Public</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="button" class="flx-btn flx-btn--ghost"
+              (click)="showCreateProject.set(false)">Annuler</button>
+            <button type="submit" class="flx-btn flx-btn--primary" [disabled]="creating()">
+              {{ creating() ? 'Création…' : 'Créer le projet' }}
+            </button>
           </div>
-          <h3>{{ project.name }}</h3>
-          <p class="desc">{{ project.description || 'Aucune description' }}</p>
-          <div class="meta flx-mono">
-            <span>
-              <flx-icon name="tasks" [size]="12"></flx-icon>
-              {{ project._count?.tasks ?? 0 }} tâches
-            </span>
-            <span>
-              <flx-icon name="user" [size]="12"></flx-icon>
-              {{ project._count?.members ?? 0 }} membres
-            </span>
-          </div>
-        </a>
+        </form>
+      }
+
+      @if (loadingProjects()) {
+        <p class="sub loading">Chargement…</p>
+      } @else if (projects().length === 0 && !showCreateProject()) {
+        <div class="empty flx-card">
+          <flx-icon name="tasks" [size]="32" color="var(--flx-text-faint)"></flx-icon>
+          <p>Aucun projet pour l'instant.</p>
+          <p class="sub">Créez votre premier projet pour commencer.</p>
+          <button class="flx-btn flx-btn--primary" (click)="showCreateProject.set(true)">
+            <flx-icon name="plus" [size]="15" color="white"></flx-icon>
+            Nouveau projet
+          </button>
+        </div>
+      } @else {
+        <div class="grid">
+          @for (project of projects(); track project.id) {
+            <a class="flx-card project-card" [routerLink]="['/projects', project.id]">
+              <div class="card-top">
+                <div class="project-icon">
+                  <flx-icon name="folder" [size]="20" color="var(--flx-accent)"></flx-icon>
+                </div>
+                <span class="badge" [class.public]="project.visibility === 'PUBLIC'">
+                  {{ project.visibility === 'PUBLIC' ? 'Public' : 'Privé' }}
+                </span>
+              </div>
+              <h3>{{ project.name }}</h3>
+              <p class="desc">{{ project.description || 'Aucune description' }}</p>
+              <div class="meta flx-mono">
+                <span>
+                  <flx-icon name="tasks" [size]="12"></flx-icon>
+                  {{ project._count?.tasks ?? 0 }} tâches
+                </span>
+                <span>
+                  <flx-icon name="user" [size]="12"></flx-icon>
+                  {{ project._count?.members ?? 0 }} membres
+                </span>
+              </div>
+            </a>
+          }
+        </div>
       }
     </div>
-  }
+
+    <!-- ── Colonne droite : Tâches à échéance ── -->
+    <div class="dash-col dash-col--side">
+      <div class="side-header">
+        <h2>Mes tâches</h2>
+        <p class="sub">assignées & non terminées</p>
+      </div>
+
+      @if (loadingDue()) {
+        <p class="sub loading">Chargement…</p>
+      } @else if (dueSoonTasks().length === 0) {
+        <div class="empty-due flx-card">
+          <flx-icon name="check" [size]="24" color="var(--flx-accent)"></flx-icon>
+          <p class="sub">Aucune tâche en cours.</p>
+        </div>
+      } @else {
+        <div class="due-list">
+          @for (task of dueSoonTasks(); track task.id) {
+            <a class="flx-card due-card" [routerLink]="['/projects', task.projectId]">
+              <div class="due-card-top">
+                <span class="task-code flx-mono">{{ task.code ?? task.id.slice(0,6) }}</span>
+                <span class="due-status" [class]="'due-' + dueLevel(task)">
+                  @if (dueLevel(task) === 'overdue') { En retard }
+                  @else if (dueLevel(task) === 'today') { Aujourd'hui }
+                  @else if (dueLevel(task) === 'soon') { Bientôt }
+                  @else if (task.dueDate) { {{ task.dueDate | date:'d MMM' }} }
+                </span>
+              </div>
+              <p class="due-title">{{ task.title }}</p>
+              <div class="due-meta flx-mono">
+                <span class="due-project">{{ task.project?.name ?? '' }}</span>
+                <span class="pill prio-{{ task.priority.toLowerCase() }}">{{ task.priority }}</span>
+              </div>
+            </a>
+          }
+        </div>
+      }
+    </div>
+
+  </div>
 
 </main>
 

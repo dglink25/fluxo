@@ -352,6 +352,182 @@ export class MailService {
     await this.send(to, subject, html, text);
   }
 
+  async sendCallInviteEmail(
+    to: string,
+    hostName: string,
+    title: string,
+    callUrl: string,
+    scheduled: boolean,
+    scheduledAt?: Date,
+  ) {
+    const subject = scheduled
+      ? `Visioconférence planifiée : "${title}"`
+      : `${hostName} vous invite à rejoindre "${title}"`;
+
+    let contextBlock: string;
+    let textContext: string;
+    if (scheduled && scheduledAt) {
+      const dt = scheduledAt.toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
+      contextBlock = `<p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              <strong style="color:#166553;">${hostName}</strong> a planifié une visioconférence :<br/>
+              📅 <strong>${title}</strong><br/>
+              🕐 ${dt}
+            </p>`;
+      textContext = `${hostName} a planifié une visioconférence "${title}" le ${dt}.`;
+    } else {
+      contextBlock = `<p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              <strong style="color:#166553;">${hostName}</strong> a lancé une visioconférence :<br/>
+              📹 <strong>${title}</strong><br/>
+              Elle est en cours maintenant.
+            </p>`;
+      textContext = `${hostName} a lancé une visioconférence "${title}". Elle est en cours maintenant.`;
+    }
+
+    const text = `${textContext}\n\nRejoindre : ${callUrl}`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr>
+          <td style="background:#166553;padding:24px;text-align:center;">
+            <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px;">Fluxo</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 36px;">
+            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">
+              ${scheduled ? 'Visioconférence planifiée' : 'Visioconférence en cours'}
+            </h2>
+            ${contextBlock}
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${callUrl}"
+                 style="display:inline-block;background:#166553;color:white;padding:14px 32px;
+                        border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+                ${scheduled ? 'Ajouter à mon agenda' : 'Rejoindre maintenant'}
+              </a>
+            </div>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+            <p style="color:#9ca3af;font-size:12px;margin:0;line-height:1.5;">
+              Lien direct : <a href="${callUrl}" style="color:#166553;">${callUrl}</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:14px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+            <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await this.send(to, subject, html, text);
+  }
+
+  async sendCallReminderEmail(
+    to: string,
+    title: string,
+    callUrl: string,
+    timeLabel: string,
+  ) {
+    const subject = `Rappel : "${title}" commence dans ${timeLabel}`;
+    const text = `La visioconférence "${title}" commence dans ${timeLabel}.\n\nRejoindre : ${callUrl}`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr>
+          <td style="background:#166553;padding:24px;text-align:center;">
+            <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px;">Fluxo</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 36px;">
+            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">⏰ Rappel de visioconférence</h2>
+            <p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              La visioconférence <strong style="color:#166553;">${title}</strong>
+              commence dans <strong>${timeLabel}</strong>.
+            </p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${callUrl}"
+                 style="display:inline-block;background:#166553;color:white;padding:14px 32px;
+                        border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+                Rejoindre la visioconférence
+              </a>
+            </div>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+            <p style="color:#9ca3af;font-size:12px;margin:0;">
+              Lien : <a href="${callUrl}" style="color:#166553;">${callUrl}</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:14px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+            <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await this.send(to, subject, html, text);
+  }
+
+  async sendCallCancelledEmail(
+    to: string,
+    hostName: string,
+    title: string,
+    scheduledAt: Date,
+  ) {
+    const dt = scheduledAt.toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
+    const subject = `Visioconférence annulée : "${title}"`;
+    const text = `La visioconférence "${title}" prévue le ${dt} a été annulée par ${hostName}.`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr>
+          <td style="background:#6b7280;padding:24px;text-align:center;">
+            <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px;">Fluxo</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 36px;">
+            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">Visioconférence annulée</h2>
+            <p style="color:#374151;line-height:1.6;font-size:15px;">
+              La visioconférence <strong style="color:#dc2626;">${title}</strong>
+              prévue le <strong>${dt}</strong> a été annulée par
+              <strong>${hostName}</strong>.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:14px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+            <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await this.send(to, subject, html, text);
+  }
+
   /** Test de connexion SMTP (utilisé par /api/health) */
   async testConnection(): Promise<{ ok: boolean; message: string; hint?: string }> {
     if (!this.transporter) {

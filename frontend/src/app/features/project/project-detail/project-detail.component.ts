@@ -606,17 +606,4 @@ export class ProjectDetailComponent implements OnInit {
     if (bytes < 1024 * 1024)           return `${(bytes / 1024).toFixed(1)} Ko`;
     return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
   }
-
-  /** Télécharge un document texte comme fichier .md */
-  downloadTextDoc(doc: any) {
-    const content = doc.details.content ?? '';
-    const title = doc.details.title ?? 'document';
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 }

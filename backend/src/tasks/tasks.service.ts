@@ -1,6 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { MailService } from '../mail/mail.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
@@ -9,6 +11,8 @@ export class TasksService {
   constructor(
     private prisma: PrismaService,
     private realtime: RealtimeGateway,
+    private mail: MailService,
+    private whatsapp: WhatsappService,
   ) {}
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -130,16 +134,25 @@ export class TasksService {
 
     this.realtime.emitToProject(projectId, 'task:created', task);
 
-    // Notifier chaque assigné
-    const allAssignees = task.assignees.map((a: any) => a.userId);
-    for (const aid of allAssignees) {
-      if (aid !== userId) {
-        await this.prisma.notification.create({
-          data: { userId: aid, type: 'TASK_ASSIGNED', content: `Vous avez été assigné à « ${task.title} »` },
-        });
-        this.realtime.emitToUser(aid, 'notification:new', { type: 'TASK_ASSIGNED' });
-      }
-    }
+    // Notifier chaque assigné (push + mail + WhatsApp)
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    });
+    const assigner = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true, fullName: true },
+    });
+    const assignerName = assigner?.fullName ?? assigner?.username ?? 'Quelqu\'un';
+    const allAssigneeIds = task.assignees.map((a: any) => a.userId);
+
+    await this.notifyAssignees(
+      allAssigneeIds,
+      { id: task.id, title: task.title, code: task.code },
+      project?.name ?? 'Projet',
+      assignerName,
+      userId,
+    );
 
     return task;
   }
@@ -210,11 +223,102 @@ export class TasksService {
     });
 
     this.realtime.emitToProject(projectId, 'task:updated', task);
+
+    // Notifier les nouveaux assignés (push + mail + WhatsApp)
+    const isAssignmentChange = assigneeIds !== undefined || dto.assigneeId !== undefined;
+    if (isAssignmentChange) {
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { name: true },
+      });
+      const assigner = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true, fullName: true },
+      });
+      const assignerName = assigner?.fullName ?? assigner?.username ?? 'Quelqu\'un';
+
+      // Déterminer les IDs réellement nouvellement assignés
+      const previousIds = new Set(existing.assignees.map((a) => a.userId));
+      const currentIds  = task.assignees.map((a: any) => a.userId);
+      const newlyAssigned = currentIds.filter((id: string) => !previousIds.has(id));
+
+      // Si pas de nouveaux (pas de changement effectif), notifier quand même tous les assignés
+      // si c'est une mise à jour directe de assigneeId sans liste
+      const toNotify = newlyAssigned.length > 0
+        ? newlyAssigned
+        : dto.assigneeId ? [dto.assigneeId] : [];
+
+      if (toNotify.length > 0) {
+        await this.notifyAssignees(
+          toNotify,
+          { id: task.id, title: task.title, code: task.code },
+          project?.name ?? 'Projet',
+          assignerName,
+          userId,
+        );
+      }
+    }
+
     return task;
   }
 
   async remove(taskId: string) {
     return this.prisma.task.delete({ where: { id: taskId } });
+  }
+
+  // ── Notification d'assignation (mail + WhatsApp + push) ──────────────────
+
+  /**
+   * Notifie les utilisateurs nouvellement assignés à une tâche.
+   * Envoie : notification in-app (WebSocket + BDD) + email + WhatsApp.
+   * @param userIds   IDs des utilisateurs à notifier
+   * @param task      Objet tâche (title, code, id)
+   * @param projectName Nom du projet
+   * @param assignerName Nom de la personne qui assigne
+   * @param currentUserId ID de l'utilisateur qui assigne (pour ne pas se notifier soi-même)
+   */
+  private async notifyAssignees(
+    userIds: string[],
+    task: { id: string; title: string; code?: string | null },
+    projectName: string,
+    assignerName: string,
+    currentUserId: string,
+  ) {
+    const taskLabel = task.code ? `[${task.code}] ${task.title}` : task.title;
+
+    for (const uid of userIds) {
+      if (uid === currentUserId) continue;
+
+      // Récupérer email + téléphone de l'assigné
+      const user = await this.prisma.user.findUnique({
+        where: { id: uid },
+        select: { id: true, email: true, phone: true, username: true, fullName: true },
+      });
+      if (!user) continue;
+
+      const displayName = user.fullName ?? user.username;
+      const content = `${assignerName} vous a assigné la tâche « ${taskLabel} » dans le projet « ${projectName} ».`;
+
+      // Push in-app
+      await this.prisma.notification.create({
+        data: { userId: uid, type: 'TASK_ASSIGNED', content },
+      });
+      this.realtime.emitToUser(uid, 'notification:new', { type: 'TASK_ASSIGNED', content });
+
+      // Email
+      if (user.email) {
+        await this.mail.sendTaskAssignedEmail(
+          user.email, displayName, assignerName, taskLabel, projectName,
+        ).catch(() => {});
+      }
+
+      // WhatsApp
+      if (user.phone) {
+        await this.whatsapp.sendTaskAssignedMessage(
+          user.phone, displayName, assignerName, taskLabel, projectName,
+        ).catch(() => {});
+      }
+    }
   }
 
   async addSubtask(taskId: string, title: string) {

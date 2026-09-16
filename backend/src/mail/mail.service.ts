@@ -528,6 +528,67 @@ export class MailService {
     await this.send(to, subject, html, text);
   }
 
+  async sendTaskAssignedEmail(
+    to: string,
+    recipientName: string,
+    assignerName: string,
+    taskLabel: string,
+    projectName: string,
+  ) {
+    const subject = `Nouvelle tâche assignée : ${taskLabel}`;
+    const text = `Bonjour ${recipientName},\n\n${assignerName} vous a assigné la tâche « ${taskLabel} » dans le projet « ${projectName} ».\n\nConnectez-vous à Fluxo pour voir les détails.`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr>
+          <td style="background:#166553;padding:24px;text-align:center;">
+            <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px;">Fluxo</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 36px;">
+            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">📋 Nouvelle tâche assignée</h2>
+            <p style="color:#374151;margin:0 0 16px;line-height:1.6;font-size:15px;">
+              Bonjour <strong>${recipientName}</strong>,
+            </p>
+            <p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              <strong style="color:#166553;">${assignerName}</strong> vous a assigné la tâche :
+            </p>
+            <div style="background:#f0fdf4;border-left:4px solid #166553;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:20px;">
+              <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">${taskLabel}</p>
+              <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">Projet : ${projectName}</p>
+            </div>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${process.env.FRONTEND_URL ?? 'http://localhost:4200'}/dashboard"
+                 style="display:inline-block;background:#166553;color:white;padding:13px 28px;
+                        border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+                Voir la tâche sur Fluxo
+              </a>
+            </div>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+            <p style="color:#9ca3af;font-size:12px;margin:0;line-height:1.5;">
+              Si vous pensez avoir reçu cet email par erreur, ignorez-le.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:14px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+            <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await this.send(to, subject, html, text);
+  }
+
   /** Test de connexion SMTP (utilisé par /api/health) */
   async testConnection(): Promise<{ ok: boolean; message: string; hint?: string }> {
     if (!this.transporter) {

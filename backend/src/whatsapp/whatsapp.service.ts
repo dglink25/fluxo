@@ -199,4 +199,25 @@ export class WhatsappService {
     ].join('\n');
     return this.send(phone, message);
   }
+
+  async sendTaskAssignedMessage(
+    phone: string,
+    recipientName: string,
+    assignerName: string,
+    taskLabel: string,
+    projectName: string,
+  ) {
+    const message = [
+      '*Fluxo* — Tâche assignée',
+      '',
+      `Bonjour *${recipientName}*,`,
+      '',
+      `*${assignerName}* vous a assigné la tâche :`,
+      `📋 *${taskLabel}*`,
+      `Projet : ${projectName}`,
+      '',
+      'Connectez-vous à Fluxo pour voir les détails.',
+    ].join('\n');
+    return this.send(phone, message);
+  }
 }

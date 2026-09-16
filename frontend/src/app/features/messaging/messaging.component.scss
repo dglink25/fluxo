@@ -54,7 +54,7 @@
   justify-content: center;
   gap: 5px;
   padding: 12px 6px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--flx-text-muted);
   background: none;
@@ -96,7 +96,7 @@
   cursor: pointer;
 }
 .project-group-name {
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -128,13 +128,13 @@
   gap: 8px;
   text-align: center;
   color: var(--flx-text-faint);
-  font-size: 13px;
+  font-size: 15px;
 }
-.sidebar-empty-state .hint { font-size: 11px; color: var(--flx-text-faint); }
+.sidebar-empty-state .hint { font-size: 15px; color: var(--flx-text-faint); }
 
 .sidebar-empty {
   padding: 20px 14px;
-  font-size: 12px;
+  font-size: 16px;
   color: var(--flx-text-faint);
   line-height: 1.5;
 }
@@ -156,7 +156,7 @@
 .room-item.active { background: var(--flx-accent-soft); border-left-color: var(--flx-accent); }
 
 .room-hash { font-size: 15px; font-weight: 700; color: var(--flx-text-faint); flex-shrink: 0; }
-.room-name  { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-name  { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .dm-avatar, .dm-avatar-placeholder {
   width: 30px; height: 30px; border-radius: 50%;
@@ -165,7 +165,7 @@
   display: grid; place-items: center;
 }
 .dm-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.dm-last  { font-size: 11px; color: var(--flx-text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dm-last  { font-size: 15px; color: var(--flx-text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Zone de chat ── */
 .chat-area {
@@ -223,7 +223,7 @@
 }
 .hash { font-size: 17px; color: var(--flx-text-faint); flex-shrink: 0; }
 .project-label {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--flx-text-faint);
   background: var(--flx-bg-sunken);
   padding: 2px 6px;
@@ -281,10 +281,10 @@
 }
 .search-input { flex: 1; }
 .search-results { max-height: 180px; overflow-y: auto; border-bottom: 1px solid var(--flx-border); }
-.search-result-item { padding: 8px 16px; border-bottom: 1px solid var(--flx-border); font-size: 13px; }
+.search-result-item { padding: 8px 16px; border-bottom: 1px solid var(--flx-border); font-size: 15px; }
 .search-result-item p { margin: 2px 0; }
 .actor { font-weight: 700; color: var(--flx-text-muted); }
-.date  { font-size: 11px; color: var(--flx-text-faint); }
+.date  { font-size: 15px; color: var(--flx-text-faint); }
 
 .no-selection, .chat-empty {
   flex: 1;
@@ -298,7 +298,7 @@
   padding: 24px;
 }
 .loading { flex: 1; display: grid; place-items: center; }
-.sub { font-size: 13px; color: var(--flx-text-muted); margin: 0; }
+.sub { font-size: 15px; color: var(--flx-text-muted); margin: 0; }
 
 /* ── Liste messages ── */
 .message-list {
@@ -332,14 +332,14 @@
 .bubble-group { display: flex; flex-direction: column; gap: 2px; max-width: 72%; }
 .message-row.mine .bubble-group { align-items: flex-end; }
 
-.sender-name { font-size: 11px; color: var(--flx-text-faint); margin-left: 4px; }
+.sender-name { font-size: 15px; color: var(--flx-text-faint); margin-left: 4px; }
 
 .bubble {
   background: var(--flx-bg-raised);
   border: 1px solid var(--flx-border);
   border-radius: 16px 16px 16px 4px;
   padding: 9px 13px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
   word-break: break-word;
 }
@@ -350,7 +350,7 @@
   border-radius: 16px 16px 4px 16px;
 }
 .bubble p { margin: 0; }
-.time { font-size: 10px; opacity: 0.55; display: block; text-align: right; margin-top: 4px; }
+.time { font-size: 16px; opacity: 0.55; display: block; text-align: right; margin-top: 4px; }
 
 /* Médias */
 .msg-image  { max-width: 240px; max-height: 200px; border-radius: 10px; display: block; margin-bottom: 4px; }
@@ -380,8 +380,8 @@
   &:hover { background: rgba(255,255,255,0.22); }
 }
 .file-msg-info   { display: flex; flex-direction: column; gap: 2px; }
-.file-msg-name   { font-size: 13px; font-weight: 600; word-break: break-all; }
-.file-msg-hint   { font-size: 10px; opacity: 0.65; }
+.file-msg-name   { font-size: 15px; font-weight: 600; word-break: break-all; }
+.file-msg-hint   { font-size: 16px; opacity: 0.65; }
 .file-doc-icon   { flex-shrink: 0; opacity: 0.8; }
 
 .reactions { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -405,8 +405,8 @@
   padding: 8px 12px;
 }
 .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: var(--flx-radius-sm); }
-.audio-preview { display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: var(--flx-font-mono); }
-.file-preview-chip { font-size: 12px; color: var(--flx-text-muted); font-family: var(--flx-font-mono); }
+.audio-preview { display: flex; align-items: center; gap: 8px; font-size: 15px; font-family: var(--flx-font-mono); }
+.file-preview-chip { font-size: 16px; color: var(--flx-text-muted); font-family: var(--flx-font-mono); }
 .clear-attach {
   margin-left: auto; background: none; border: none;
   color: var(--flx-text-faint); cursor: pointer; line-height: 0;
@@ -414,7 +414,7 @@
 }
 
 .recording-bar {
-  display: flex; align-items: center; gap: 10px; padding: 10px 4px; font-size: 13px;
+  display: flex; align-items: center; gap: 10px; padding: 10px 4px; font-size: 15px;
 }
 .rec-dot {
   width: 10px; height: 10px; border-radius: 50%;
@@ -423,7 +423,7 @@
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 .rec-time  { font-weight: 700; color: #dc2626; }
 .rec-label { color: var(--flx-text-muted); flex: 1; }
-.stop-rec-btn { padding: 6px 12px; font-size: 12px; gap: 5px; }
+.stop-rec-btn { padding: 6px 12px; font-size: 16px; gap: 5px; }
 
 .input-form {
   display: flex;
@@ -447,7 +447,7 @@
   flex: 1;
   border-radius: 20px;
   padding: 9px 16px;
-  font-size: 14px;
+  font-size: 16px;
   min-width: 0;
 }
 
@@ -484,7 +484,7 @@
 .msg-action-del:hover { color: #dc2626; border-color: #dc2626; }
 
 .edit-inline  { display: flex; flex-direction: column; gap: 6px; max-width: 400px; }
-.edit-input   { font-size: 14px; }
+.edit-input   { font-size: 16px; }
 .edit-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
 /* Label projet dans l'en-tête chat */
@@ -553,7 +553,7 @@
   display: flex; align-items: center; justify-content: space-between;
 }
 .modal-header h3 { font-size: 16px; margin: 0; }
-.modal-sub { font-size: 13px; color: var(--flx-text-muted); margin: 0; }
+.modal-sub { font-size: 15px; color: var(--flx-text-muted); margin: 0; }
 
 .modal-close {
   width: 32px; height: 32px; border-radius: 50%;
@@ -586,7 +586,7 @@
 .dm-search-input-wrap .flx-input:focus { outline: none; box-shadow: none; }
 
 .dm-results { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
-.dm-no-result { font-size: 13px; color: var(--flx-text-faint); text-align: center; padding: 16px 0; }
+.dm-no-result { font-size: 15px; color: var(--flx-text-faint); text-align: center; padding: 16px 0; }
 
 .dm-result-item {
   display: flex; align-items: center; gap: 10px;
@@ -598,8 +598,8 @@
 .dm-result-item:disabled { opacity: 0.6; cursor: default; }
 
 .dm-result-info { display: flex; flex-direction: column; gap: 2px; }
-.dm-result-name { font-size: 14px; font-weight: 600; }
-.dm-result-user { font-size: 12px; color: var(--flx-text-faint); }
+.dm-result-name { font-size: 16px; font-weight: 600; }
+.dm-result-user { font-size: 16px; color: var(--flx-text-faint); }
 
 .dm-item { gap: 10px; }
 
@@ -658,7 +658,7 @@
   /* Messages */
   .message-list { padding: 8px 10px; }
   .bubble-group { max-width: 85%; }
-  .bubble { font-size: 13px; padding: 8px 11px; }
+  .bubble { font-size: 15px; padding: 8px 11px; }
 
   /* Médias */
   .msg-image  { max-width: 190px; max-height: 150px; }
@@ -667,7 +667,7 @@
 
   /* Saisie */
   .input-area { padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
-  .message-input { font-size: 13px; padding: 8px 14px; }
+  .message-input { font-size: 15px; padding: 8px 14px; }
   .attach-btn { width: 36px; height: 36px; }
   .send-btn, .mic-btn { width: 38px; height: 38px; }
 }

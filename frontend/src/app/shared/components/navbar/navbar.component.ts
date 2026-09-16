@@ -60,13 +60,12 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
   styles: [`
     .bar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 24px; height: 57px;
+      padding: 0 24px; height: 60px;
       border-bottom: 1px solid var(--flx-border);
       background: var(--flx-bg-raised);
       position: sticky; top: 0; z-index: 30; gap: 12px;
     }
 
-    /* Logo */
     .brand {
       display: inline-flex; flex-direction: column; align-items: center;
       gap: 1px; text-decoration: none !important; color: var(--flx-text) !important;
@@ -77,15 +76,14 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
       object-fit: contain;
       filter: drop-shadow(0 2px 6px rgba(22,101,83,0.3));
     }
-    .brand-name { font-size: 10px; font-weight: 800; letter-spacing: 0.05em; }
+    .brand-name { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; }
 
-    /* Nav desktop */
     .nav-links {
       display: flex; align-items: center; gap: 2px; flex: 1; padding-left: 8px;
     }
     .nav-link {
-      position: relative; padding: 6px 12px; border-radius: var(--flx-radius-md);
-      font-size: 14px; font-weight: 600; color: var(--flx-text-muted);
+      position: relative; padding: 8px 14px; border-radius: var(--flx-radius-md);
+      font-size: 15px; font-weight: 600; color: var(--flx-text-muted);
       text-decoration: none !important; transition: background 0.12s, color 0.12s;
       display: flex; align-items: center; gap: 6px;
     }
@@ -93,17 +91,15 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
     .nav-link.active { color: var(--flx-accent); background: var(--flx-accent-soft); }
 
     .notif-badge {
-      background: #dc2626; color: white; font-size: 10px; font-weight: 700;
-      padding: 1px 5px; border-radius: 999px; line-height: 1.4; min-width: 16px;
+      background: #dc2626; color: white; font-size: 11px; font-weight: 700;
+      padding: 1px 6px; border-radius: 999px; line-height: 1.4; min-width: 18px;
       text-align: center; font-family: var(--flx-font-mono);
     }
 
-    /* Droite */
     .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-    /* Avatar */
     .avatar-btn {
-      width: 34px; height: 34px; border-radius: 50%; overflow: hidden;
+      width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
       display: grid; place-items: center; text-decoration: none !important;
       border: 2px solid var(--flx-border); transition: border-color 0.12s; flex-shrink: 0;
     }
@@ -111,13 +107,12 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
     .avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .avatar-initials {
       width: 100%; height: 100%; background: var(--flx-accent-soft); color: var(--flx-accent);
-      display: grid; place-items: center; font-size: 14px; font-weight: 700;
+      display: grid; place-items: center; font-size: 15px; font-weight: 700;
     }
 
-    /* Déconnexion */
     .logout-btn {
-      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
-      font-size: 13px; font-weight: 600; border-radius: var(--flx-radius-md);
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+      font-size: 14px; font-weight: 600; border-radius: var(--flx-radius-md);
       border: 1px solid var(--flx-border); background: none;
       color: var(--flx-text-muted); cursor: pointer;
       transition: background 0.12s, color 0.12s;

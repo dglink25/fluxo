@@ -49,7 +49,7 @@
 .task-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
 .id {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--flx-text-faint);
   display: block;
   margin-bottom: 4px;
@@ -86,7 +86,7 @@ h2 {
 .status-chip {
   padding: 6px 14px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   border: 1.5px solid var(--flx-border);
   background: transparent;
@@ -107,7 +107,7 @@ h2 {
 /* Description */
 .description {
   padding: 14px 22px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--flx-text-muted);
   margin: 0;
   line-height: 1.6;
@@ -128,7 +128,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--flx-text-muted);
   text-transform: uppercase;
@@ -139,7 +139,7 @@ h2 {
   background: var(--flx-bg-sunken);
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--flx-text-faint);
 }
 
@@ -149,7 +149,7 @@ h2 {
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--flx-text);
 }
 .subtask-row input[type='checkbox'] {
@@ -189,9 +189,9 @@ h2 {
   justify-content: space-between;
   margin-bottom: 6px;
 }
-.comment-head span { font-size: 12px; font-weight: 700; }
-.date { font-size: 11px; color: var(--flx-text-faint); font-family: var(--flx-font-mono); }
-.comment p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--flx-text); }
+.comment-head span { font-size: 16px; font-weight: 700; }
+.date { font-size: 15px; color: var(--flx-text-faint); font-family: var(--flx-font-mono); }
+.comment p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--flx-text); }
 
 .add-comment {
   display: flex;
@@ -204,7 +204,7 @@ h2 {
 .assign-block h4 { margin-bottom: 10px; }
 
 .assignees-label {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--flx-text-faint);
   display: flex;
   align-items: center;
@@ -236,7 +236,7 @@ h2 {
   border-color: var(--flx-accent);
   background: var(--flx-accent-soft);
 }
-.assignee-item .flx-mono { font-size: 10px; color: var(--flx-text-muted); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assignee-item .flx-mono { font-size: 16px; color: var(--flx-text-muted); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .assignee-avatar {
   position: relative;
@@ -265,12 +265,12 @@ h2 {
 
 .btn-xs {
   padding: 5px 12px;
-  font-size: 12px;
+  font-size: 16px;
   gap: 5px;
 }
 
 .status-hint {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--flx-text-faint);
   font-style: italic;
   align-self: center;
@@ -296,7 +296,7 @@ h2 {
   background: var(--flx-bg-sunken);
   padding: 8px 12px;
   border-radius: var(--flx-radius-sm);
-  font-size: 12px;
+  font-size: 16px;
 }
 .file-emoji { font-size: 18px; }
 
@@ -358,7 +358,7 @@ h2 {
   align-items: center;
   gap: 7px;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--flx-accent);
   background: var(--flx-accent-soft);
   padding: 6px 12px;
@@ -389,7 +389,7 @@ h2 {
 }
 .task-code {
   font-family: var(--flx-font-mono);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   background: var(--flx-accent-soft);
   color: var(--flx-accent);
@@ -399,13 +399,13 @@ h2 {
 }
 .copy-code-btn {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 5px; font-size: 15px; font-weight: 600;
   background: var(--flx-bg-sunken); border: 1px solid var(--flx-border);
   color: var(--flx-text-muted); cursor: pointer;
   transition: background 0.1s, color 0.1s;
   &:hover { background: var(--flx-accent-soft); color: var(--flx-accent); }
 }
 .commit-hint {
-  font-size: 10px; color: var(--flx-text-faint);
+  font-size: 16px; color: var(--flx-text-faint);
   background: var(--flx-bg-sunken); padding: 2px 7px; border-radius: 4px;
 }

@@ -20,13 +20,13 @@
 h1 { font-size: 20px; font-weight: 800; margin: 0; }
 
 .mark-all {
-  font-size: 12px;
+  font-size: 16px;
   padding: 7px 12px;
   gap: 6px;
 }
 
 .sub {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--flx-text-muted);
   margin: 0;
 }
@@ -45,7 +45,7 @@ h1 { font-size: 20px; font-weight: 800; margin: 0; }
   align-items: center;
   gap: 7px;
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--flx-text-muted);
   background: none;
@@ -62,7 +62,7 @@ h1 { font-size: 20px; font-weight: 800; margin: 0; }
 .tab .badge {
   background: var(--flx-accent);
   color: white;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
@@ -125,12 +125,12 @@ h1 { font-size: 20px; font-weight: 800; margin: 0; }
 }
 .content p {
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.4;
 }
 .content .role,
 .content .date {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--flx-text-faint);
 }
 
@@ -169,5 +169,5 @@ h1 { font-size: 20px; font-weight: 800; margin: 0; }
   .page { padding: 20px 16px 90px; }
   .invite-row { flex-wrap: wrap; }
   .row-actions { width: 100%; justify-content: flex-end; }
-  .tab { padding: 10px 12px; font-size: 13px; }
+  .tab { padding: 10px 12px; font-size: 15px; }
 }

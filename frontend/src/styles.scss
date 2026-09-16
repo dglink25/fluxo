@@ -1,8 +1,5 @@
 /* ==========================================================================
    Fluxo — design tokens
-   Palette : ardoise graphite + accent émeraude (#059669), pensée pour un
-   outil de travail utilisé toute la journée (contraste doux, pas de blanc pur).
-   Typo : Manrope (interface) + JetBrains Mono (identifiants, dates, code).
    ========================================================================== */
 
 :root {
@@ -20,6 +17,15 @@
 
   --flx-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.08);
   --flx-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  /* ── Échelle typographique ── */
+  --flx-text-xs:   13px;   /* labels, meta, timestamps */
+  --flx-text-sm:   14px;   /* secondaire */
+  --flx-text-base: 16px;   /* corps principal */
+  --flx-text-md:   17px;   /* légèrement au-dessus */
+  --flx-text-lg:   19px;   /* titres de section */
+  --flx-text-xl:   22px;   /* titres de page */
+  --flx-text-2xl:  26px;   /* grands titres */
 
   color-scheme: light;
 
@@ -52,7 +58,13 @@
   --flx-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
-* { box-sizing: border-box; }
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  /* Base 16px — tous les rem en héritent */
+  font-size: 16px;
+}
 
 html, body {
   height: 100%;
@@ -62,44 +74,57 @@ html, body {
 
 body {
   font-family: var(--flx-font-ui);
+  font-size: var(--flx-text-base);   /* 16px */
+  line-height: 1.6;
   background: var(--flx-bg);
   color: var(--flx-text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-h1, h2, h3, h4 {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0;
-}
+/* ── Titres ── */
+h1 { font-size: var(--flx-text-2xl); font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+h2 { font-size: var(--flx-text-xl);  font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+h3 { font-size: var(--flx-text-lg);  font-weight: 700; margin: 0; }
+h4 { font-size: var(--flx-text-md);  font-weight: 700; margin: 0; }
 
-a { color: var(--flx-accent); text-decoration: none; }
+p  { font-size: var(--flx-text-base); line-height: 1.6; margin: 0; }
+
+a { color: var(--flx-accent); text-decoration: none; font-size: inherit; }
 a:hover { text-decoration: underline; }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
+/* ── Utilitaire mono ── */
 .flx-mono {
   font-family: var(--flx-font-mono);
   font-variant-ligatures: none;
+  font-size: 0.875em; /* légèrement plus petit que le contexte — mono est visuellement plus grand */
 }
 
-/* Boutons partagés */
+/* ── Composants globaux ── */
+
+/* Boutons */
 .flx-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 11px 18px;
   border-radius: var(--flx-radius-md);
   border: 1px solid transparent;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--flx-text-base);   /* 16px — plus jamais 14px fixe */
+  line-height: 1.3;
   transition: transform 0.08s ease, background-color 0.15s ease;
 }
 .flx-btn:active { transform: scale(0.98); }
+
+/* Petite variante pour les contextes compacts */
+.btn-sm {
+  padding: 8px 14px !important;
+  font-size: var(--flx-text-sm) !important;  /* 14px */
+}
 
 .flx-btn--primary {
   background: var(--flx-accent);
@@ -114,21 +139,25 @@ button {
 }
 .flx-btn--ghost:hover { background: var(--flx-bg-sunken); }
 
+/* Inputs */
 .flx-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border-radius: var(--flx-radius-sm);
   border: 1px solid var(--flx-border);
   background: var(--flx-bg-raised);
   color: var(--flx-text);
-  font-size: 14px;
+  font-size: var(--flx-text-base);   /* 16px */
   font-family: inherit;
+  line-height: 1.4;
 }
 .flx-input:focus {
   outline: 2px solid var(--flx-accent);
   outline-offset: 1px;
 }
+.flx-input::placeholder { color: var(--flx-text-faint); }
 
+/* Carte */
 .flx-card {
   background: var(--flx-bg-raised);
   border: 1px solid var(--flx-border);
@@ -136,48 +165,41 @@ button {
   box-shadow: var(--flx-shadow-1);
 }
 
-/* Focus clavier visible partout (accessibilité) */
+/* Focus accessibilité */
 :focus-visible {
   outline: 2px solid var(--flx-accent);
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-}
-
-/* ── Utilitaires responsifs ── */
+/* ── Mobile — taille de base augmentée légèrement ── */
 @media (max-width: 768px) {
-  /* Espace pour la bottom nav mobile */
-  main, .page {
-    padding-bottom: 90px;
-  }
+  html { font-size: 16px; } /* maintenir 16px, pas de réduction */
+
+  main, .page { padding-bottom: 90px; }
+
+  /* Les très petites tailles deviennent lisibles */
+  .flx-mono { font-size: 0.9em; }
 }
 
-/* ── Scrollbar globale discrète ── */
+/* ── Scrollbar discrète ── */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--flx-border) transparent;
 }
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--flx-border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--flx-text-faint);
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--flx-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--flx-text-faint); }
 
-/* ── Helpers ── */
+/* ── Helpers texte ── */
 .text-accent { color: var(--flx-accent); }
 .text-muted  { color: var(--flx-text-muted); }
 .text-faint  { color: var(--flx-text-faint); }
+
+.text-xs   { font-size: var(--flx-text-xs); }
+.text-sm   { font-size: var(--flx-text-sm); }
+.text-base { font-size: var(--flx-text-base); }
+.text-lg   { font-size: var(--flx-text-lg); }
 
 /* Texte tronqué */
 .truncate {
@@ -193,74 +215,76 @@ hr.flx-sep {
   margin: 16px 0;
 }
 
-/* Badge générique */
+/* Badge */
 .flx-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--flx-text-xs);
   font-weight: 700;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   background: var(--flx-bg-sunken);
-  color: var(--flx-text-faint);
+  color: var(--flx-text-muted);
 }
-.flx-badge--accent {
-  background: var(--flx-accent-soft);
-  color: var(--flx-accent);
-}
-.flx-badge--red {
-  background: #dc262618;
-  color: #dc2626;
-}
-.flx-badge--orange {
-  background: #d9770618;
-  color: #d97706;
-}
-.flx-badge--blue {
-  background: #2563eb18;
-  color: #2563eb;
-}
+.flx-badge--accent { background: var(--flx-accent-soft); color: var(--flx-accent); }
+.flx-badge--red    { background: #dc262618; color: #dc2626; }
+.flx-badge--orange { background: #d9770618; color: #d97706; }
+.flx-badge--blue   { background: #2563eb18; color: #2563eb; }
 
-/* Loader inline */
+/* Spinner */
 .flx-spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 2px solid var(--flx-border);
   border-top-color: var(--flx-accent);
   animation: flx-spin 0.7s linear infinite;
+  flex-shrink: 0;
 }
 @keyframes flx-spin { to { transform: rotate(360deg); } }
 
-/* Grille responsive générique */
+/* Grille responsive */
 .flx-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 
-/* Toast / message d'erreur inline */
+/* Messages inline */
 .flx-error {
-  font-size: 13px;
+  font-size: var(--flx-text-sm);
   color: #dc2626;
   background: #dc262612;
   border: 1px solid #dc262630;
   border-radius: var(--flx-radius-sm);
-  padding: 10px 14px;
+  padding: 11px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1.5;
 }
 .flx-success {
-  font-size: 13px;
+  font-size: var(--flx-text-sm);
   color: var(--flx-accent);
   background: var(--flx-accent-soft);
   border: 1px solid var(--flx-accent);
   border-radius: var(--flx-radius-sm);
-  padding: 10px 14px;
+  padding: 11px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1.5;
+}
+
+/* Sous-texte */
+.sub {
+  font-size: var(--flx-text-sm);
+  color: var(--flx-text-muted);
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }

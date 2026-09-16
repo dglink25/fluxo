@@ -43,9 +43,7 @@ interface NavItem {
   styles: [`
     .bottom-nav {
       position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      left: 0; right: 0; bottom: 0;
       display: flex;
       justify-content: space-around;
       background: var(--flx-bg-raised);
@@ -59,11 +57,11 @@ interface NavItem {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
-      padding: 5px 8px;
+      gap: 4px;
+      padding: 6px 8px;
       color: var(--flx-text-faint);
       text-decoration: none !important;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 600;
       border-radius: var(--flx-radius-sm);
       flex: 1;

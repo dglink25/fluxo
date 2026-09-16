@@ -17,9 +17,10 @@ const refreshDone$ = new BehaviorSubject<string | null>(null);
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
 
-  // Ne pas intercepter les appels au endpoint de refresh lui-même
-  // pour éviter une boucle infinie
-  if (req.url.includes('/auth/refresh')) {
+  // Ne pas intercepter :
+  // - le endpoint de refresh (évite boucle infinie)
+  // - les requêtes vers Cloudinary (upload direct, pas besoin d'auth Fluxo)
+  if (req.url.includes('/auth/refresh') || req.url.includes('cloudinary.com')) {
     return next(req);
   }
 

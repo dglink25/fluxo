@@ -131,7 +131,7 @@ export class ProjectDetailComponent implements OnInit {
     private messagingService: MessagingService,
     private realtime: RealtimeService,
     private http: HttpClient,
-    private authService: AuthService,
+    public authService: AuthService,
   ) {}
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -294,18 +294,55 @@ export class ProjectDetailComponent implements OnInit {
 
   // ── Viewer de fichier in-app ──────────────────────────────────────────────
   previewFile = signal<{ id: string; name: string; mimeType: string; url: string } | null>(null);
+  /** Commentaires du fichier actuellement ouvert */
+  fileComments   = signal<any[]>([]);
+  newFileComment = '';
+  sendingComment = signal(false);
 
   toggleFilePreview(file: { id: string; name: string; mimeType: string; url: string }) {
     const current = this.previewFile();
     if (current?.id === file.id) {
       this.previewFile.set(null);
+      this.fileComments.set([]);
     } else {
       this.previewFile.set(file);
+      this.fileComments.set([]);
+      // Charger les commentaires existants
+      this.filesService.listComments(this.projectId, file.id).subscribe({
+        next: (comments) => this.fileComments.set(comments),
+        error: () => {},
+      });
     }
   }
 
   closePreview() {
     this.previewFile.set(null);
+    this.fileComments.set([]);
+  }
+
+  submitFileComment() {
+    const content = this.newFileComment.trim();
+    const file    = this.previewFile();
+    if (!content || !file || this.sendingComment()) return;
+
+    this.sendingComment.set(true);
+    this.filesService.addComment(this.projectId, file.id, content).subscribe({
+      next: (comment) => {
+        this.fileComments.update((list) => [...list, comment]);
+        this.newFileComment = '';
+        this.sendingComment.set(false);
+      },
+      error: () => this.sendingComment.set(false),
+    });
+  }
+
+  deleteFileComment(commentId: string) {
+    const file = this.previewFile();
+    if (!file) return;
+    this.filesService.deleteComment(this.projectId, file.id, commentId).subscribe({
+      next: () => this.fileComments.update((list) => list.filter((c) => c.id !== commentId)),
+      error: () => {},
+    });
   }
 
   isPreviewable(mimeType: string): boolean {

@@ -151,8 +151,8 @@ export class WhatsappService {
         '*Fluxo* — Visioconférence planifiée',
         '',
         `*${hostName}* a planifié une visioconférence :`,
-        `📅 *${title}*`,
-        `🕐 ${dt}`,
+        `*${title}*`,
+        `${dt}`,
         '',
         `Rejoindre : ${callUrl}`,
       ].join('\n');
@@ -161,7 +161,7 @@ export class WhatsappService {
         '*Fluxo* — Visioconférence en cours',
         '',
         `*${hostName}* a lancé une visioconférence :`,
-        `📹 *${title}*`,
+        `*${title}*`,
         '',
         `Rejoindre maintenant : ${callUrl}`,
       ].join('\n');
@@ -178,7 +178,7 @@ export class WhatsappService {
     const message = [
       '*Fluxo* — Rappel de visioconférence',
       '',
-      `⏰ La visioconférence *${title}* commence dans *${timeLabel}*.`,
+      `La visioconférence *${title}* commence dans *${timeLabel}*.`,
       '',
       `Rejoindre : ${callUrl}`,
     ].join('\n');
@@ -208,15 +208,84 @@ export class WhatsappService {
     projectName: string,
   ) {
     const message = [
-      '*Fluxo* — Tâche assignée',
+      '*Fluxo Tâche assignée*',
       '',
       `Bonjour *${recipientName}*,`,
       '',
       `*${assignerName}* vous a assigné la tâche :`,
-      `📋 *${taskLabel}*`,
-      `Projet : ${projectName}`,
+      `*${taskLabel}*`,
+      `*Projet : ${projectName}*`,
       '',
       'Connectez-vous à Fluxo pour voir les détails.',
+    ].join('\n');
+    return this.send(phone, message);
+  }
+
+  // ── Dépôt de fichier ──────────────────────────────────────────────────────
+
+  /**
+   * Notification formelle envoyée à tous les collaborateurs du projet
+   * lorsqu'un nouveau document est déposé.
+   */
+  async sendFileUploadedMessage(
+    phone: string,
+    recipientName: string,
+    uploaderName: string,
+    fileName: string,
+    projectName: string,
+    appUrl: string,
+  ) {
+    const message = [
+      '*Fluxo Nouveau document partagé*',
+      '',
+      `Bonjour *${recipientName}*,`,
+      '',
+      `Nous vous informons qu'un nouveau document vient d'être déposé dans le projet *${projectName}*.`,
+      '',
+      `*Fichier :* ${fileName}`,
+      `*Déposé par :* ${uploaderName}`,
+      '',
+      'Vous pouvez consulter et commenter ce document en vous connectant à la plateforme :',
+      appUrl,
+      '',
+      'Cordialement,',
+      '*L\'équipe Fluxo*',
+    ].join('\n');
+    return this.send(phone, message);
+  }
+
+  /**
+   * Notification formelle envoyée au déposeur du fichier
+   * lorsqu'un collaborateur y laisse un commentaire.
+   */
+  async sendFileCommentedMessage(
+    phone: string,
+    recipientName: string,
+    commenterName: string,
+    fileName: string,
+    projectName: string,
+    commentPreview: string,
+    appUrl: string,
+  ) {
+    const preview = commentPreview.length > 120
+      ? commentPreview.slice(0, 117) + '…'
+      : commentPreview;
+
+    const message = [
+      '*Fluxo Commentaire sur votre document*',
+      '',
+      `Bonjour *${recipientName}*,`,
+      '',
+      `*${commenterName}* a laissé un commentaire sur le document *${fileName}*`,
+      `dans le projet *${projectName}* :`,
+      '',
+      `_« ${preview} »_`,
+      '',
+      'Pour consulter et répondre à ce commentaire, connectez-vous à la plateforme :',
+      appUrl,
+      '',
+      'Cordialement,',
+      '*L\'équipe Fluxo*',
     ].join('\n');
     return this.send(phone, message);
   }

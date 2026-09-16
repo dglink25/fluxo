@@ -782,6 +782,134 @@
   .file-viewer-body { max-height: 60vh; }
 }
 
+/* ── Section commentaires fichier ── */
+.file-comments {
+  border-top: 1px solid var(--flx-border);
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--flx-bg-raised);
+}
+
+.file-comments-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--flx-text);
+}
+.comments-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--flx-accent-soft);
+  color: var(--flx-accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.file-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.comments-empty {
+  font-size: 13px;
+  color: var(--flx-text-faint);
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
+.file-comment {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.fc-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--flx-bg-sunken);
+  color: var(--flx-text-faint);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700;
+  flex-shrink: 0; overflow: hidden;
+}
+.fc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.fc-body {
+  flex: 1;
+  min-width: 0;
+  background: var(--flx-bg-sunken);
+  border-radius: 4px 12px 12px 12px;
+  padding: 10px 13px;
+}
+.fc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.fc-meta strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--flx-text);
+}
+.fc-date {
+  font-size: 11px;
+  color: var(--flx-text-faint);
+}
+.fc-content {
+  margin: 0;
+  font-size: 13px;
+  color: var(--flx-text);
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.fc-delete {
+  background: none;
+  border: none;
+  color: var(--flx-text-faint);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.1s;
+}
+.file-comment:hover .fc-delete { opacity: 1; }
+.fc-delete:hover { color: #dc2626; }
+
+.file-comment-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.file-comment-input .flx-input {
+  flex: 1;
+  border-radius: 20px;
+  padding: 9px 16px;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .file-comment-input { flex-wrap: wrap; }
+  .file-comment-input .flx-btn { width: 100%; justify-content: center; }
+}
+
 /* ── Valeur / mot de passe field ── */
 .value-row {
   display: flex;

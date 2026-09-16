@@ -120,6 +120,7 @@ model User {
   validatedDeliverables Deliverable[]      @relation("DeliverableValidator")
   hostedCalls          VideoCall[]         @relation("VideoCallHost")
   callParticipations   VideoCallParticipant[]
+  fileComments         FileComment[]
 
   @@unique([provider, providerId])
 }
@@ -380,6 +381,20 @@ model ProjectFile {
   uploader User        @relation(fields: [uploadedBy], references: [id])
   parent   ProjectFile? @relation("FileVersions", fields: [parentId], references: [id])
   children ProjectFile[] @relation("FileVersions")
+  comments FileComment[]
+}
+
+/// Commentaire sur un fichier partagé
+model FileComment {
+  id        String   @id @default(uuid())
+  fileId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  file ProjectFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Livrables ────────────────────────────────────────────────────────────────

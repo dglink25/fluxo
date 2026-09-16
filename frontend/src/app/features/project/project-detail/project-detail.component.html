@@ -343,6 +343,8 @@
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
                     </button>
                   </div>
+
+                  <!-- Prévisualisation -->
                   <div class="file-viewer-body">
                     @if (file.mimeType.startsWith('image/')) {
                       <img [src]="getViewerUrl(file)" [alt]="file.name" class="viewer-img" />
@@ -370,6 +372,75 @@
                       </div>
                     }
                   </div>
+
+                  <!-- Section commentaires -->
+                  <div class="file-comments">
+                    <h4 class="file-comments-title">
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      Commentaires
+                      @if (fileComments().length > 0) {
+                        <span class="comments-count">{{ fileComments().length }}</span>
+                      }
+                    </h4>
+
+                    <!-- Liste des commentaires -->
+                    <div class="file-comments-list">
+                      @if (fileComments().length === 0) {
+                        <p class="comments-empty">Aucun commentaire. Soyez le premier à commenter.</p>
+                      }
+                      @for (c of fileComments(); track c.id) {
+                        <div class="file-comment">
+                          <div class="fc-avatar">
+                            @if (c.user.avatarUrl) {
+                              <img [src]="c.user.avatarUrl" [alt]="c.user.username" />
+                            } @else {
+                              <span>{{ c.user.username.slice(0,1).toUpperCase() }}</span>
+                            }
+                          </div>
+                          <div class="fc-body">
+                            <div class="fc-meta">
+                              <strong>{{ c.user.fullName || c.user.username }}</strong>
+                              <span class="fc-date flx-mono">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
+                            </div>
+                            <p class="fc-content">{{ c.content }}</p>
+                          </div>
+                          @if (c.user.id === authService.currentUser()?.id) {
+                            <button class="fc-delete" (click)="deleteFileComment(c.id)" title="Supprimer">
+                              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+                              </svg>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Saisie commentaire -->
+                    <div class="file-comment-input">
+                      <input
+                        class="flx-input"
+                        [(ngModel)]="newFileComment"
+                        placeholder="Écrire un commentaire…"
+                        (keydown.enter)="submitFileComment()"
+                        [disabled]="sendingComment()"
+                      />
+                      <button
+                        class="flx-btn flx-btn--primary btn-sm"
+                        (click)="submitFileComment()"
+                        [disabled]="!newFileComment.trim() || sendingComment()">
+                        @if (sendingComment()) {
+                          <span class="flx-spinner" style="width:12px;height:12px;border-width:2px"></span>
+                        } @else {
+                          <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+                        }
+                        Envoyer
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
               }
             </div>

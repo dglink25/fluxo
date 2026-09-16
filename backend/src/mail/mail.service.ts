@@ -370,14 +370,14 @@ export class MailService {
       const dt = scheduledAt.toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' });
       contextBlock = `<p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
               <strong style="color:#166553;">${hostName}</strong> a planifié une visioconférence :<br/>
-              📅 <strong>${title}</strong><br/>
-              🕐 ${dt}
+              <strong>${title}</strong><br/>
+              ${dt}
             </p>`;
       textContext = `${hostName} a planifié une visioconférence "${title}" le ${dt}.`;
     } else {
       contextBlock = `<p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
               <strong style="color:#166553;">${hostName}</strong> a lancé une visioconférence :<br/>
-              📹 <strong>${title}</strong><br/>
+              <strong>${title}</strong><br/>
               Elle est en cours maintenant.
             </p>`;
       textContext = `${hostName} a lancé une visioconférence "${title}". Elle est en cours maintenant.`;
@@ -452,7 +452,7 @@ export class MailService {
         </tr>
         <tr>
           <td style="padding:32px 36px;">
-            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">⏰ Rappel de visioconférence</h2>
+            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">Rappel de visioconférence</h2>
             <p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
               La visioconférence <strong style="color:#166553;">${title}</strong>
               commence dans <strong>${timeLabel}</strong>.
@@ -552,7 +552,7 @@ export class MailService {
         </tr>
         <tr>
           <td style="padding:32px 36px;">
-            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">📋 Nouvelle tâche assignée</h2>
+            <h2 style="color:#111827;margin:0 0 12px;font-size:20px;">Nouvelle tâche assignée</h2>
             <p style="color:#374151;margin:0 0 16px;line-height:1.6;font-size:15px;">
               Bonjour <strong>${recipientName}</strong>,
             </p>
@@ -573,6 +573,152 @@ export class MailService {
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
             <p style="color:#9ca3af;font-size:12px;margin:0;line-height:1.5;">
               Si vous pensez avoir reçu cet email par erreur, ignorez-le.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:14px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+            <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await this.send(to, subject, html, text);
+  }
+
+  async sendFileUploadedEmail(
+    to: string,
+    recipientName: string,
+    uploaderName: string,
+    fileName: string,
+    projectName: string,
+    appUrl: string,
+  ) {
+    const subject = `[${projectName}] Nouveau document partagé : ${fileName}`;
+    const text = `Bonjour ${recipientName},\n\n${uploaderName} vient de déposer un nouveau document "${fileName}" dans le projet "${projectName}".\n\nConsultez-le ici : ${appUrl}\n\nCordialement,\nL'équipe Fluxo`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr>
+          <td style="background:#166553;padding:24px;text-align:center;">
+            <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px;">Fluxo</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 36px;">
+            <h2 style="color:#111827;margin:0 0 8px;font-size:20px;">Nouveau document partagé</h2>
+            <p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              Bonjour <strong>${recipientName}</strong>,
+            </p>
+            <p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              Un nouveau document vient d'être déposé dans le projet
+              <strong style="color:#166553;">${projectName}</strong>.
+            </p>
+            <div style="background:#f0fdf4;border-left:4px solid #166553;padding:16px 20px;border-radius:0 10px 10px 0;margin-bottom:24px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:4px 0;font-size:13px;color:#6b7280;width:100px;">Fichier</td>
+                  <td style="padding:4px 0;font-size:14px;font-weight:700;color:#111827;">${fileName}</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0;font-size:13px;color:#6b7280;">Déposé par</td>
+                  <td style="padding:4px 0;font-size:14px;color:#374151;">${uploaderName}</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0;font-size:13px;color:#6b7280;">Projet</td>
+                  <td style="padding:4px 0;font-size:14px;color:#374151;">${projectName}</td>
+                </tr>
+              </table>
+            </div>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${appUrl}"
+                 style="display:inline-block;background:#166553;color:white;padding:13px 32px;
+                        border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+                Consulter le document
+              </a>
+            </div>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+            <p style="color:#9ca3af;font-size:12px;margin:0;line-height:1.5;">
+              Vous recevez cet email car vous êtes collaborateur du projet <em>${projectName}</em>.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:14px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+            <span style="color:#9ca3af;font-size:11px;">Fluxo — Gestion de projet collaborative</span>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    await this.send(to, subject, html, text);
+  }
+
+  async sendFileCommentedEmail(
+    to: string,
+    recipientName: string,
+    commenterName: string,
+    fileName: string,
+    projectName: string,
+    commentPreview: string,
+    appUrl: string,
+  ) {
+    const preview = commentPreview.length > 200
+      ? commentPreview.slice(0, 197) + '…'
+      : commentPreview;
+
+    const subject = `[${projectName}] Nouveau commentaire sur "${fileName}"`;
+    const text = `Bonjour ${recipientName},\n\n${commenterName} a commenté votre document "${fileName}" dans le projet "${projectName}" :\n\n"${preview}"\n\nRépondez ici : ${appUrl}\n\nCordialement,\nL'équipe Fluxo`;
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0"
+        style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <tr>
+          <td style="background:#166553;padding:24px;text-align:center;">
+            <span style="font-size:28px;font-weight:900;color:white;letter-spacing:-1px;">Fluxo</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 36px;">
+            <h2 style="color:#111827;margin:0 0 8px;font-size:20px;">Commentaire sur votre document</h2>
+            <p style="color:#374151;margin:0 0 20px;line-height:1.6;font-size:15px;">
+              Bonjour <strong>${recipientName}</strong>,
+            </p>
+            <p style="color:#374151;margin:0 0 16px;line-height:1.6;font-size:15px;">
+              <strong style="color:#166553;">${commenterName}</strong> a laissé un commentaire
+              sur votre document <strong>${fileName}</strong>
+              dans le projet <strong>${projectName}</strong> :
+            </p>
+            <div style="background:#f9fafb;border-left:4px solid #d1d5db;border-radius:0 8px 8px 0;
+                        padding:14px 18px;margin-bottom:24px;">
+              <p style="margin:0;font-size:14px;color:#374151;font-style:italic;line-height:1.6;">
+                « ${preview} »
+              </p>
+            </div>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${appUrl}"
+                 style="display:inline-block;background:#166553;color:white;padding:13px 32px;
+                        border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+                Voir le commentaire
+              </a>
+            </div>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+            <p style="color:#9ca3af;font-size:12px;margin:0;line-height:1.5;">
+              Vous recevez cet email car vous avez déposé un document dans <em>${projectName}</em>.
             </p>
           </td>
         </tr>

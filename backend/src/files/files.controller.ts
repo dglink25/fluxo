@@ -1,7 +1,8 @@
 import {
-  Body, Controller, Delete, Get, Param, Post, UseGuards,
+  Body, Controller, Delete, Get, Param, Post, UseGuards, Logger,
 } from '@nestjs/common';
-import { IsNumber, IsString, MinLength } from 'class-validator';
+import { IsNumber, IsString, MinLength, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProjectRolesGuard } from '../common/guards/project-roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -9,10 +10,18 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FilesService } from './files.service';
 
 class CreateFileDto {
-  @IsString() name: string;
-  @IsNumber() size: number;
-  @IsString() mimeType: string;
-  @IsString() url: string;
+  @IsString()
+  name: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  size: number;
+
+  @IsString()
+  mimeType: string;
+
+  @IsString()
+  url: string;
 }
 
 class CreateFileCommentDto {

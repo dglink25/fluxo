@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
@@ -6,6 +6,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Injectable()
 export class FilesService {
+  private readonly logger = new Logger(FilesService.name);
   private readonly appUrl = process.env.FRONTEND_URL ?? 'http://localhost:4200';
 
   constructor(
@@ -44,6 +45,9 @@ export class FilesService {
   ) {
     await this.assertMember(projectId, userId);
 
+    this.logger.log(`Création fichier: ${data.name} (${data.mimeType}, ${data.size} bytes) pour projet ${projectId}`);
+    this.logger.log(`URL type: ${data.url.startsWith('data:') ? 'BASE64' : data.url.startsWith('https://') ? 'HTTPS' : 'OTHER'}`);
+
     const file = await this.prisma.projectFile.create({
       data: {
         projectId,
@@ -72,8 +76,15 @@ export class FilesService {
     // Notifier en temps réel
     this.realtime.emitToProject(projectId, 'file:uploaded', { fileId: file.id, name: data.name });
 
-    // Notifier tous les collaborateurs (sauf le déposeur)
-    await this.notifyCollaboratorsOnUpload(projectId, userId, file);
+    this.logger.log(`Fichier ${file.id} sauvegardé en BDD avec succès: ${file.name}`);
+
+    // Notifier en temps réel (synchrone — rapide)
+    this.realtime.emitToProject(projectId, 'file:uploaded', { fileId: file.id, name: data.name });
+
+    // Notifier les collaborateurs en arrière-plan — ne bloque pas la réponse HTTP
+    this.notifyCollaboratorsOnUpload(projectId, userId, file).catch((err) => {
+      this.logger.warn(`Erreur notification upload: ${err?.message}`);
+    });
 
     return file;
   }
@@ -146,57 +157,53 @@ export class FilesService {
     // Émettre en temps réel
     this.realtime.emitToProject(file.projectId, 'file:comment', { fileId, comment });
 
-    // Notifier le déposeur (si ce n'est pas lui qui commente)
+    // Notifier le déposeur en arrière-plan — ne bloque pas la réponse HTTP
     if (file.uploadedBy !== userId) {
-      const commenter = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { username: true, fullName: true },
+      this.notifyUploaderOnComment(file, userId, content).catch((err) => {
+        this.logger.warn(`Erreur notification commentaire: ${err?.message}`);
       });
-      const commenterName = commenter?.fullName ?? commenter?.username ?? 'Un collaborateur';
-      const uploaderName  = file.uploader.fullName ?? file.uploader.username;
-      const appUrl = `${this.appUrl}/projects/${file.projectId}?view=documents`;
-
-      // Push in-app
-      await this.prisma.notification.create({
-        data: {
-          userId:  file.uploadedBy,
-          type:    'FILE_COMMENTED',
-          content: `${commenterName} a commenté votre fichier « ${file.name} »`,
-        },
-      });
-      this.realtime.emitToUser(file.uploadedBy, 'notification:new', {
-        type: 'FILE_COMMENTED',
-        content: `${commenterName} a commenté « ${file.name} »`,
-      });
-
-      // Email
-      if (file.uploader.email) {
-        await this.mail.sendFileCommentedEmail(
-          file.uploader.email,
-          uploaderName,
-          commenterName,
-          file.name,
-          file.project.name,
-          content,
-          appUrl,
-        ).catch(() => {});
-      }
-
-      // WhatsApp
-      if (file.uploader.phone) {
-        await this.whatsapp.sendFileCommentedMessage(
-          file.uploader.phone,
-          uploaderName,
-          commenterName,
-          file.name,
-          file.project.name,
-          content,
-          appUrl,
-        ).catch(() => {});
-      }
     }
 
     return comment;
+  }
+
+  private async notifyUploaderOnComment(
+    file: any,
+    commenterId: string,
+    content: string,
+  ) {
+    const commenter = await this.prisma.user.findUnique({
+      where: { id: commenterId },
+      select: { username: true, fullName: true },
+    });
+    const commenterName = commenter?.fullName ?? commenter?.username ?? 'Un collaborateur';
+    const uploaderName  = file.uploader.fullName ?? file.uploader.username;
+    const appUrl = `${this.appUrl}/projects/${file.projectId}?view=documents`;
+
+    await this.prisma.notification.create({
+      data: {
+        userId:  file.uploadedBy,
+        type:    'FILE_COMMENTED',
+        content: `${commenterName} a commenté votre fichier « ${file.name} »`,
+      },
+    });
+    this.realtime.emitToUser(file.uploadedBy, 'notification:new', {
+      type: 'FILE_COMMENTED',
+      content: `${commenterName} a commenté « ${file.name} »`,
+    });
+
+    if (file.uploader.email) {
+      await this.mail.sendFileCommentedEmail(
+        file.uploader.email, uploaderName, commenterName,
+        file.name, file.project.name, content, appUrl,
+      ).catch(() => {});
+    }
+    if (file.uploader.phone) {
+      await this.whatsapp.sendFileCommentedMessage(
+        file.uploader.phone, uploaderName, commenterName,
+        file.name, file.project.name, content, appUrl,
+      ).catch(() => {});
+    }
   }
 
   async listComments(fileId: string, userId: string) {

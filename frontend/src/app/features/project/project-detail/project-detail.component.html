@@ -355,9 +355,19 @@
                   <!-- Prévisualisation -->
                   <div class="file-viewer-body">
                     @if (file.mimeType.startsWith('image/')) {
-                      <img [src]="getViewerUrl(file)" [alt]="file.name" class="viewer-img" />
+                      <img [src]="getViewerUrl(file)" [alt]="file.name" class="viewer-img"
+                           (error)="handleViewerError($event)" />
                     } @else if (file.mimeType === 'application/pdf') {
-                      <iframe [src]="getViewerUrl(file) | safe" class="viewer-iframe" [title]="file.name"></iframe>
+                      <!-- PDF : viewer Google Docs pour les URLs Cloudinary -->
+                      @if (file.url.startsWith('https://')) {
+                        <iframe
+                          [src]="getPdfViewerUrl(file.url) | safe"
+                          class="viewer-iframe"
+                          [title]="file.name">
+                        </iframe>
+                      } @else {
+                        <iframe [src]="getViewerUrl(file) | safe" class="viewer-iframe" [title]="file.name"></iframe>
+                      }
                     } @else if (file.mimeType.startsWith('video/')) {
                       <video [src]="getViewerUrl(file)" controls class="viewer-video"></video>
                     } @else if (file.mimeType.startsWith('audio/')) {

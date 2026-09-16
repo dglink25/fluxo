@@ -379,6 +379,30 @@ export class ProjectDetailComponent implements OnInit {
     return blobUrl;
   }
 
+  /**
+   * Pour les PDFs hébergés sur Cloudinary (URL https://),
+   * utilise Google Docs Viewer qui peut afficher les PDFs distants
+   * même sans accès direct (contourne l'ACL Cloudinary).
+   */
+  getPdfViewerUrl(fileUrl: string): string {
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+  }
+
+  handleViewerError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const parent = img.parentElement;
+    if (parent) {
+      parent.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:32px;color:var(--flx-text-faint);font-size:14px;text-align:center">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p>Impossible d'afficher l'image. Téléchargez-la pour la consulter.</p>
+        </div>`;
+    }
+  }
+
   // ── Documents / Fichiers ──────────────────────────────────────────────────
   private _pendingFileObj: File | null = null;
   uploadProgress = signal<number | null>(null); // 0-100 ou null

@@ -41,15 +41,15 @@ export class UploadService {
   // ── Upload Cloudinary via fetch() natif ──────────────────────────────────
 
   private async uploadToCloudinary(file: File): Promise<UploadResult> {
-    const resourceType = this.getResourceType(file);
-    const url = `https://api.cloudinary.com/v1_1/${this.cloudName}/${resourceType}/upload`;
+    // Utiliser "auto" pour que Cloudinary détecte et gère tous les types de fichiers
+    // en accès public — évite le problème d'ACL sur /raw/upload
+    const url = `https://api.cloudinary.com/v1_1/${this.cloudName}/auto/upload`;
 
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', this.uploadPreset);
-    // Ne pas mettre de folder ici — le preset le gère déjà
+    formData.append('resource_type', 'auto');
 
-    // Timeout de 120 secondes pour les gros fichiers
     const controller = new AbortController();
     const timeoutId  = setTimeout(() => controller.abort(), 120_000);
 
@@ -59,7 +59,6 @@ export class UploadService {
         method: 'POST',
         body:   formData,
         signal: controller.signal,
-        // AUCUN header Authorization — Cloudinary n'en a pas besoin
       });
     } catch (err: any) {
       clearTimeout(timeoutId);
@@ -83,7 +82,7 @@ export class UploadService {
       originalFilename: data.original_filename ?? file.name,
       format:           data.format ?? file.name.split('.').pop() ?? '',
       bytes:            data.bytes ?? file.size,
-      resourceType:     data.resource_type ?? resourceType,
+      resourceType:     data.resource_type ?? 'auto',
     };
   }
 

@@ -23,6 +23,7 @@ import { TaskDetailComponent } from '../components/task-detail/task-detail.compo
 import { ActivityFeedComponent } from '../components/activity-feed/activity-feed.component';
 import { SecretsComponent } from '../components/secrets/secrets.component';
 import { MembersComponent } from '../components/members/members.component';
+import { SafeUrlPipe } from '../../../shared/pipes/safe-url.pipe';
 import { environment } from '../../../../environments/environment';
 
 type ViewMode =
@@ -37,6 +38,7 @@ type ViewMode =
     NavbarComponent, BottomNavComponent, IconComponent,
     TaskCardComponent, InviteModalComponent, TaskDetailComponent,
     ActivityFeedComponent, SecretsComponent, MembersComponent,
+    SafeUrlPipe,
   ],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.scss',
@@ -288,6 +290,53 @@ export class ProjectDetailComponent implements OnInit {
       },
       error: () => this.creatingAnnouncement.set(false),
     });
+  }
+
+  // ── Viewer de fichier in-app ──────────────────────────────────────────────
+  previewFile = signal<{ id: string; name: string; mimeType: string; url: string } | null>(null);
+
+  toggleFilePreview(file: { id: string; name: string; mimeType: string; url: string }) {
+    const current = this.previewFile();
+    if (current?.id === file.id) {
+      this.previewFile.set(null);
+    } else {
+      this.previewFile.set(file);
+    }
+  }
+
+  closePreview() {
+    this.previewFile.set(null);
+  }
+
+  isPreviewable(mimeType: string): boolean {
+    return (
+      mimeType.startsWith('image/') ||
+      mimeType === 'application/pdf' ||
+      mimeType.startsWith('video/') ||
+      mimeType.startsWith('audio/') ||
+      mimeType.startsWith('text/')  ||
+      mimeType === 'text/markdown'
+    );
+  }
+
+  getBlobUrl(file: { url: string; mimeType: string }): string {
+    if (file.url.startsWith('data:')) {
+      const blob = this.dataUrlToBlob(file.url, file.mimeType);
+      return URL.createObjectURL(blob);
+    }
+    return file.url;
+  }
+
+  /** Cache des blob URLs pour éviter de recréer à chaque détection de changement */
+  private blobUrlCache = new Map<string, string>();
+
+  getViewerUrl(file: { id: string; url: string; mimeType: string }): string {
+    if (!file.url.startsWith('data:')) return file.url;
+    if (this.blobUrlCache.has(file.id)) return this.blobUrlCache.get(file.id)!;
+    const blob    = this.dataUrlToBlob(file.url, file.mimeType);
+    const blobUrl = URL.createObjectURL(blob);
+    this.blobUrlCache.set(file.id, blobUrl);
+    return blobUrl;
   }
 
   // ── Documents / Fichiers ──────────────────────────────────────────────────

@@ -289,29 +289,89 @@
         <div class="docs-grid">
           <!-- Fichiers uploadés -->
           @for (file of files(); track file.id) {
-            <div class="flx-card doc-item file-item">
-              <div class="doc-item-icon file-emoji-lg">{{ fileEmoji(file.mimeType) }}</div>
-              <div class="doc-item-info">
-                <p class="doc-item-name">{{ file.name }}</p>
-                <span class="doc-item-meta flx-mono">
-                  {{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}
-                </span>
-                <span class="doc-item-meta flx-mono">{{ file.mimeType }}</span>
+            <div class="doc-file-block">
+              <!-- Ligne principale -->
+              <div class="flx-card doc-item file-item" [class.doc-item--open]="previewFile()?.id === file.id">
+                <div class="doc-item-icon file-emoji-lg">{{ fileEmoji(file.mimeType) }}</div>
+                <div class="doc-item-info">
+                  <p class="doc-item-name">{{ file.name }}</p>
+                  <span class="doc-item-meta flx-mono">
+                    {{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}
+                  </span>
+                </div>
+                <div class="doc-actions-row">
+                  <!-- Ouvrir / Fermer dans l'app -->
+                  @if (isPreviewable(file.mimeType)) {
+                    <button
+                      class="flx-btn doc-action"
+                      [class.flx-btn--primary]="previewFile()?.id === file.id"
+                      [class.flx-btn--ghost]="previewFile()?.id !== file.id"
+                      (click)="toggleFilePreview(file)"
+                      [title]="previewFile()?.id === file.id ? 'Fermer' : 'Ouvrir dans l\'application'">
+                      @if (previewFile()?.id === file.id) {
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <polyline points="18 15 12 9 6 15"/>
+                        </svg>
+                        Fermer
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                        Ouvrir
+                      }
+                    </button>
+                  }
+                  <!-- Télécharger au format d'origine -->
+                  <button
+                    class="flx-btn flx-btn--ghost doc-action"
+                    (click)="downloadFile(file)"
+                    [title]="'Télécharger ' + file.name">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Télécharger
+                  </button>
+                </div>
               </div>
-              <div class="doc-actions-row">
-                <!-- Ouvrir dans un nouvel onglet -->
-                <button class="flx-btn flx-btn--ghost doc-action" (click)="openFile(file)" title="Ouvrir">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>
-                  </svg>
-                </button>
-                <!-- Télécharger avec le bon nom et MIME type -->
-                <button class="flx-btn flx-btn--ghost doc-action" (click)="downloadFile(file)" title="Télécharger">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                  </svg>
-                </button>
-              </div>
+
+              <!-- Viewer inline — s'ouvre sous la carte -->
+              @if (previewFile()?.id === file.id) {
+                <div class="file-viewer">
+                  <div class="file-viewer-header">
+                    <span class="file-viewer-name">{{ file.name }}</span>
+                    <button class="file-viewer-close" (click)="closePreview()" title="Fermer">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                  <div class="file-viewer-body">
+                    @if (file.mimeType.startsWith('image/')) {
+                      <img [src]="getViewerUrl(file)" [alt]="file.name" class="viewer-img" />
+                    } @else if (file.mimeType === 'application/pdf') {
+                      <iframe [src]="getViewerUrl(file) | safe" class="viewer-iframe" [title]="file.name"></iframe>
+                    } @else if (file.mimeType.startsWith('video/')) {
+                      <video [src]="getViewerUrl(file)" controls class="viewer-video"></video>
+                    } @else if (file.mimeType.startsWith('audio/')) {
+                      <div class="viewer-audio-wrap">
+                        <audio [src]="getViewerUrl(file)" controls class="viewer-audio"></audio>
+                      </div>
+                    } @else {
+                      <div class="viewer-unsupported">
+                        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--flx-text-faint)" stroke-width="1.5" stroke-linecap="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <p>Aperçu non disponible pour ce type de fichier.</p>
+                        <button class="flx-btn flx-btn--primary btn-sm" (click)="downloadFile(file)">
+                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                          </svg>
+                          Télécharger {{ file.name }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           }
           <!-- Documents texte -->

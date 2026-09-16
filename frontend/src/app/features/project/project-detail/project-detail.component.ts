@@ -11,6 +11,7 @@ import { DocumentsService, ProjectDocument } from '../../../core/services/docume
 import { MessagingService } from '../../../core/services/messaging.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UploadService } from '../../../core/services/upload.service';
 import { Project } from '../../../core/models/project.model';
 import { Task, TaskStatus, TASK_STATUSES } from '../../../core/models/task.model';
 import { Channel } from '../../../core/models/message.model';
@@ -132,6 +133,7 @@ export class ProjectDetailComponent implements OnInit {
     private realtime: RealtimeService,
     private http: HttpClient,
     public authService: AuthService,
+    private uploadService: UploadService,
   ) {}
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -378,15 +380,15 @@ export class ProjectDetailComponent implements OnInit {
 
   // ── Documents / Fichiers ──────────────────────────────────────────────────
   private _pendingFileObj: File | null = null;
+  uploadProgress = signal<number | null>(null); // 0-100 ou null
 
   onDocFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     const file  = input.files?.[0];
     if (!file) return;
 
-    // Vérification taille (50 Mo max)
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Le fichier dépasse la limite de 50 Mo.');
+    if (file.size > 100 * 1024 * 1024) {
+      alert('Le fichier dépasse la limite de 100 Mo.');
       input.value = '';
       return;
     }
@@ -395,13 +397,8 @@ export class ProjectDetailComponent implements OnInit {
     this.newDocTitle     = file.name;
     this.docFileMime     = file.type || this.guessMime(file.name);
     this.docFileSelected = true;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.newDocContent = (e.target?.result as string) ?? '';
-    };
-    // Toujours lire en dataURL — on stocke le base64 complet avec son MIME prefix
-    reader.readAsDataURL(file);
+    // Réinitialiser le contenu — l'upload se fera à la soumission
+    this.newDocContent   = '';
   }
 
   createDocument() {
@@ -409,23 +406,39 @@ export class ProjectDetailComponent implements OnInit {
     this.creatingDoc.set(true);
 
     if (this.docFormType === 'file' && this._pendingFileObj) {
-      // Fichier binaire → stocker dans ProjectFile avec l'URL base64
       const file = this._pendingFileObj;
-      this.filesService.declare(this.projectId, {
-        name:     file.name,
-        size:     file.size,
-        mimeType: this.docFileMime || file.type,
-        url:      this.newDocContent, // dataURL complet
-      }).subscribe({
-        next: (pf) => {
-          this.files.update((l) => [pf, ...l]);
-          this.resetDocForm();
-          this.creatingDoc.set(false);
+      this.uploadProgress.set(0);
+
+      // Upload vers Cloudinary (ou dataURL en fallback dev)
+      this.uploadService.upload(file).subscribe({
+        next: (result) => {
+          this.uploadProgress.set(100);
+          this.filesService.declare(this.projectId, {
+            name:     file.name,
+            size:     result.bytes,
+            mimeType: this.docFileMime || file.type,
+            url:      result.url,   // URL permanente Cloudinary
+          }).subscribe({
+            next: (pf) => {
+              this.files.update((l) => [pf, ...l]);
+              this.resetDocForm();
+              this.uploadProgress.set(null);
+              this.creatingDoc.set(false);
+            },
+            error: () => {
+              this.uploadProgress.set(null);
+              this.creatingDoc.set(false);
+            },
+          });
         },
-        error: () => this.creatingDoc.set(false),
+        error: (err) => {
+          this.uploadProgress.set(null);
+          this.creatingDoc.set(false);
+          alert('Erreur lors de l\'upload : ' + (err?.message ?? 'Erreur inconnue'));
+        },
       });
     } else {
-      // Document texte → stocker dans Activity
+      // Document texte → Activity
       this.documentsService.create(this.projectId, {
         title:   this.newDocTitle,
         content: this.newDocContent,

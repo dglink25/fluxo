@@ -269,7 +269,15 @@
             </button>
             <button class="flx-btn flx-btn--primary btn-sm" (click)="createDocument()"
               [disabled]="creatingDoc() || !newDocTitle.trim()">
-              {{ creatingDoc() ? 'Ajout…' : 'Ajouter' }}
+              @if (creatingDoc() && uploadProgress() !== null) {
+                <span class="flx-spinner" style="width:12px;height:12px;border-width:2px"></span>
+                Upload en cours…
+              } @else if (creatingDoc()) {
+                <span class="flx-spinner" style="width:12px;height:12px;border-width:2px"></span>
+                Ajout…
+              } @else {
+                Ajouter
+              }
             </button>
           </div>
         </div>

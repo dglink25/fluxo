@@ -169,7 +169,8 @@ export class ProjectDetailComponent implements OnInit {
 
   loadFiles() {
     this.filesService.list(this.projectId).subscribe({
-      next: (f) => this.files.set(f), error: () => {},
+      next: (f) => this.files.set(f),
+      error: (err) => console.error('Erreur chargement fichiers:', err),
     });
   }
 
@@ -409,25 +410,41 @@ export class ProjectDetailComponent implements OnInit {
       const file = this._pendingFileObj;
       this.uploadProgress.set(0);
 
-      // Upload vers Cloudinary (ou dataURL en fallback dev)
       this.uploadService.upload(file).subscribe({
         next: (result) => {
-          this.uploadProgress.set(100);
+          this.uploadProgress.set(80);
+
+          // Enregistrer le fichier en base de données via le backend
           this.filesService.declare(this.projectId, {
             name:     file.name,
             size:     result.bytes,
             mimeType: this.docFileMime || file.type,
-            url:      result.url,   // URL permanente Cloudinary
+            url:      result.url,
           }).subscribe({
             next: (pf) => {
-              this.files.update((l) => [pf, ...l]);
-              this.resetDocForm();
-              this.uploadProgress.set(null);
-              this.creatingDoc.set(false);
+              this.uploadProgress.set(100);
+              // Recharger la liste depuis la BDD pour garantir la cohérence
+              this.filesService.list(this.projectId).subscribe({
+                next: (allFiles) => {
+                  this.files.set(allFiles);
+                  this.resetDocForm();
+                  this.uploadProgress.set(null);
+                  this.creatingDoc.set(false);
+                },
+                error: () => {
+                  // Fallback : ajouter optimistiquement si le rechargement échoue
+                  this.files.update((l) => [pf, ...l]);
+                  this.resetDocForm();
+                  this.uploadProgress.set(null);
+                  this.creatingDoc.set(false);
+                },
+              });
             },
-            error: () => {
+            error: (err) => {
               this.uploadProgress.set(null);
               this.creatingDoc.set(false);
+              const msg = err?.error?.message ?? err?.message ?? 'Erreur inconnue';
+              alert(`Le fichier a été uploadé sur Cloudinary mais n'a pas pu être enregistré dans le projet.\n\nErreur : ${msg}\n\nURL du fichier : ${result.url}`);
             },
           });
         },
@@ -448,7 +465,11 @@ export class ProjectDetailComponent implements OnInit {
           this.resetDocForm();
           this.creatingDoc.set(false);
         },
-        error: () => this.creatingDoc.set(false),
+        error: (err) => {
+          this.creatingDoc.set(false);
+          const msg = err?.error?.message ?? 'Erreur lors de la création du document';
+          alert(msg);
+        },
       });
     }
   }

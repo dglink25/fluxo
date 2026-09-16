@@ -4,10 +4,10 @@
   "description": "Fluxo API - plateforme de gestion de projet collaborative",
   "private": true,
   "scripts": {
-    "build": "nest build",
+    "build": "prisma generate && nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "start:prod": "node dist/src/main.js",
+    "start:prod": "prisma migrate deploy && node dist/src/main.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",

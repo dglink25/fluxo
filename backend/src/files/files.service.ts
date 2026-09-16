@@ -27,10 +27,9 @@ export class FilesService {
           select: { id: true, version: true, url: true, createdAt: true },
           orderBy: { version: 'asc' },
         },
-        comments: {
-          include: { user: { select: { id: true, username: true, fullName: true, avatarUrl: true } } },
-          orderBy: { createdAt: 'asc' },
-        },
+        // Les commentaires sont chargés séparément via GET /:fileId/comments
+        // pour éviter que l'absence de la table FileComment en prod ne bloque
+        // l'affichage de tous les fichiers.
       },
       orderBy: { createdAt: 'desc' },
     });

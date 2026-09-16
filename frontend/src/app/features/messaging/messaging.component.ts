@@ -30,6 +30,10 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   activePane = signal<ActivePane>('channels');
 
+  // ── Navigation mobile (sidebar ↔ chat) ───────────────────────────────────
+  /** true = on affiche le chat, false = on affiche la sidebar */
+  mobileShowChat = signal(false);
+
   // ── Channels (tous projets) ──────────────────────────────────────────────
   projectGroups    = signal<ProjectChannelGroup[]>([]);
   activeChannelId  = signal<string | null>(null);
@@ -234,6 +238,7 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.activeChannelId.set(channel.id);
     this.activeProjectId.set(projectId);
     this.activePane.set('channels');
+    this.mobileShowChat.set(true);
     this.loadingMessages.set(true);
     this.realtime.joinChannel(channel.id);
     this.messaging.getChannelMessages(projectId, channel.id, { limit: 50 }).subscribe({
@@ -249,6 +254,7 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
   selectDm(conv: DirectMessageConversation) {
     this.activeDmId.set(conv.id);
     this.activePane.set('dm');
+    this.mobileShowChat.set(true);
     this.loadingMessages.set(true);
     this.realtime.joinChannel(conv.id);
     this.messaging.getDmMessages(conv.id, { limit: 50 }).subscribe({

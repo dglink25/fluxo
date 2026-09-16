@@ -201,26 +201,25 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     if (this.auth.isAuthenticated()) {
-      this.realtime.connect();
-      this.http.get<any>(`${environment.apiUrl}/users/me`).subscribe({
-        next: (user) => {
-          if (user) {
-            const current = this.auth.currentUser();
-            if (current) {
-              this.auth.currentUser.set({
-                ...current,
-                avatarUrl:      user.avatarUrl      ?? current.avatarUrl,
-                fullName:       user.fullName        ?? current.fullName,
-                provider:       user.provider        ?? current.provider,
-                githubLinked:   user.githubLinked    ?? current.githubLinked,
-                githubUsername: user.githubUsername  ?? current.githubUsername,
-              });
-              localStorage.setItem('fluxo-user', JSON.stringify(this.auth.currentUser()));
-            }
-          }
-        },
-        error: () => {},
-      });
+      // ── Refresh proactif au démarrage ─────────────────────────────────────
+      // Couvre le cas "retour après plusieurs heures d'inactivité" :
+      // si l'accessToken est expiré/sur le point d'expirer, on refresh d'abord,
+      // puis on connecte le WebSocket et on sync le profil.
+      if (this.auth.isAccessTokenExpiredOrExpiring()) {
+        this.auth.refreshAccessToken().subscribe({
+          next: () => {
+            this.realtime.connect();
+            this.syncUserProfile();
+          },
+          error: () => {
+            // Refresh token aussi expiré → déconnexion propre
+            this.auth.logout();
+          },
+        });
+      } else {
+        this.realtime.connect();
+        this.syncUserProfile();
+      }
     }
 
     // Écouter les invitations d'appel entrant via WebSocket
@@ -233,6 +232,28 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       },
     );
+  }
+
+  private syncUserProfile() {
+    this.http.get<any>(`${environment.apiUrl}/users/me`).subscribe({
+      next: (user) => {
+        if (user) {
+          const current = this.auth.currentUser();
+          if (current) {
+            this.auth.currentUser.set({
+              ...current,
+              avatarUrl:      user.avatarUrl      ?? current.avatarUrl,
+              fullName:       user.fullName        ?? current.fullName,
+              provider:       user.provider        ?? current.provider,
+              githubLinked:   user.githubLinked    ?? current.githubLinked,
+              githubUsername: user.githubUsername  ?? current.githubUsername,
+            });
+            localStorage.setItem('fluxo-user', JSON.stringify(this.auth.currentUser()));
+          }
+        }
+      },
+      error: () => {},
+    });
   }
 
   ngAfterViewInit() {}

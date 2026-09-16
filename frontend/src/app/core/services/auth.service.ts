@@ -75,6 +75,22 @@ export class AuthService {
   }
 
   /**
+   * Vérifie si l'accessToken est expiré (ou expire dans moins de 60s).
+   * Décode le JWT localement sans vérification de signature.
+   */
+  isAccessTokenExpiredOrExpiring(): boolean {
+    const token = this.getAccessToken();
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiresAt = payload.exp * 1000; // en ms
+      return Date.now() >= expiresAt - 60_000; // 60s de marge
+    } catch {
+      return true;
+    }
+  }
+
+  /**
    * Utilise le refreshToken pour obtenir un nouveau accessToken.
    * Appelé automatiquement par l'interceptor sur les 401.
    * Retourne le nouveau accessToken (string).

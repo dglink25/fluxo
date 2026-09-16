@@ -7,7 +7,6 @@ import {
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError, BehaviorSubject, filter, take } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../../environments/environment';
 
 // ── État partagé du refresh en cours ─────────────────────────────────────────
 // Ces variables vivent en dehors de la fonction interceptor pour être partagées
@@ -33,10 +32,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Gérer uniquement les 401 (token expiré)
       if (err.status !== 401) return throwError(() => err);
 
-      // Si pas de refresh token disponible → ne pas déconnecter,
-      // juste propager l'erreur (l'utilisateur devra se reconnecter manuellement)
+      // Si pas de refresh token disponible → déconnecter
       const refreshToken = auth.getRefreshToken();
-      if (!refreshToken) return throwError(() => err);
+      if (!refreshToken) {
+        auth.logout();
+        return throwError(() => err);
+      }
 
       // ── Refresh en cours — attendre qu'il se termine ──────────────────────
       if (isRefreshing) {
@@ -59,6 +60,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return next(addToken(req, newToken));
         }),
         catchError((refreshErr) => {
+          // Réinitialiser l'état même en cas d'erreur
           isRefreshing = false;
           refreshDone$.next(null);
           // Le refresh a vraiment échoué (refresh token expiré/révoqué)

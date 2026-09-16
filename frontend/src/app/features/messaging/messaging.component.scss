@@ -473,16 +473,118 @@
 .mic-btn:active { transform: scale(0.94); }
 
 /* ── Mobile ── */
+
+/* Bouton retour — masqué par défaut, visible sur mobile quand chat ouvert */
+.back-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--flx-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s;
+  &:hover { background: var(--flx-bg-sunken); }
+}
+
+/* Bouton appel vidéo — accent visible */
+.ctrl-icon-btn--call {
+  color: var(--flx-accent);
+  border-color: var(--flx-accent-soft);
+  background: var(--flx-accent-soft);
+}
+.ctrl-icon-btn--call:hover {
+  background: var(--flx-accent);
+  color: white;
+  border-color: var(--flx-accent);
+}
+
 @media (max-width: 768px) {
   .layout { height: calc(100dvh - 57px - 56px); }
   .sidebar { width: 220px; }
 }
 
-@media (max-width: 540px) {
-  .sidebar { width: 56px; }
-  .room-name, .dm-info, .sidebar-empty { display: none; }
-  .room-item { justify-content: center; padding: 12px 0; }
-  .s-tab { font-size: 0; gap: 0; padding: 12px 0; }
+@media (max-width: 600px) {
+  /* Layout mobile : sidebar et chat empilés, on slide entre les deux */
+  .layout {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    z-index: 2;
+    transform: translateX(0);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chat-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    z-index: 1;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Quand chat actif : sidebar glisse à gauche, chat arrive */
+  .layout.mobile-show-chat .sidebar {
+    transform: translateX(-100%);
+  }
+  .layout.mobile-show-chat .chat-area {
+    transform: translateX(0);
+    z-index: 2;
+  }
+
+  /* Bouton retour visible sur mobile */
+  .back-btn { display: flex; }
+
+  /* Header chat plus compact */
+  .chat-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .chat-title {
+    font-size: 14px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .chat-title strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .project-label { display: none; } /* trop long sur mobile */
+
+  /* Actions header : taille réduite */
+  .header-actions { gap: 4px; }
+  .ctrl-icon-btn {
+    width: 34px; height: 34px;
+  }
+
+  /* Sidebar : taille normale (plein écran) */
+  .room-name, .dm-info { display: flex; }
+  .room-item { justify-content: flex-start; padding: 10px 14px; }
+  .s-tab { font-size: 12px; gap: 5px; padding: 12px 6px; }
+
+  /* Messages : padding réduit */
+  .message-list { padding: 10px 10px; }
+  .bubble-group { max-width: 82%; }
+
+  /* Zone de saisie */
+  .input-area { padding: 8px 10px; }
+  .message-input { font-size: 13px; }
+
+  /* Médias plus petits */
+  .msg-image { max-width: 180px; max-height: 160px; }
+  .msg-video { max-width: 200px; }
+  .audio-player { width: 140px; }
 }
 
 /* ── Modaux ── */

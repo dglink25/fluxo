@@ -291,36 +291,150 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   // ── Documents / Fichiers ──────────────────────────────────────────────────
+  private _pendingFileObj: File | null = null;
+
   onDocFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     const file  = input.files?.[0];
     if (!file) return;
-    this.newDocTitle    = file.name;
-    this.docFileMime    = file.type;
-    this.docFileSelected = true;
-    const reader = new FileReader();
-    reader.onload = (e) => { this.newDocContent = (e.target?.result as string) ?? ''; };
-    if (file.type.startsWith('text') || file.name.match(/\.(json|md|csv|xml|yaml|yml)$/i)) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsDataURL(file);   // base64 pour les binaires
+
+    // Vérification taille (50 Mo max)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Le fichier dépasse la limite de 50 Mo.');
+      input.value = '';
+      return;
     }
+
+    this._pendingFileObj = file;
+    this.newDocTitle     = file.name;
+    this.docFileMime     = file.type || this.guessMime(file.name);
+    this.docFileSelected = true;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.newDocContent = (e.target?.result as string) ?? '';
+    };
+    // Toujours lire en dataURL — on stocke le base64 complet avec son MIME prefix
+    reader.readAsDataURL(file);
   }
 
   createDocument() {
     if (!this.newDocTitle.trim()) return;
     this.creatingDoc.set(true);
-    this.documentsService.create(this.projectId, {
-      title:   this.newDocTitle,
-      content: this.newDocContent,
-    }).subscribe({
-      next: (doc) => {
-        this.documents.update((l) => [doc, ...l]);
-        this.newDocTitle = ''; this.newDocContent = ''; this.docFileSelected = false;
-        this.showDocForm.set(false); this.creatingDoc.set(false);
-      },
-      error: () => this.creatingDoc.set(false),
-    });
+
+    if (this.docFormType === 'file' && this._pendingFileObj) {
+      // Fichier binaire → stocker dans ProjectFile avec l'URL base64
+      const file = this._pendingFileObj;
+      this.filesService.declare(this.projectId, {
+        name:     file.name,
+        size:     file.size,
+        mimeType: this.docFileMime || file.type,
+        url:      this.newDocContent, // dataURL complet
+      }).subscribe({
+        next: (pf) => {
+          this.files.update((l) => [pf, ...l]);
+          this.resetDocForm();
+          this.creatingDoc.set(false);
+        },
+        error: () => this.creatingDoc.set(false),
+      });
+    } else {
+      // Document texte → stocker dans Activity
+      this.documentsService.create(this.projectId, {
+        title:   this.newDocTitle,
+        content: this.newDocContent,
+      }).subscribe({
+        next: (doc) => {
+          this.documents.update((l) => [doc, ...l]);
+          this.resetDocForm();
+          this.creatingDoc.set(false);
+        },
+        error: () => this.creatingDoc.set(false),
+      });
+    }
+  }
+
+  private resetDocForm() {
+    this.newDocTitle     = '';
+    this.newDocContent   = '';
+    this.docFileSelected = false;
+    this.docFileMime     = '';
+    this._pendingFileObj = null;
+    this.showDocForm.set(false);
+  }
+
+  /** Ouvrir un fichier dans un nouvel onglet (fonctionne avec dataURL et vraie URL) */
+  openFile(file: { url: string; name: string; mimeType: string }) {
+    if (file.url.startsWith('data:')) {
+      // dataURL → créer un Blob et l'ouvrir
+      const blob = this.dataUrlToBlob(file.url, file.mimeType);
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, '_blank');
+      // Libérer l'URL après un délai
+      if (win) { setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000); }
+    } else {
+      window.open(file.url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  /** Télécharger un fichier avec le bon nom et MIME type */
+  downloadFile(file: { url: string; name: string; mimeType: string }) {
+    const a = document.createElement('a');
+    if (file.url.startsWith('data:')) {
+      const blob = this.dataUrlToBlob(file.url, file.mimeType);
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5_000);
+    } else {
+      a.href = file.url;
+      a.download = file.name;
+      a.target = '_blank';
+      a.click();
+    }
+  }
+
+  private dataUrlToBlob(dataUrl: string, fallbackMime: string): Blob {
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : fallbackMime;
+    const bstr = atob(arr[1]);
+    const u8arr = new Uint8Array(bstr.length);
+    for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+    return new Blob([u8arr], { type: mime });
+  }
+
+  private guessMime(filename: string): string {
+    const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+    const map: Record<string, string> = {
+      pdf: 'application/pdf',
+      doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xls: 'application/vnd.ms-excel',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ppt: 'application/vnd.ms-powerpoint',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+      svg: 'image/svg+xml', webp: 'image/webp',
+      mp4: 'video/mp4', webm: 'video/webm',
+      mp3: 'audio/mpeg', wav: 'audio/wav',
+      zip: 'application/zip', rar: 'application/x-rar-compressed',
+      txt: 'text/plain', md: 'text/markdown', csv: 'text/csv', json: 'application/json',
+    };
+    return map[ext] ?? 'application/octet-stream';
+  }
+
+  /** Télécharge un document texte comme fichier .md */
+  downloadTextDoc(doc: any) {
+    const content = doc.details.content ?? '';
+    const title   = doc.details.title ?? 'document';
+    const blob    = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url     = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href        = url;
+    a.download    = `${title.replace(/[^a-z0-9]/gi, '_')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ── GitHub ────────────────────────────────────────────────────────────────

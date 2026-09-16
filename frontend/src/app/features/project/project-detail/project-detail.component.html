@@ -293,21 +293,24 @@
               <div class="doc-item-icon file-emoji-lg">{{ fileEmoji(file.mimeType) }}</div>
               <div class="doc-item-info">
                 <p class="doc-item-name">{{ file.name }}</p>
-                <span class="doc-item-meta flx-mono">{{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}</span>
+                <span class="doc-item-meta flx-mono">
+                  {{ formatFileSize(file.size) }} · v{{ file.version }} · &#64;{{ file.uploader.username }}
+                </span>
+                <span class="doc-item-meta flx-mono">{{ file.mimeType }}</span>
               </div>
               <div class="doc-actions-row">
                 <!-- Ouvrir dans un nouvel onglet -->
-                <a [href]="file.url" target="_blank" rel="noopener"
-                   class="flx-btn flx-btn--ghost doc-action" title="Ouvrir">
+                <button class="flx-btn flx-btn--ghost doc-action" (click)="openFile(file)" title="Ouvrir">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>
                   </svg>
-                </a>
-                <!-- Télécharger -->
-                <a [href]="file.url" [download]="file.name"
-                   class="flx-btn flx-btn--ghost doc-action" title="Télécharger">
-                  <flx-icon name="send" [size]="14"></flx-icon>
-                </a>
+                </button>
+                <!-- Télécharger avec le bon nom et MIME type -->
+                <button class="flx-btn flx-btn--ghost doc-action" (click)="downloadFile(file)" title="Télécharger">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                  </svg>
+                </button>
               </div>
             </div>
           }

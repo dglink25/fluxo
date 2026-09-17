@@ -73,13 +73,10 @@ export class FilesService {
       },
     });
 
-    // Notifier en temps réel
+    // Notifier en temps réel (synchrone — rapide)
     this.realtime.emitToProject(projectId, 'file:uploaded', { fileId: file.id, name: data.name });
 
     this.logger.log(`Fichier ${file.id} sauvegardé en BDD avec succès: ${file.name}`);
-
-    // Notifier en temps réel (synchrone — rapide)
-    this.realtime.emitToProject(projectId, 'file:uploaded', { fileId: file.id, name: data.name });
 
     // Notifier les collaborateurs en arrière-plan — ne bloque pas la réponse HTTP
     this.notifyCollaboratorsOnUpload(projectId, userId, file).catch((err) => {

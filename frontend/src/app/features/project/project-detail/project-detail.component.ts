@@ -310,10 +310,13 @@ export class ProjectDetailComponent implements OnInit {
     } else {
       this.previewFile.set(file);
       this.fileComments.set([]);
-      // Charger les commentaires existants
       this.filesService.listComments(this.projectId, file.id).subscribe({
         next: (comments) => this.fileComments.set(comments),
-        error: () => {},
+        error: (err) => {
+          console.warn('Chargement commentaires échoué:', err?.status, err?.error?.message);
+          // Table FileComment peut-être absente en BDD — on continue sans commentaires
+          this.fileComments.set([]);
+        },
       });
     }
   }
@@ -335,7 +338,11 @@ export class ProjectDetailComponent implements OnInit {
         this.newFileComment = '';
         this.sendingComment.set(false);
       },
-      error: () => this.sendingComment.set(false),
+      error: (err) => {
+        this.sendingComment.set(false);
+        const msg = err?.error?.message ?? `Erreur ${err?.status ?? 'inconnue'}`;
+        alert(`Impossible d'ajouter le commentaire : ${msg}`);
+      },
     });
   }
 

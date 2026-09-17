@@ -144,12 +144,16 @@ export class FilesService {
     // Vérifier que le commentateur est membre du projet
     await this.assertMember(file.projectId, userId);
 
+    this.logger.log(`Ajout commentaire sur fichier ${fileId} par user ${userId}`);
+
     const comment = await this.prisma.fileComment.create({
       data: { fileId, userId, content },
       include: {
         user: { select: { id: true, username: true, fullName: true, avatarUrl: true } },
       },
     });
+
+    this.logger.log(`Commentaire ${comment.id} créé avec succès`);
 
     // Émettre en temps réel
     this.realtime.emitToProject(file.projectId, 'file:comment', { fileId, comment });
@@ -204,17 +208,20 @@ export class FilesService {
   }
 
   async listComments(fileId: string, userId: string) {
+    this.logger.log(`Chargement commentaires pour fichier ${fileId}`);
     const file = await this.prisma.projectFile.findUnique({ where: { id: fileId } });
     if (!file) throw new NotFoundException('Fichier introuvable');
     await this.assertMember(file.projectId, userId);
 
-    return this.prisma.fileComment.findMany({
+    const comments = await this.prisma.fileComment.findMany({
       where: { fileId },
       include: {
         user: { select: { id: true, username: true, fullName: true, avatarUrl: true } },
       },
       orderBy: { createdAt: 'asc' },
     });
+    this.logger.log(`${comments.length} commentaire(s) trouvé(s) pour fichier ${fileId}`);
+    return comments;
   }
 
   async deleteComment(commentId: string, userId: string) {

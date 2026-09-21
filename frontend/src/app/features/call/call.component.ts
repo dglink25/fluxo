@@ -167,57 +167,79 @@ export class CallComponent implements OnInit, AfterViewInit, OnDestroy {
     const room = this.roomId();
     if (!room || !this.jitsiContainerRef?.nativeElement) return;
 
-    const user    = this.auth.currentUser();
-    const appId   = environment.jaasAppId;
+    const user  = this.auth.currentUser();
+    const appId = environment.jaasAppId;
 
-    // Domaine et nom de la salle selon le mode (JaaS ou public)
     const domain   = appId ? '8x8.vc' : 'meet.jit.si';
     const roomName = jaasRoom ?? (appId ? `${appId}/fluxo-${room}` : `fluxo-${room}`);
 
     const options: any = {
       roomName,
       parentNode: this.jitsiContainerRef.nativeElement,
-      width:      '100%',
-      height:     '100%',
+      width:  '100%',
+      height: '100%',
+
+      // ── Langue française ──────────────────────────────────────────────
+      lang: 'fr',
+
       configOverwrite: {
-        startWithAudioMuted:  false,
-        startWithVideoMuted:  false,
-        prejoinPageEnabled:   false,
-        enableLobbyChat:      false,
-        requireDisplayName:   false,
-        defaultLanguage:      'fr',
-        // Désactiver la salle d'attente par défaut (l'hôte peut l'activer si besoin)
+        startWithAudioMuted: false,
+        startWithVideoMuted: false,
+        prejoinPageEnabled:  false,
+        enableLobbyChat:     false,
+        requireDisplayName:  false,
+
+        // Forcer le français dans Jitsi
+        defaultLanguage: 'fr',
+        preferredLocale: 'fr',
+
+        // Désactiver la salle d'attente par défaut
         lobby: { autoKnock: false, enableChat: false },
+
+        // Désactiver les notifications de déconnexion intempestives
+        enableNoAudioDetection:    false,
+        enableNoisyMicDetection:   false,
+        disableDeepLinking:        true,
+        disableMobileBrowserPrompt: true,
       },
+
       interfaceConfigOverwrite: {
         SHOW_JITSI_WATERMARK:      false,
         SHOW_WATERMARK_FOR_GUESTS: false,
         APP_NAME:                  'Fluxo',
         NATIVE_APP_NAME:           'Fluxo',
+        DEFAULT_REMOTE_DISPLAY_NAME: 'Participant',
+        // Garder uniquement les boutons utiles
         TOOLBAR_BUTTONS: [
           'microphone', 'camera', 'desktop', 'fullscreen',
           'fodeviceselection', 'hangup', 'chat', 'raisehand',
           'videoquality', 'tileview', 'select-background', 'settings',
         ],
       },
+
       userInfo: {
         displayName: user?.fullName ?? user?.username ?? 'Participant',
         email:       user?.email ?? '',
       },
     };
 
-    // Ajouter le JWT si disponible (mode JaaS — durée illimitée)
-    if (jwt) {
-      options.jwt = jwt;
-    }
+    if (jwt) options.jwt = jwt;
 
     try {
       this.jitsiApi = new JitsiMeetExternalAPI(domain, options);
+
       this.jitsiApi.addEventListeners({
-        videoConferenceJoined: () => this.ngZone.run(() => this.status.set('ready')),
-        videoConferenceLeft:   () => this.ngZone.run(() => this.leaveCall()),
-        readyToClose:          () => this.ngZone.run(() => this.leaveCall()),
+        videoConferenceJoined: () => this.ngZone.run(() => {
+          this.status.set('ready');
+          // Forcer la langue française une fois connecté
+          try { this.jitsiApi.executeCommand('setLanguage', 'fr'); } catch { /* noop */ }
+        }),
+        videoConferenceLeft: () => this.ngZone.run(() => this.leaveCall()),
+        readyToClose:        () => this.ngZone.run(() => this.leaveCall()),
+        // Quand un participant raccroche depuis le bouton Jitsi natif
+        hangup: () => this.ngZone.run(() => this.leaveCall()),
       });
+
       this.status.set('ready');
     } catch (e) {
       console.error('Erreur initialisation Jitsi:', e);
@@ -269,12 +291,30 @@ export class CallComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   leaveCall() {
-    const cId = this.callId();
+    const cId     = this.callId();
+    const chanId  = this.channelId();
+    const projId  = this.projectId();
+    const dId     = this.dmId();
+
+    // Notifier le backend que l'appel est terminé
     if (cId) this.videoCallApi.endCall(cId).subscribe({ error: () => {} });
+
     this.status.set('ended');
     this.cleanup();
     this.callState.clear();
-    setTimeout(() => this.router.navigate(['/messaging']), 800);
+
+    // Rediriger vers la messagerie avec le bon contexte
+    // → l'utilisateur retrouve directement la conversation d'où l'appel a été lancé
+    const queryParams: Record<string, string> = {};
+    if (projId) queryParams['projectId'] = projId;
+    if (dId)    queryParams['dmId']      = dId;
+
+    // Délai court pour que l'écran "Réunion terminée" soit visible 1 seconde
+    setTimeout(() => {
+      this.router.navigate(['/messaging'], {
+        queryParams: Object.keys(queryParams).length ? queryParams : undefined,
+      });
+    }, 1200);
   }
 
   // ── Chat ─────────────────────────────────────────────────────────────────

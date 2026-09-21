@@ -255,7 +255,22 @@
                           </a>
                         </div>
                       } @else {
-                        <p>{{ msg.content }}</p>
+                        @if (isCallMsg(msg)) {
+                          <!-- Message d'appel vidéo — carte cliquable -->
+                          <div class="call-msg-card" (click)="joinCallFromChat(msg)">
+                            <div class="call-msg-icon">
+                              <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                                <path d="M4 6.5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l5 3V7.5l-5 3v-2a2 2 0 0 0-2-2H4z"/>
+                              </svg>
+                            </div>
+                            <div class="call-msg-info">
+                              <span class="call-msg-label">Visioconférence</span>
+                              <span class="call-msg-action">Cliquer pour rejoindre →</span>
+                            </div>
+                          </div>
+                        } @else {
+                          <p>{{ msg.content }}</p>
+                        }
                       }
                       <span class="time flx-mono">{{ msg.createdAt | date:'HH:mm' }}</span>
                     </div>

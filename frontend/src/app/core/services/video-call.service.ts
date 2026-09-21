@@ -65,4 +65,11 @@ export class VideoCallApiService {
     if (dmId) params['dmId'] = dmId;
     return this.http.get<VideoCallResponse[]>(this.base, { params });
   }
+
+  /** Obtenir un JWT JaaS pour rejoindre une salle */
+  getJaasToken(room: string): Observable<{ jwt: string | null; appId: string; room: string; isConfigured: boolean }> {
+    return this.http.get<{ jwt: string | null; appId: string; room: string; isConfigured: boolean }>(
+      `${this.base}/token/${room}`,
+    );
+  }
 }

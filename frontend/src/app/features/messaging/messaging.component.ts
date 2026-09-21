@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { MessagingService, ProjectChannelGroup } from '../../core/services/messaging.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -101,6 +101,7 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
     private messaging: MessagingService,
     public auth: AuthService,
     private realtime: RealtimeService,
+    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -555,6 +556,38 @@ export class MessagingComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (mime.startsWith('video/')) return 'VIDEO';
     if (mime.startsWith('audio/')) return 'AUDIO';
     return 'FILE';
+  }
+
+  // ── Appels vidéo dans le chat ─────────────────────────────────────────────
+
+  /** Détecte si un message est une invitation d'appel (via le champ ou via le contenu) */
+  isCallMsg(msg: ChatMessage): boolean {
+    return !!(msg.isCallMessage || (msg.content && msg.content.includes('/call?room=')));
+  }
+
+  /** Extrait l'URL d'appel depuis le contenu du message */
+  extractCallUrl(msg: ChatMessage): string {
+    if (msg.callUrl) return msg.callUrl;
+    // Extraire l'URL du contenu texte
+    const match = msg.content.match(/https?:\/\/\S+\/call\?[^\s]+/);
+    return match ? match[0] : '';
+  }
+
+  /** Rejoindre un appel depuis le chat */
+  joinCallFromChat(msg: ChatMessage) {
+    const url = this.extractCallUrl(msg);
+    if (!url) return;
+    try {
+      const parsed = new URL(url);
+      const room = parsed.searchParams.get('room');
+      if (room) {
+        this.router.navigate(['/call'], { queryParams: { room } });
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch {
+      window.open(url, '_blank');
+    }
   }
 
   // ── Modal appel vidéo ────────────────────────────────────────────────────

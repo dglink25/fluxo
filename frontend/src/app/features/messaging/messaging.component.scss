@@ -465,6 +465,46 @@
 .send-btn:active, .mic-btn:active { transform: scale(0.94); }
 .send-btn:disabled { opacity: 0.5; cursor: default; }
 
+/* ── Message d'appel vidéo ── */
+.call-msg-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(22,101,83,0.9), rgba(15,74,60,0.95));
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.08s;
+  min-width: 200px;
+  max-width: 280px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.call-msg-card:hover { opacity: 0.9; transform: scale(0.99); }
+.call-msg-card:active { transform: scale(0.97); }
+
+.call-msg-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+
+.call-msg-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.call-msg-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+.call-msg-action {
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+}
+
 /* ── Edition message inline ── */
 .bubble-wrap {
   position: relative; display: flex; align-items: flex-start; gap: 4px;

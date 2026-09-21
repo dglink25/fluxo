@@ -20,6 +20,11 @@ export interface ChatMessage {
   createdAt: string;
   sender: { id: string; username: string; avatarUrl?: string | null };
   reactions: MessageReaction[];
+  /** true si ce message est un message d'invitation à une visioconférence */
+  isCallMessage?: boolean;
+  /** URL de la salle (pour les messages d'appel) */
+  callUrl?: string;
+  roomId?: string;
 }
 
 export interface Channel {

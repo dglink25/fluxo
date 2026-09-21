@@ -14,13 +14,19 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { VideoCallService } from './video-call.service';
+import { JaasTokenService } from './jaas-token.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { StartCallDto } from './dto/start-call.dto';
 import { ScheduleCallDto } from './dto/schedule-call.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('video-calls')
 export class VideoCallController {
-  constructor(private readonly videoCallService: VideoCallService) {}
+  constructor(
+    private readonly videoCallService: VideoCallService,
+    private readonly jaasToken: JaasTokenService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /** POST /video-calls/start — Lancer un appel immédiat */
   @Post('start')
@@ -94,5 +100,42 @@ export class VideoCallController {
   @Get(':id')
   getCall(@Param('id') id: string) {
     return this.videoCallService.getCall(id);
+  }
+
+  /**
+   * GET /video-calls/token/:room
+   * Génère un JWT JaaS pour l'utilisateur connecté et la salle donnée.
+   * Retourne { jwt, appId, room } — utilisé par le frontend pour initialiser Jitsi.
+   */
+  @Get('token/:room')
+  async getJaasToken(
+    @Param('room') room: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    // Récupérer le profil complet de l'utilisateur
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { id: true, username: true, fullName: true, email: true, avatarUrl: true },
+    });
+
+    if (!dbUser) {
+      return { jwt: null, appId: this.jaasToken['appId'], room };
+    }
+
+    // L'hôte est modérateur — déterminé par la BDD (VideoCall.hostId)
+    const call = await this.prisma.videoCall.findFirst({
+      where: { roomId: room },
+      select: { hostId: true },
+    });
+    const isModerator = call?.hostId === user.userId;
+
+    const jwt = this.jaasToken.generateToken(dbUser, room, isModerator);
+
+    return {
+      jwt,
+      appId: this.jaasToken['appId'],
+      room:  `${this.jaasToken['appId']}/${room}`,
+      isConfigured: this.jaasToken.isConfigured,
+    };
   }
 }

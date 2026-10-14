@@ -155,6 +155,11 @@ export class SecretsComponent implements OnInit {
     return g ? this.secrets().filter((s) => s.group === g) : this.secrets();
   }
 
+  /** Compte les variables d'un groupe donné */
+  countInGroup(g: string): number {
+    return this.secrets().filter((s) => s.group === g).length;
+  }
+
   selectGroup(g: string | null) {
     this.activeGroup.set(g);
     // Pré-remplir le nom d'export avec le groupe sélectionné
@@ -386,6 +391,15 @@ export class SecretsComponent implements OnInit {
       this.importContent = (e.target?.result as string) ?? '';
     };
     reader.readAsText(file);
+  }
+
+  clearImport() {
+    this.importContent  = '';
+    this.importFileName = '.env';
+  }
+
+  setExportFileName(name: string) {
+    this.exportFileName = name;
   }
 
   /** Ouvre le modal de choix du nom avant export */

@@ -427,6 +427,7 @@ model Secret {
   id          String   @id @default(uuid())
   projectId   String
   name        String                    /// Nom de la variable (ex. DATABASE_URL)
+  group       String   @default(".env") /// Fichier source (ex. .env, .env.develop, .env.production)
   valueEnc    String                    /// Valeur chiffrée AES-256-GCM (base64)
   iv          String                    /// IV de chiffrement (base64)
   authTag     String                    /// Auth tag GCM (base64)
@@ -438,7 +439,9 @@ model Secret {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   logs    SecretAccessLog[]
 
-  @@unique([projectId, name])
+  /// Unicité : même variable autorisée dans des groupes différents
+  @@unique([projectId, group, name])
+  @@index([projectId, group])
 }
 
 /// Journal d'accès aux secrets

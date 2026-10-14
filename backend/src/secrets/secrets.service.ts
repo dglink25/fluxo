@@ -70,121 +70,126 @@ export class SecretsService {
 
   // ── Variables d'environnement ────────────────────────────────────────────────
 
-  /** Liste les secrets (sans les valeurs) */
+  /** Liste les secrets (sans les valeurs), groupés par fichier */
   async listSecrets(projectId: string, userId: string) {
     await this.assertMember(projectId, userId);
-    const secrets = await this.prisma.secret.findMany({
+    const secrets = await (this.prisma.secret as any).findMany({
       where: { projectId },
       select: {
-        id: true,
-        name: true,
-        description: true,
-        createdBy: true,
-        createdAt: true,
-        updatedAt: true,
-        // Ne pas exposer valueEnc / iv / authTag
+        id: true, name: true, group: true, description: true,
+        createdBy: true, createdAt: true, updatedAt: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ group: 'asc' }, { name: 'asc' }],
     });
     return secrets;
   }
 
-  /** Crée ou met à jour une variable */
+  /** Crée ou met à jour une variable dans un groupe donné */
   async upsertSecret(
     projectId: string,
     userId: string,
     name: string,
     value: string,
     description?: string,
+    group = '.env',
   ) {
     await this.assertOwnerOrAdmin(projectId, userId);
-
     const { valueEnc, iv, authTag } = encrypt(value);
 
-    return this.prisma.secret.upsert({
-      where: { projectId_name: { projectId, name } },
-      create: { projectId, name, valueEnc, iv, authTag, description, createdBy: userId },
+    return (this.prisma.secret as any).upsert({
+      where: { projectId_group_name: { projectId, group, name } },
+      create: { projectId, name, group, valueEnc, iv, authTag, description, createdBy: userId },
       update: { valueEnc, iv, authTag, description, updatedAt: new Date() },
-      select: { id: true, name: true, description: true, createdAt: true, updatedAt: true },
+      select: { id: true, name: true, group: true, description: true, createdAt: true, updatedAt: true },
     });
   }
 
-  /** Importe plusieurs variables depuis un fichier .env parsé */
-  async importEnvFile(projectId: string, userId: string, content: string) {
+  /** Importe plusieurs variables depuis un fichier .env parsé dans un groupe nommé */
+  async importEnvFile(projectId: string, userId: string, content: string, group = '.env') {
     await this.assertOwnerOrAdmin(projectId, userId);
 
-    const lines = content.split('\n');
+    const lines  = content.split('\n');
     const parsed: { name: string; value: string }[] = [];
 
     for (const raw of lines) {
       const line = raw.trim();
       if (!line || line.startsWith('#')) continue;
-
       const eqIdx = line.indexOf('=');
       if (eqIdx === -1) continue;
-
       const name = line.slice(0, eqIdx).trim();
-      let value = line.slice(eqIdx + 1).trim();
-
-      // Enlever les guillemets simples ou doubles entourant la valeur
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
+      let value  = line.slice(eqIdx + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
         value = value.slice(1, -1);
       }
-
       if (!name) continue;
       parsed.push({ name, value });
     }
 
-    // Upsert en batch
     const results = await Promise.all(
-      parsed.map((p) => this.upsertSecret(projectId, userId, p.name, p.value)),
+      parsed.map((p) => this.upsertSecret(projectId, userId, p.name, p.value, undefined, group)),
     );
-
-    return { imported: results.length, variables: results };
+    return { imported: results.length, variables: results, group };
   }
 
   /** Révèle la valeur d'un secret et log l'accès */
   async revealSecret(secretId: string, userId: string, accessType: 'VIEW' | 'COPY') {
     const secret = await this.prisma.secret.findUnique({ where: { id: secretId } });
     if (!secret) throw new NotFoundException('Variable introuvable');
-
     await this.assertOwnerOrAdmin(secret.projectId, userId);
-
-    // Log de l'accès
-    await this.prisma.secretAccessLog.create({
-      data: { secretId, userId, accessType },
-    });
-
+    await this.prisma.secretAccessLog.create({ data: { secretId, userId, accessType } });
     const value = decrypt(secret.valueEnc, secret.iv, secret.authTag);
-    return { id: secret.id, name: secret.name, value };
+    return { id: secret.id, name: secret.name, group: (secret as any).group ?? '.env', value };
   }
 
-  /** Exporte toutes les variables en clair (log de l'accès) */
-  async exportEnv(projectId: string, userId: string) {
+  /** Exporte toutes les variables d'un groupe en clair */
+  async exportEnv(projectId: string, userId: string, group?: string) {
     await this.assertOwnerOrAdmin(projectId, userId);
 
-    const secrets = await this.prisma.secret.findMany({
-      where: { projectId },
-      orderBy: { name: 'asc' },
+    const where: any = { projectId };
+    if (group) where.group = group;
+
+    const secrets = await (this.prisma.secret as any).findMany({
+      where,
+      orderBy: [{ group: 'asc' }, { name: 'asc' }],
     });
 
-    // Log export pour chaque secret
-    await this.prisma.secretAccessLog.createMany({
-      data: secrets.map((s) => ({ secretId: s.id, userId, accessType: 'EXPORT' })),
-    });
+    if (secrets.length > 0) {
+      await this.prisma.secretAccessLog.createMany({
+        data: secrets.map((s: any) => ({ secretId: s.id, userId, accessType: 'EXPORT' })),
+      });
+    }
 
-    const lines = secrets.map((s) => {
+    const lines: string[] = [];
+    let currentGroup = '';
+    for (const s of secrets) {
+      const g = (s as any).group ?? '.env';
+      if (!group && g !== currentGroup) {
+        if (currentGroup) lines.push('');
+        lines.push(`# ${g}`);
+        currentGroup = g;
+      }
       const value = decrypt(s.valueEnc, s.iv, s.authTag);
-      return `${s.name}=${value}`;
-    });
+      lines.push(`${s.name}=${value}`);
+    }
 
     return {
       content: lines.join('\n'),
       count: secrets.length,
+      groups: [...new Set(secrets.map((s: any) => (s as any).group ?? '.env'))],
     };
+  }
+
+  /** Liste les groupes disponibles pour un projet */
+  async listGroups(projectId: string, userId: string) {
+    await this.assertMember(projectId, userId);
+    const result = await (this.prisma.secret as any).findMany({
+      where: { projectId },
+      select: { group: true },
+      distinct: ['group'],
+      orderBy: { group: 'asc' },
+    });
+    return result.map((r: any) => r.group ?? '.env');
   }
 
   /** Supprime une variable */

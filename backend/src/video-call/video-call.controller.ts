@@ -96,33 +96,24 @@ export class VideoCallController {
     return this.videoCallService.listForRoom(channelId, dmId);
   }
 
-  /** GET /video-calls/:id — Détail d'un appel */
-  @Get(':id')
-  getCall(@Param('id') id: string) {
-    return this.videoCallService.getCall(id);
-  }
-
   /**
    * GET /video-calls/token/:room
-   * Génère un JWT JaaS pour l'utilisateur connecté et la salle donnée.
-   * Retourne { jwt, appId, room } — utilisé par le frontend pour initialiser Jitsi.
+   * Doit être AVANT /:id pour éviter que NestJS ne confonde "token" avec un id.
    */
   @Get('token/:room')
   async getJaasToken(
     @Param('room') room: string,
     @CurrentUser() user: { userId: string },
   ) {
-    // Récupérer le profil complet de l'utilisateur
     const dbUser = await this.prisma.user.findUnique({
       where: { id: user.userId },
       select: { id: true, username: true, fullName: true, email: true, avatarUrl: true },
     });
 
     if (!dbUser) {
-      return { jwt: null, appId: this.jaasToken['appId'], room };
+      return { jwt: null, appId: this.jaasToken['appId'], room, isConfigured: false };
     }
 
-    // L'hôte est modérateur — déterminé par la BDD (VideoCall.hostId)
     const call = await this.prisma.videoCall.findFirst({
       where: { roomId: room },
       select: { hostId: true },
@@ -133,9 +124,15 @@ export class VideoCallController {
 
     return {
       jwt,
-      appId: this.jaasToken['appId'],
-      room:  `${this.jaasToken['appId']}/${room}`,
+      appId:        this.jaasToken['appId'],
+      room:         `${this.jaasToken['appId']}/fluxo-${room}`,
       isConfigured: this.jaasToken.isConfigured,
     };
+  }
+
+  /** GET /video-calls/:id — Détail d'un appel */
+  @Get(':id')
+  getCall(@Param('id') id: string) {
+    return this.videoCallService.getCall(id);
   }
 }

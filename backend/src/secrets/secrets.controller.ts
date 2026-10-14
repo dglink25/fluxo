@@ -32,12 +32,20 @@ class UpsertSecretDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  group?: string;
 }
 
 class ImportEnvDto {
   @IsString()
   @MinLength(1)
   content: string;
+
+  @IsOptional()
+  @IsString()
+  group?: string;
 }
 
 class UploadConfidentialFileDto {
@@ -83,6 +91,7 @@ export class SecretsController {
       dto.name,
       dto.value,
       dto.description,
+      dto.group,
     );
   }
 
@@ -93,17 +102,24 @@ export class SecretsController {
     @CurrentUser() user: any,
     @Body() dto: ImportEnvDto,
   ) {
-    return this.secrets.importEnvFile(projectId, user.userId, dto.content);
+    return this.secrets.importEnvFile(projectId, user.userId, dto.content, dto.group);
   }
 
-  /**
-   * Export .env — retourne le contenu en JSON pour que le frontend
-   * crée le téléchargement côté client (évite le token en query param).
-   */
   @Roles('OWNER', 'ADMIN')
   @Get('export')
-  async exportEnv(@Param('projectId') projectId: string, @CurrentUser() user: any) {
-    return this.secrets.exportEnv(projectId, user.userId);
+  async exportEnv(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: any,
+    @Headers('x-env-group') group?: string,
+  ) {
+    return this.secrets.exportEnv(projectId, user.userId, group || undefined);
+  }
+
+  /** Liste les groupes (noms de fichiers) disponibles pour ce projet */
+  @Roles('OWNER', 'ADMIN', 'MEMBER', 'READER')
+  @Get('groups')
+  listGroups(@Param('projectId') projectId: string, @CurrentUser() user: any) {
+    return this.secrets.listGroups(projectId, user.userId);
   }
 
   @Roles('OWNER', 'ADMIN')

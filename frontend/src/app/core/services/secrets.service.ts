@@ -5,11 +5,11 @@ import { environment } from '../../../environments/environment';
 export interface Secret {
   id: string;
   name: string;
+  group: string;          // fichier source (.env, .env.develop, .env.production, etc.)
   description?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-  // La valeur n'est jamais retournée dans la liste
   revealedValue?: string;
 }
 
@@ -46,20 +46,28 @@ export class SecretsService {
     return this.http.get<Secret[]>(`${this.base(projectId)}/secrets`);
   }
 
-  upsertSecret(projectId: string, name: string, value: string, description?: string) {
-    return this.http.put<Secret>(`${this.base(projectId)}/secrets`, { name, value, description });
+  upsertSecret(projectId: string, name: string, value: string, description?: string, group = '.env') {
+    return this.http.put<Secret>(`${this.base(projectId)}/secrets`, { name, value, description, group });
   }
 
-  /** Importer le contenu d'un fichier .env (texte brut) */
-  importEnv(projectId: string, content: string) {
-    return this.http.post<{ imported: number }>(`${this.base(projectId)}/secrets/import`, { content });
-  }
-
-  /** Exporter toutes les variables en fichier .env — reçoit le contenu et déclenche le dl côté client */
-  exportEnv(projectId: string) {
-    return this.http.get<{ content: string; count: number }>(
-      `${this.base(projectId)}/secrets/export`,
+  importEnv(projectId: string, content: string, group = '.env') {
+    return this.http.post<{ imported: number; group: string }>(
+      `${this.base(projectId)}/secrets/import`,
+      { content, group },
     );
+  }
+
+  exportEnv(projectId: string, group?: string) {
+    const headers: Record<string, string> = {};
+    if (group) headers['x-env-group'] = group;
+    return this.http.get<{ content: string; count: number; groups: string[] }>(
+      `${this.base(projectId)}/secrets/export`,
+      { headers },
+    );
+  }
+
+  listGroups(projectId: string) {
+    return this.http.get<string[]>(`${this.base(projectId)}/secrets/groups`);
   }
 
   revealSecret(projectId: string, secretId: string) {

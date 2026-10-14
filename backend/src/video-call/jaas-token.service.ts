@@ -45,7 +45,8 @@ export class JaasTokenService {
     const now = Math.floor(Date.now() / 1000);
 
     const header = {
-      kid: `${this.appId}/${this.keyId}`,
+      // kid = keyId tel quel (il contient déjà appId/64f625)
+      kid: this.keyId,
       typ: 'JWT',
       alg: 'RS256',
     };
@@ -77,8 +78,10 @@ export class JaasTokenService {
           email:      user.email ?? '',
         },
       },
-      // '*' = accès à toutes les salles ; ou spécifier le roomId exact
-      room: `${this.appId}/${room}`,
+      // '*' = accès à toutes les salles de l'AppID
+      // Le nom de la salle côté Jitsi est "appId/fluxo-roomId"
+      // donc on met '*' pour que le JWT soit valide sur n'importe quelle salle
+      room: '*',
     };
 
     try {

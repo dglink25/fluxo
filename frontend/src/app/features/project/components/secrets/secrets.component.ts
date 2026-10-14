@@ -61,9 +61,19 @@ export class SecretsComponent implements OnInit {
   saving = signal(false);
 
   // Import .env
-  importContent = '';
-  importing = signal(false);
-  importResult = signal<{ imported: number } | null>(null);
+  importContent    = '';
+  importFileName   = '.env';
+  importing        = signal(false);
+  importResult     = signal<{ imported: number } | null>(null);
+
+  // Export
+  showExportModal  = signal(false);
+  exportFileName   = '.env';
+  exportGroup      = signal<string | undefined>(undefined); // groupe à exporter
+
+  // Groupes disponibles (noms des fichiers importés)
+  groups           = signal<string[]>([]);
+  activeGroup      = signal<string | null>(null); // null = afficher tout
 
   // Toast
   toastMsg = signal<string | null>(null);
@@ -99,6 +109,7 @@ export class SecretsComponent implements OnInit {
   ngOnInit() {
     this.loadSecrets();
     this.loadFiles();
+    this.loadGroups();
   }
 
   // Fermeture de la modal avec Echap
@@ -131,6 +142,25 @@ export class SecretsComponent implements OnInit {
     });
   }
 
+  loadGroups() {
+    this.secretsService.listGroups(this.projectId).subscribe({
+      next: (g) => this.groups.set(g),
+      error: () => {},
+    });
+  }
+
+  /** Secrets filtrés par groupe actif */
+  get filteredSecrets() {
+    const g = this.activeGroup();
+    return g ? this.secrets().filter((s) => s.group === g) : this.secrets();
+  }
+
+  selectGroup(g: string | null) {
+    this.activeGroup.set(g);
+    // Pré-remplir le nom d'export avec le groupe sélectionné
+    if (g) this.exportFileName = g;
+  }
+
   openAddForm() {
     this.editingId.set(null);
     this.formName = '';
@@ -150,9 +180,7 @@ export class SecretsComponent implements OnInit {
 
     if (!s.revealedValue) {
       this.secretsService.revealSecret(this.projectId, s.id).subscribe({
-        next: (r) => {
-          this.formValue = r.value;
-        },
+        next: (r) => { this.formValue = r.value; },
         error: () => {},
       });
     }
@@ -161,17 +189,20 @@ export class SecretsComponent implements OnInit {
   saveSecret() {
     if (!this.formName.trim() || !this.formValue.trim()) return;
     this.saving.set(true);
+    // Utiliser le groupe actif, ou .env par défaut
+    const group = this.activeGroup() ?? '.env';
     this.secretsService
       .upsertSecret(
         this.projectId,
         this.formName.trim(),
         this.formValue,
         this.formDescription || undefined,
+        group,
       )
       .subscribe({
         next: (saved) => {
           this.secrets.update((list) => {
-            const idx = list.findIndex((s) => s.id === saved.id || s.name === saved.name);
+            const idx = list.findIndex((s) => s.id === saved.id || (s.name === saved.name && s.group === saved.group));
             if (idx >= 0) {
               const updated = [...list];
               updated[idx] = { ...saved };
@@ -179,9 +210,10 @@ export class SecretsComponent implements OnInit {
             }
             return [saved, ...list];
           });
+          this.loadGroups();
           this.showAddForm.set(false);
           this.saving.set(false);
-          this.showToast(`Variable ${saved.name} enregistree`, 'success');
+          this.showToast(`Variable ${saved.name} enregistrée dans "${saved.group}"`, 'success');
         },
         error: (err) => {
           this.saving.set(false);
@@ -320,13 +352,17 @@ export class SecretsComponent implements OnInit {
   importEnvFile() {
     if (!this.importContent.trim()) return;
     this.importing.set(true);
-    this.secretsService.importEnv(this.projectId, this.importContent).subscribe({
+    // Le nom du fichier devient le "group" — les variables sont isolées dans ce groupe
+    const group = this.importFileName.trim() || '.env';
+    this.secretsService.importEnv(this.projectId, this.importContent, group).subscribe({
       next: (r) => {
         this.importResult.set(r);
         this.importing.set(false);
         this.importContent = '';
+        this.importFileName = '.env';
         this.loadSecrets();
-        this.showToast(`${r.imported} variable(s) importee(s)`, 'success');
+        this.loadGroups();
+        this.showToast(`${r.imported} variable(s) importée(s) dans "${group}"`, 'success');
       },
       error: (err) => {
         this.importing.set(false);
@@ -339,6 +375,12 @@ export class SecretsComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+
+    // Conserver le nom d'origine du fichier importé
+    this.importFileName = file.name;
+    // Pré-remplir le nom d'export avec le même nom
+    this.exportFileName = file.name;
+
     const reader = new FileReader();
     reader.onload = (e) => {
       this.importContent = (e.target?.result as string) ?? '';
@@ -346,19 +388,28 @@ export class SecretsComponent implements OnInit {
     reader.readAsText(file);
   }
 
+  /** Ouvre le modal de choix du nom avant export */
+  openExportModal() {
+    this.showExportModal.set(true);
+  }
+
   exportEnv() {
-    this.secretsService.exportEnv(this.projectId).subscribe({
+    // Exporter uniquement le groupe actif, ou tout si aucun groupe sélectionné
+    const group = this.activeGroup() ?? undefined;
+    this.secretsService.exportEnv(this.projectId, group).subscribe({
       next: (result) => {
+        const fileName = this.exportFileName.trim() || (group ?? '.env');
         const blob = new Blob([result.content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
+        const url  = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', '.env');
+        link.setAttribute('download', fileName);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        this.showToast(`${result.count} variable(s) exportee(s)`, 'success');
+        this.showExportModal.set(false);
+        this.showToast(`${result.count} variable(s) exportée(s) → ${fileName}`, 'success');
       },
       error: (err) => this.showToast(err?.error?.message ?? 'Erreur export', 'error'),
     });
